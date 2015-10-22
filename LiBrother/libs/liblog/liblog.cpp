@@ -9,18 +9,13 @@
 #include <cstdarg>
 #include <cstring>
 #include <ctime>
-#include <string>
-#include <sstream>
-#include <iomanip>
-using std::string;
-using std::stringstream;
-using std::setw;
-using std::setfill;
 
 MODULE_LOG_NAME("LibLog");
 
 //单条日志的长度上限
 const int nLogBufferSize = 512;
+//日志头长度上限
+const int nLogHeaderSize = 64;
 
 static bool g_bCopytoScreen = false;
 static FILE * g_pFile = nullptr;
@@ -28,7 +23,7 @@ static FILE * g_pFile = nullptr;
 //获取当前时间
 tm GetTime();
 //生成日志头，格式：[时间] [日志类别] [模块名称]
-string GetLogHeader(const char * strStatus, const char * strModuleName, const tm& tmNow);
+void GetLogHeader(char * pDest, const size_t nBufferSize, const char * strStatus, const char * strModuleName, const tm& tmNow);
 //输出日志，nSize == -1表示不指定长度
 void printLog(const char * strContent, int nSize = -1);
 
@@ -53,7 +48,8 @@ void lprintf_(const char * strStatus, const char * strModuleName, const char * s
 {
 	va_list pArgs;
 	tm tmNow = GetTime();
-	string strLogHeader = GetLogHeader(strStatus, strModuleName, tmNow);
+	char strLogHeader[nLogHeaderSize];
+	GetLogHeader(strLogHeader, sizeof(strLogHeader), strStatus, strModuleName, tmNow);
 
 	char strBuffer[nLogBufferSize];
 	size_t nLength;
@@ -66,7 +62,7 @@ void lprintf_(const char * strStatus, const char * strModuleName, const char * s
 	for (int i = 0, j = 0; i < nLength; i++)
 		if (strBuffer[i] == '\n' || i == nLength - 1)
 		{
-			printLog(strLogHeader.c_str());
+			printLog(strLogHeader);
 			printLog(strBuffer + j, i - j + 1);
 			j = i + 1;
 		}
@@ -97,20 +93,14 @@ tm GetTime()
 	return tmNow;
 }
 
-string GetLogHeader(const char * strStatus, const char * strModuleName, const tm& tmNow)
+void GetLogHeader(char * pDest, const size_t nBufferSize, const char * strStatus, const char * strModuleName, const tm& tmNow)
 {
-	stringstream ss;
-
-	ss << "["
-		<< tmNow.tm_year + 1900 << "-"
-		<< setw(2) << setfill('0') << tmNow.tm_mon << "-"
-		<< setw(2) << setfill('0') << tmNow.tm_mday << " "
-		<< setw(2) << setfill('0') << tmNow.tm_hour << ":"
-		<< setw(2) << setfill('0') << tmNow.tm_min << ":"
-		<< setw(2) << setfill('0') << tmNow.tm_sec
-		<< "] [" << strStatus << "] [" << strModuleName << "] ";
-
-	return ss.str();
+	if (!pDest)
+		return;
+	snprintf(pDest, nBufferSize, "[%d-%02d-%02d %02d:%02d:%02d] [%s] [%s] ",
+		tmNow.tm_year + 1900, tmNow.tm_mon, tmNow.tm_mday,
+		tmNow.tm_hour, tmNow.tm_min, tmNow.tm_sec,
+		strStatus, strModuleName);
 }
 
 void printLog(const char * strContent, int nSize)
