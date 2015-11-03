@@ -32,6 +32,6 @@ void MainWindow::on_pushButton_4_clicked()
 {
     QString book1;
     book1 = ui->lineEdit->text();
-    ui->tableView->
+    //ui->tableView->
 
 }
