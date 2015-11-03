@@ -1,6 +1,7 @@
 #ifndef __FUNCTION_INTERFACES_H__
 #define __FUNCTION_INTERFACES_H__
 
+#include "common_types.h"
 #include "common_interfaces.h"
 
 /*

@@ -1,12 +1,29 @@
 #ifndef __COMMON_INTERFACES_H__
 #define __COMMON_INTERFACES_H__
 
-#include "common_types.h"
 #include <vector>
 
 #ifndef interface
 #define interface struct
 #endif
+
+//错误类型
+enum ErrType
+{
+	None,
+	InvalidParam, PermissionDenied,
+	UnsupportedMethod, NetworkError, DatabaseError,
+	Other
+};
+
+//描述一个错误
+struct TErrInfo
+{
+	ErrType type;		//类型
+	int code;			//错误代码
+	const char * description;	//错误的描述[不使用时置为nullptr]
+	TErrInfo(ErrType type = None, int code = 0, const char * description = nullptr) : type(type), code(code), description(description) {}
+};
 
 /*	用于实现一个接口，在定义class时加入
 	示例：

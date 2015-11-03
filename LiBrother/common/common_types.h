@@ -4,24 +4,6 @@
 #include <string>
 #include <ctime>
 
-//错误类型
-enum ErrType
-{
-	None,
-	InvalidParam, PermissionDenied,
-	UnsupportedMethod, NetworkError, DatabaseError,
-	Other
-};
-
-//描述一个错误
-struct TErrInfo
-{
-	ErrType type;		//类型
-	int code;			//错误代码
-	const char * description;	//错误的描述[不使用时置为nullptr]
-	TErrInfo(ErrType type = None, int code = 0, const char * description = nullptr) : type(type), code(code), description(description) {}
-};
-
 //图书的基本信息
 struct TBookBasicInfo
 {
