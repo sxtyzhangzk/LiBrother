@@ -42,7 +42,7 @@ interface IAuthManager : public IAbstract
 /*
   用于客户端的类工厂扩展
 */
-interface IClassFactoryClient : public IClassFactory
+interface IClassFactoryClient : public ILibClassFactory
 {
 	//获取一个IAuthManager接口对象
 	virtual bool getAuthManager(IAuthManager ** ppAuthManager) = 0;

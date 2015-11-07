@@ -117,7 +117,7 @@ interface IUserManager : public IAbstract
   类工厂
   用于创建其他接口的实例
 */
-interface IClassFactory : public IAbstract
+interface ILibClassFactory : public IAbstract
 {
 	//创建一个空的IBook对象，用于insertBook等操作
 	virtual bool createEmptyBook(IBook ** ppBook) = 0;
