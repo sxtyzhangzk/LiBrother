@@ -21,5 +21,19 @@
     <ClInclude Include="client_interfaces.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="class_factory_client.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="netclient.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="backend_main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="netclient.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

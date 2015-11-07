@@ -70,16 +70,16 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(ProjectDir)\..\common;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\..\exlib\include;$(ProjectDir)\..\common;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(ProjectDir)\..\common;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\..\exlib\include;$(ProjectDir)\..\common;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(ProjectDir)\..\common;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\..\exlib\include;$(ProjectDir)\..\common;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(ProjectDir)\..\common;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\..\exlib\include;$(ProjectDir)\..\common;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -150,6 +150,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="client_interfaces.h" />
+    <ClInclude Include="class_factory_client.h" />
+    <ClInclude Include="netclient.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="backend_main.cpp" />
+    <ClCompile Include="netclient.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
