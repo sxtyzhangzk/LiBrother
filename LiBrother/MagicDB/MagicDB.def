@@ -1,0 +1,4 @@
+LIBRARY MagicDB
+EXPORT
+getDBMS
+getVersion
