@@ -45,6 +45,7 @@ bool initBackend(int argc, char * argv[], int& retcode)
 		g_configClient.nPort = netConfig["port"].as<int>();
 		g_configClient.bTLS = netConfig["tls"].as<bool>();
 		g_configClient.bKeepAlive = netConfig["keepalive"].as<bool>();
+		g_configClient.nBufferSize = netConfig["buffersize"].as<int>();
 
 		YAML::Node generalConfig = doc["general"];
 		g_configClient.bLog = generalConfig["log"].as<bool>();
