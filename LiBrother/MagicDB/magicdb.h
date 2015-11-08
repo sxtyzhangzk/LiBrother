@@ -36,11 +36,12 @@ interface IRecordset
 
 	/*
 	读取Binary类型
-	参数：	column	[in]	列名称或列序号
-			buffer	[out]	保存数据的缓存区
-			szBuffer[in]	缓存区大小
+	参数：	column		[in]	列名称或列序号
+			buffer		[out]	保存数据的缓存区
+			nOffset		[in]	从nOffset位置开始读取
+			nDataSize	[in]	读取的数据大小
 	*/
-	virtual bool getBinary(const MVariant& column, char * buffer, size_t szBuffer) = 0;
+	virtual bool getBinary(const MVariant& column, char * buffer, size_t nOffset, size_t nDataSize) = 0;
 
 	/*
 	查找下一条记录
@@ -56,8 +57,11 @@ interface IRecordset
 	//设定数据
 	virtual bool setData(const MVariant& column, const MVariant& val) = 0;
 
-	//设定Binary类型的内容
-	virtual bool setBinary(const MVariant& column, const char * buffer, size_t szBuffer) = 0;
+	//设定Binary数据的长度
+	virtual bool setBinarySize(const MVariant& column, size_t nSize) = 0;
+
+	//设定Binary类型的内容，多于设定长度将自动加大空间
+	virtual bool setBinary(const MVariant& column, const char * buffer, size_t nOffset, size_t nDataSize) = 0;
 
 	//新增加一行，仅当记录集是一个实际的数据表时可用
 	virtual bool addNew() = 0;
