@@ -36,6 +36,7 @@ bool initBackend(int argc, char * argv[], int& retcode)
 		return false;
 	}
 
+	//¶ÁÈ¡ÅäÖÃÎÄ¼ş
 	try
 	{
 		YAML::Node doc = YAML::Load(fconfig);

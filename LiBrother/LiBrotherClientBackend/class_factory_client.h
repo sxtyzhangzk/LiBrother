@@ -1,6 +1,8 @@
 #ifndef __CLASS_FACTORY_CLIENT_H__
 #define __CLASS_FACTORY_CLIENT_H__
 
+//实现客户端类工厂IClassFactoryClient
+
 #include "client_interfaces.h"
 
 class CClassFactory : public IClassFactoryClient
