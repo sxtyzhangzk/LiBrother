@@ -19,6 +19,7 @@ const int nLogHeaderSize = 64;
 
 static bool g_bCopytoScreen = false;
 static FILE * g_pFile = nullptr;
+static bool g_bInited = false;
 
 //获取当前时间
 tm GetTime();
@@ -41,11 +42,14 @@ bool InitLog(const char * strFile, bool bAppend, bool bCopytoScreen)
 			return false;
 #endif
 	}
+	g_bInited = true;
 	return true;
 }
 
 void lprintf_(const char * strStatus, const char * strModuleName, const char * strFormat, ...)
 {
+	if (!g_bInited)
+		return;
 	va_list pArgs;
 	tm tmNow = GetTime();
 	char strLogHeader[nLogHeaderSize];
@@ -72,6 +76,7 @@ void lprintf_(const char * strStatus, const char * strModuleName, const char * s
 
 void CloseLog()
 {
+	g_bInited = false;
 	if (g_pFile)
 	{
 		fclose(g_pFile);
