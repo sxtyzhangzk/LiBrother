@@ -18,6 +18,12 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="netserver.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="netserver.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{7E8CFCD5-6F8C-4F52-9166-972F1C0B04FE}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
