@@ -30,7 +30,7 @@ interface IBook : public IAbstract
 	virtual bool deleteBook() = 0;
 
 	//获取图书的借阅信息
-	virtual bool getBorrowInfo(std::vector<TBorrowInfo> binfo) = 0;
+	virtual bool getBorrowInfo(std::vector<TBorrowInfo> &binfo) = 0;
 };
 
 /*

@@ -18,6 +18,14 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="book.cpp" />
+    <ClCompile Include="factory.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="book.h" />
+    <ClInclude Include="factory.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{7E8CFCD5-6F8C-4F52-9166-972F1C0B04FE}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
@@ -75,7 +83,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(ProjectDir)\..\exlib\include;$(ProjectDir)\..\common;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\..\MagicDB;$(ProjectDir)\..\exlib\include;$(ProjectDir)\..\common;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
