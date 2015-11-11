@@ -43,6 +43,9 @@ const socket_t INVALID_SOCKET = 0;
  *   INVALID_SESSION\n
  *   \n
  *
+ * 如需保持连接在请求开头加入：
+ *   KEEP-ALIVE\n
+ *
  * SessionID格式
  *   63-38位		0
  *   37   位		1
@@ -247,7 +250,7 @@ bool postData(const std::string& strSend, std::string& strRecv)
 	if (sockNow == INVALID_SOCKET)
 		return false;
 
-	if (!sendData(sockNow, strSend))
+	if (!sendData(sockNow, g_configClient.bKeepAlive ? std::string("KEEP-ALIVE\n") + strSend : strSend))
 	{
 		if (bNewSocket)
 		{
