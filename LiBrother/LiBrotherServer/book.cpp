@@ -1,11 +1,13 @@
 #include "book.h"
-
-#include <magicdb.h>
+#include "sstream"
+#include "magicdb.h"
 CBook::CBook(IDatabase * DatabaseFile)
 {
 	m_pDatabase = DatabaseFile;
 	m_Id = -1;
 	is_from_Database = 0;
+	m_CBBI.id = -1;
+	m_CBBI.count = 0;
 }
 bool CBook::getBasicInfo(TBookBasicInfo& info)
 {
@@ -57,7 +59,28 @@ bool CBook::deleteBook()
 	Release();
 	return true;
 }
-bool CBook::getBorrowInfo(std::vector<TBorrowInfo> binfo)
+bool CBook::getBorrowInfo(std::vector<TBorrowInfo> &binfo)
 {
+	if (!is_from_Database)
+	{
+		setError(InvalidParam, 6, "This book is not in the library.");
+		return false;
+	}
+	binfo.clear();
+	//char str[10] = "bDatabase";
+	IRecordset * bRecordset;
+	//m_pDatabase->getTable(str,&bRecordset);
+	std::stringstream str;
+	str << "SELECT BInfo FROM bDatabase WHERE bookID=" << m_Id;
+	m_pDatabase->executeSQL(str.str().c_str(),&bRecordset);
+	if (bRecordset->getSize() == -1)
+	{
+		setError(InvalidParam, 7, "The book has no borrow information.");
+		return false;
+	}
 
+	do
+	{
+
+	}
 }

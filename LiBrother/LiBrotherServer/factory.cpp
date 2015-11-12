@@ -1,7 +1,7 @@
 #include "factory.h"
 #include "book.h"
 #include "magicdb.h"
-Cfactory :: Cfactory(IDatabase * DatabaseFile) : m_Database(DatabaseFile)
+Cfactory::Cfactory(IDatabase * DatabaseFile) : m_Database(DatabaseFile)
 {
 }
 bool Cfactory :: createEmptyBook(IBook ** ppBook)

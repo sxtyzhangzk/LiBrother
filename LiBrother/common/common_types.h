@@ -27,8 +27,10 @@ struct TUserBasicInfo
 //借阅信息
 struct TBorrowInfo
 {
+	int bookID;			//借阅的书ID
 	int userID;			//借阅的用户ID
 	time_t borrowTime;	//借阅的时间
+	bool flag;		//表示是借出还是还入，0表示借出，1表示还入
 };
 
 #endif

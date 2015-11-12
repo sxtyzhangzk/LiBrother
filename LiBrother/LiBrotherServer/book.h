@@ -2,7 +2,7 @@
 #define __BOOK_H__
 
 #include "function_interfaces.h"
-#include "common_types"
+#include "common_types.h"
 interface IDatabase;
 
 class CBook : public IBook
@@ -15,7 +15,7 @@ public:
 	virtual bool setBasicInfo(const TBookBasicInfo& info) override;
 	virtual bool setDescription(const char * description) override;
 	virtual bool deleteBook() override;
-	virtual bool getBorrowInfo(std::vector<TBorrowInfo> binfo) override;
+	virtual bool getBorrowInfo(std::vector<TBorrowInfo> &binfo) override;
 	bool insert();
 	bool check(TBookBasicInfo info_to_check);
 protected:
@@ -25,6 +25,7 @@ protected:
 	std::string m_Description;
 	int is_from_Database;
 	int m_Id;
+
 };
 
 #endif
