@@ -1,6 +1,7 @@
 #include "usermain.h"
 #include "ui_usermain.h"
 #include "mainwindow.h"
+#include "userborrow.h"
 
 usermain::usermain(QWidget *parent) :
     QDialog(parent),
@@ -14,7 +15,12 @@ usermain::~usermain()
     delete ui;
 }
 
-void usermain::on_label_3_linkActivated(const QString &link)
-{
 
+
+
+
+void usermain::on_pushButton_2_clicked()
+{
+    userborrow userborrow1;
+    userborrow1.exec();
 }

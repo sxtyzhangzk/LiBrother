@@ -6,18 +6,66 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>685</width>
-    <height>473</height>
+    <width>562</width>
+    <height>460</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>LiBrother 1.0</string>
   </property>
   <widget class="QWidget" name="centralWidget">
+   <widget class="QPushButton" name="pushButton_2">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>220</y>
+      <width>191</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>新用户注册
+Sign up</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_3">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>350</y>
+      <width>191</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>退出系统
+Exit</string>
+    </property>
+   </widget>
+   <widget class="QTableWidget" name="tableWidget">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>180</y>
+      <width>341</width>
+      <height>211</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>140</y>
+      <width>341</width>
+      <height>31</height>
+     </rect>
+    </property>
+   </widget>
    <widget class="QWidget" name="verticalLayoutWidget">
     <property name="geometry">
      <rect>
-      <x>20</x>
+      <x>10</x>
       <y>10</y>
       <width>191</width>
       <height>130</height>
@@ -40,111 +88,72 @@ p, li { white-space: pre-wrap; }
      </item>
     </layout>
    </widget>
-   <widget class="QWidget" name="verticalLayoutWidget_2">
+   <widget class="QPushButton" name="pushButton">
     <property name="geometry">
      <rect>
-      <x>230</x>
+      <x>10</x>
       <y>150</y>
-      <width>436</width>
-      <height>261</height>
+      <width>191</width>
+      <height>71</height>
      </rect>
     </property>
-    <layout class="QVBoxLayout" name="verticalLayout_2">
-     <item>
-      <layout class="QHBoxLayout" name="horizontalLayout">
-       <item>
-        <widget class="QLabel" name="label_2">
-         <property name="text">
-          <string>请输入您需要查找的书本信息</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QComboBox" name="comboBox">
-         <item>
-          <property name="text">
-           <string>书名</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>作者</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>ISBN</string>
-          </property>
-         </item>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="pushButton_4">
-         <property name="minimumSize">
-          <size>
-           <width>81</width>
-           <height>32</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>搜索</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-     <item>
-      <widget class="QLineEdit" name="lineEdit"/>
-     </item>
-     <item>
-      <widget class="QTableWidget" name="tableWidget"/>
-     </item>
-    </layout>
+    <property name="minimumSize">
+     <size>
+      <width>0</width>
+      <height>48</height>
+     </size>
+    </property>
+    <property name="text">
+     <string>用户登陆
+Log in</string>
+    </property>
    </widget>
-   <widget class="QWidget" name="verticalLayoutWidget_4">
+   <widget class="QWidget" name="horizontalLayoutWidget">
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>160</y>
-      <width>191</width>
-      <height>251</height>
+      <x>205</x>
+      <y>110</y>
+      <width>341</width>
+      <height>32</height>
      </rect>
     </property>
-    <layout class="QVBoxLayout" name="verticalLayout_3">
+    <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <widget class="QPushButton" name="pushButton">
+      <widget class="QLabel" name="label_2">
        <property name="text">
-        <string>用户登陆
-Log in</string>
+        <string>请输入您需要查找的书本信息</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton_2">
-       <property name="text">
-        <string>新用户注册
-Sign up</string>
-       </property>
+      <widget class="QComboBox" name="comboBox">
+       <item>
+        <property name="text">
+         <string>书名</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>作者</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>ISBN</string>
+        </property>
+       </item>
       </widget>
      </item>
      <item>
-      <spacer name="verticalSpacer_2">
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
+      <widget class="QPushButton" name="pushButton_4">
+       <property name="minimumSize">
         <size>
-         <width>20</width>
-         <height>40</height>
+         <width>81</width>
+         <height>32</height>
         </size>
        </property>
-      </spacer>
-     </item>
-     <item>
-      <widget class="QPushButton" name="pushButton_3">
        <property name="text">
-        <string>退出系统
-Exit</string>
+        <string>搜索</string>
        </property>
       </widget>
      </item>
@@ -156,7 +165,7 @@ Exit</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>685</width>
+     <width>562</width>
      <height>22</height>
     </rect>
    </property>
@@ -181,8 +190,8 @@ Exit</string>
    <slot>close()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>102</x>
-     <y>407</y>
+     <x>282</x>
+     <y>225</y>
     </hint>
     <hint type="destinationlabel">
      <x>162</x>

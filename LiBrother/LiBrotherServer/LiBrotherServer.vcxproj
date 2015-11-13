@@ -19,10 +19,14 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="book.cpp" />
+    <ClCompile Include="factory.cpp" />
     <ClCompile Include="netserver_win.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="book.h" />
     <ClInclude Include="config.h" />
+    <ClInclude Include="factory.h" />
     <ClInclude Include="netserver.h" />
     <ClInclude Include="session.h" />
   </ItemGroup>

@@ -25,8 +25,7 @@ private slots:
 private:
     Ui::MainWindow *ui;
 
-public:
-    int flag = 0;
+
 
 
 };

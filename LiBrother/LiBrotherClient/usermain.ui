@@ -88,7 +88,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>您已借阅了以下书本</string>
+    <string>您已借阅了以下书本：</string>
    </property>
   </widget>
   <widget class="QColumnView" name="columnView">
@@ -111,20 +111,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>借书</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="pushButton_3">
-   <property name="geometry">
-    <rect>
-     <x>220</x>
-     <y>230</y>
-     <width>115</width>
-     <height>32</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>还书</string>
+    <string>继续借书</string>
    </property>
   </widget>
   <widget class="QPushButton" name="pushButton">
