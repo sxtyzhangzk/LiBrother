@@ -30,12 +30,24 @@
     <ClInclude Include="config.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="book.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="library.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="backend_main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="netclient.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="book.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="library.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

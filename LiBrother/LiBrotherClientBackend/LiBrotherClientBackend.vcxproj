@@ -149,13 +149,17 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="book.h" />
     <ClInclude Include="client_interfaces.h" />
     <ClInclude Include="class_factory_client.h" />
     <ClInclude Include="config.h" />
+    <ClInclude Include="library.h" />
     <ClInclude Include="netclient.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="backend_main.cpp" />
+    <ClCompile Include="book.cpp" />
+    <ClCompile Include="library.cpp" />
     <ClCompile Include="netclient.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -110,8 +110,9 @@ bool CBook::setDescription(const char * description)
 	return false;
 }
 
-bool CBook::deleteBook(const int number) 
+bool CBook::deleteBook(int number) 
 {
+	//TODO: number表示删除图书的本数，将它传给服务端 ---[zk]
 	Json::Value value0;
 	value0["command"] = "deleteBook";
 	value0["id"] = m_Id;

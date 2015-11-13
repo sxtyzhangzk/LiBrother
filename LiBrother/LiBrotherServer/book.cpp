@@ -1,6 +1,7 @@
 #include "book.h"
 #include "sstream"
 #include "magicdb.h"
+
 CBook::CBook(IDatabase * DatabaseFile)
 {
 	m_pDatabase = DatabaseFile;
@@ -11,8 +12,8 @@ CBook::CBook(IDatabase * DatabaseFile)
 }
 CBook::~CBook()
 {
-	Release();
 }
+
 bool CBook::getBasicInfo(TBookBasicInfo& info)
 {
 	if (!check(m_CBBI) || !is_from_Database)	//检查书本基本信息是否合法以及是否来自数据库
