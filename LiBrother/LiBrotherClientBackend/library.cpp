@@ -54,14 +54,14 @@ bool CLibrary::queryById(int nID, IBook ** ppBook)
 	Json::Reader reader;
 	Json::Value value;
 	reader.parse(strRespond, value);
-	if (value["result"].asInt == 1) {
+	if (value["result"].asInt() == 1) {
 		TBookBasicInfo *Info = new TBookBasicInfo;
 		Info->id = value["id"].asInt();
 		Info->count = value["count"].asInt();
 		Info->name = value["name"].asString();
-		Info->author = value["author"].asString;
-		Info->isbn = value["isbn"].asString;
-		Info->publisher = value["publisher"].asString;
+		Info->author = value["author"].asString();
+		Info->isbn = value["isbn"].asString();
+		Info->publisher = value["publisher"].asString();
 		CBook *book = new CBook(Info);
 		*ppBook = book;
 		return true;
@@ -86,14 +86,14 @@ bool CLibrary::queryByISBN(const char * strISBN, IBook ** ppBook)
 	Json::Reader reader;
 	Json::Value value;
 	reader.parse(strRespond, value);
-	if (value["result"].asInt == 1) {
+	if (value["result"].asInt() == 1) {
 		TBookBasicInfo *Info = new TBookBasicInfo;
 		Info->id = value["id"].asInt();
 		Info->count = value["count"].asInt();
 		Info->name = value["name"].asString();
-		Info->author = value["author"].asString;
-		Info->isbn = value["isbn"].asString;
-		Info->publisher = value["publisher"].asString;
+		Info->author = value["author"].asString();
+		Info->isbn = value["isbn"].asString();
+		Info->publisher = value["publisher"].asString();
 		CBook *book = new CBook(Info);
 		*ppBook = book;
 		return true;
@@ -107,5 +107,5 @@ bool CLibrary::queryByISBN(const char * strISBN, IBook ** ppBook)
 
 bool CLibrary::insertBook(IBook * pBook)
 {
-
+	return 1;
 }
