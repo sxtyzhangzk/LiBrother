@@ -53,7 +53,7 @@ bool CBook::setDescription(const char * description)	//还未完成
 	m_Description = description;	//不为空，将description赋给书的介绍
 	return true;
 }
-bool CBook::deleteBook(const int number)
+bool CBook::deleteBook(int number)
 {
 	if (!is_from_Database)	//判断是否来自数据库
 	{
