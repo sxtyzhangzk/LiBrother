@@ -47,9 +47,9 @@ const socket_t INVALID_SOCKET = 0;
  *   KEEP-ALIVE\n
  *
  * SessionID格式
- *   63-38位		0
- *   37   位		1
- *   36-4 位		随机身份码
+ *   63-37位		0
+ *   36   位		1
+ *   35-4 位		随机身份码
  *   3-0  位		校验和
  *******************************/
 
@@ -306,12 +306,12 @@ bool getSession()
 bool verifySession()
 {
 	int checkSum = 0;
-	for (int bit = 63; bit >= 38; bit--)
+	for (int bit = 63; bit >= 37; bit--)
 		if (sessionID & (1ULL << bit))
 			return false;
-	if (!(sessionID & (1ULL << 37)))
+	if (!(sessionID & (1ULL << 36)))
 		return false;
-	for (int bit = 36; bit >= 4; bit--)
+	for (int bit = 35; bit >= 4; bit--)
 		checkSum += (((1ULL << bit) & sessionID) > 0) * bit;
 	checkSum ^= 0xF;
 	if ((checkSum & 0xF) != (sessionID & 0xF))

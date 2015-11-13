@@ -19,10 +19,12 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="netserver.cpp" />
+    <ClCompile Include="netserver_win.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="config.h" />
     <ClInclude Include="netserver.h" />
+    <ClInclude Include="session.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{7E8CFCD5-6F8C-4F52-9166-972F1C0B04FE}</ProjectGuid>
@@ -77,11 +79,11 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(ProjectDir)\..\exlib\include;$(ProjectDir)\..\common;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\..\libs\liblog;$(ProjectDir)\..\exlib\include;$(ProjectDir)\..\common;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(ProjectDir)\..\exlib\include;$(ProjectDir)\..\common;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\..\libs\liblog;$(ProjectDir)\..\exlib\include;$(ProjectDir)\..\common;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
