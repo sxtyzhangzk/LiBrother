@@ -63,6 +63,7 @@ bool CLibrary::queryById(int nID, IBook ** ppBook)
 		Info->isbn = value["isbn"].asString();
 		Info->publisher = value["publisher"].asString();
 		CBook *book = new CBook(Info);
+		book->AddRef();
 		*ppBook = book;
 		return true;
 	}
@@ -95,6 +96,7 @@ bool CLibrary::queryByISBN(const char * strISBN, IBook ** ppBook)
 		Info->isbn = value["isbn"].asString();
 		Info->publisher = value["publisher"].asString();
 		CBook *book = new CBook(Info);
+		book->AddRef();
 		*ppBook = book;
 		return true;
 	}
@@ -107,5 +109,25 @@ bool CLibrary::queryByISBN(const char * strISBN, IBook ** ppBook)
 
 bool CLibrary::insertBook(IBook * pBook)
 {
-	return 1;
+	CBook *book = dynamic_cast<CBook*>(pBook);
+	Json::Value value0;
+	value0["command"] = "insertBook";
+	TBookBasicInfo tem_book_basic_info;
+	book->getBasicInfo(tem_book_basic_info);
+	value0["id"] = tem_book_basic_info.id;
+	value0["count"] = tem_book_basic_info.count;
+	value0["name"] = tem_book_basic_info.name;
+	value0["author"] = tem_book_basic_info.author;
+	value0["isbn"] = tem_book_basic_info.isbn;
+	value0["publisher"] = tem_book_basic_info.publisher;
+	Json::FastWriter writer;
+	std::string strRequest;
+	std::string strRespond;
+	strRequest = writer.write(value0);
+	sendRequest(strRequest, strRespond);
+	Json::Reader reader;
+	Json::Value value;
+	reader.parse(strRespond, value);
+	if (value["result"].asInt() == 1) return true;
+	return false;
 }
