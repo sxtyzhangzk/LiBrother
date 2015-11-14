@@ -1,14 +1,13 @@
 #include "book.h"
 #include "netclient.h"
 #include <json/json.h>
-CBook::CBook():m_CBBI(nullptr){}
-CBook::CBook(TBookBasicInfo *Info) : m_CBBI(Info) {}
+CBook::CBook(TBookBasicInfo *Info = nullptr) : m_CBBI(Info) { if (m_CBBI) m_Id = m_CBBI->id; }
 CBook::~CBook() {
 	if (m_CBBI) delete m_CBBI;
 }
 bool CBook::getBasicInfo(TBookBasicInfo& info)
 {
-	if (!m_CBBI) m_CBBI = new TBookBasicInfo;
+	/*if (!m_CBBI) m_CBBI = new TBookBasicInfo;
 	Json::Value value0;
 	value0["command"] = "getBasicInfo";
 	value0["bookid"] = m_Id;
@@ -31,7 +30,8 @@ bool CBook::getBasicInfo(TBookBasicInfo& info)
 		setError(InvalidParam, 1, "This book is not valid.");
 		return false;
 	}
-	info = *m_CBBI;
+	info = *m_CBBI;*/
+	info = * m_CBBI;
 	return true;
 }
 
@@ -55,19 +55,9 @@ bool CBook::getDescription(std::string& description)
 
 bool CBook::setBasicInfo(const TBookBasicInfo& info)
 {
-	if (!check(info))
-	{
-		setError(InvalidParam, 2, "The information is not valid.");
-		return false;
-	}
-	if (info.id != m_CBBI->id)
-	{
-		setError(PermissionDenied, 3, "You have no access to the database.");
-		return false;
-	}
 	*m_CBBI = info;
 	Json::Value value0;
-	value0["command"] = "setBasicInfo";
+	value0["command"] = "setBookBasicInfo";
 	value0["id"] = m_CBBI->id;
 	value0["count"] = m_CBBI->count;
 	value0["name"] = m_CBBI->name;
@@ -82,7 +72,7 @@ bool CBook::setBasicInfo(const TBookBasicInfo& info)
 	Json::Reader reader;
 	Json::Value value;
 	reader.parse(strRespond, value);
-	if(value["result"] == "1") return true;
+	if(value["result"].asInt() == 1) return true;
 	return false;
 }
 
@@ -106,16 +96,16 @@ bool CBook::setDescription(const char * description)
 	Json::Reader reader;
 	Json::Value value;
 	reader.parse(strRespond, value);
-	if (value["result"] == "1") return true;
+	if (value["result"].asInt() == 1) return true;
 	return false;
 }
 
 bool CBook::deleteBook(int number) 
 {
-	//TODO: number表示删除图书的本数，将它传给服务端 ---[zk]
 	Json::Value value0;
 	value0["command"] = "deleteBook";
 	value0["id"] = m_Id;
+	value0["number"] = number;
 	Json::FastWriter writer;
 	std::string strRequest;
 	std::string strRespond;
@@ -124,24 +114,11 @@ bool CBook::deleteBook(int number)
 	Json::Reader reader;
 	Json::Value value;
 	reader.parse(strRespond, value);
-	if (value["result"] == "1") {
-		Release();
-		return true;
-	}
+	if (value["result"].asInt() == 1)  return true;//lots of error types to be handled
 	return false;
 }
 
 bool CBook::getBorrowInfo(std::vector<TBorrowInfo> &binfo)
-{
-	return true;
-}
-
-bool CBook::insert()
-{
-	return true;
-}
-
-bool CBook::check(TBookBasicInfo info_to_check)
 {
 	return true;
 }

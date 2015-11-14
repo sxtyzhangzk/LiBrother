@@ -19,7 +19,7 @@ struct TBookBasicInfo
 struct TUserBasicInfo
 {
 	int id;				//用户ID
-	int gender;			//性别
+	int gender;			//性别 male:0
 	std::string name;	//用户名
 	std::string email;	//用户邮箱
 };

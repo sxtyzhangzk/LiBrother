@@ -8,8 +8,7 @@ class CBook : public IBook
 {
 	IMPLEMENT_INTERFACE
 public:
-	CBook();
-	CBook(TBookBasicInfo *Info);
+	CBook(TBookBasicInfo* =nullptr);
 	~CBook();
 	virtual bool getBasicInfo(TBookBasicInfo& info) override;
 	virtual bool getDescription(std::string& description) override;
@@ -17,8 +16,6 @@ public:
 	virtual bool setDescription(const char * description) override;
 	virtual bool deleteBook(int number) override;
 	virtual bool getBorrowInfo(std::vector<TBorrowInfo> &binfo) override;
-	bool insert();
-	bool check(TBookBasicInfo info_to_check);
 protected:
 	TBookBasicInfo * m_CBBI;
 	std::string m_Description;
