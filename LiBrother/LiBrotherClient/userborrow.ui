@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>393</width>
-    <height>281</height>
+    <width>391</width>
+    <height>322</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,7 +19,7 @@
      <x>10</x>
      <y>70</y>
      <width>371</width>
-     <height>192</height>
+     <height>241</height>
     </rect>
    </property>
   </widget>
@@ -29,7 +29,7 @@
      <x>10</x>
      <y>30</y>
      <width>371</width>
-     <height>41</height>
+     <height>33</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout">
@@ -37,7 +37,32 @@
      <widget class="QLineEdit" name="lineEdit"/>
     </item>
     <item>
-     <widget class="QPushButton" name="pushButton">
+     <widget class="QComboBox" name="comboBox">
+      <item>
+       <property name="text">
+        <string>书名</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>作者</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>ISBN</string>
+       </property>
+      </item>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="pushButton_4">
+      <property name="minimumSize">
+       <size>
+        <width>81</width>
+        <height>32</height>
+       </size>
+      </property>
       <property name="text">
        <string>搜索</string>
       </property>
@@ -45,17 +70,30 @@
     </item>
    </layout>
   </widget>
-  <widget class="QLabel" name="label">
+  <widget class="QLabel" name="label_2">
    <property name="geometry">
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>211</width>
-     <height>16</height>
+     <width>241</width>
+     <height>21</height>
     </rect>
    </property>
    <property name="text">
-    <string>请输入您所要查询的书名：</string>
+    <string>请输入您需要查找的书本信息：</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton">
+   <property name="geometry">
+    <rect>
+     <x>260</x>
+     <y>0</y>
+     <width>115</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>PushButton</string>
    </property>
   </widget>
  </widget>

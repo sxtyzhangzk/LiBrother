@@ -26,8 +26,11 @@ interface IBook : public IAbstract
 	//设定图书的描述
 	virtual bool setDescription(const char * description) = 0;
 
-	//删除此图书
-	virtual bool deleteBook(const int number) = 0;
+	/*
+	 删除图书
+	 参数：number	[in]	删除此图书的本数，-1表示全部删除
+	*/
+	virtual bool deleteBook(int number) = 0;
 
 	//获取图书的借阅信息
 	virtual bool getBorrowInfo(std::vector<TBorrowInfo> &binfo) = 0;

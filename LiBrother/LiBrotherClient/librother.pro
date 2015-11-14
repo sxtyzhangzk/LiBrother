@@ -17,16 +17,24 @@ SOURCES += main.cpp\
     login.cpp \
     signup.cpp \
     signupmain.cpp \
-    usermain.cpp
+    usermain.cpp \
+    bookdata.cpp \
+    userborrow.cpp
 
 HEADERS  += mainwindow.h \
     login.h \
     signup.h \
     signupmain.h \
-    usermain.h
+    usermain.h \
+    bookdata.h \
+    userborrow.h
 
 FORMS    += mainwindow.ui \
     login.ui \
     signup.ui \
     signupmain.ui \
-    usermain.ui
+    usermain.ui \
+    bookdata.ui \
+    userborrow.ui
+
+DISTFILES +=
