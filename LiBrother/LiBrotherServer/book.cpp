@@ -13,7 +13,14 @@ CBook::CBook(IDatabase * DatabaseFile)
 CBook::~CBook()
 {
 }
-
+bool CBook::check(TBookBasicInfo info_to_check)
+{
+	return true;
+}
+bool CBook::bcheck(TBorrowInfo info_to_check)
+{
+	return true;
+}
 bool CBook::getBasicInfo(TBookBasicInfo& info)
 {
 	if (!check(m_CBBI) || !is_from_Database)	//检查书本基本信息是否合法以及是否来自数据库
@@ -29,7 +36,7 @@ bool CBook::getDescription(std::string& description)
 	description = m_Description;	//根本不能不合法，直接赋值
 	return true;
 }
-bool CBook::setBasicInfo(const TBookBasicInfo& info)	//还未完成
+bool CBook::setBasicInfo(const TBookBasicInfo& info)	
 {
 	if (!check(info))	//判断给予的基本信息是否合法
 	{
@@ -42,9 +49,22 @@ bool CBook::setBasicInfo(const TBookBasicInfo& info)	//还未完成
 		return false;	//在作死，返回false
 	}
 	m_CBBI = info;	//操作合法，将info赋给书本基本信息
+	if (is_from_Database)
+	{
+		IRecordset * BIRecordset;
+		std::stringstream str;
+		str << "SELECT * FROM BookInfoDatabase WHERE bookID=" << m_Id;
+		m_pDatabase->executeSQL(str.str().c_str(), &BIRecordset);
+		BIRecordset->setData("count", m_CBBI.count);
+		BIRecordset->setData("name", m_CBBI.name);
+		BIRecordset->setData("author", m_CBBI.author);
+		BIRecordset->setData("publisher", m_CBBI.publisher);
+		BIRecordset->setData("ISBN", m_CBBI.isbn);
+		BIRecordset->updateDatabase();	//赋值操作
+	}
 	return true;
 }
-bool CBook::setDescription(const char * description)	//还未完成
+bool CBook::setDescription(const char * description)
 {
 	if (!description)	//判断指针是否为空
 	{
@@ -52,6 +72,15 @@ bool CBook::setDescription(const char * description)	//还未完成
 		return false;	//为空，返回false
 	}
 	m_Description = description;	//不为空，将description赋给书的介绍
+	if (is_from_Database)
+	{
+		IRecordset * BIRecordset;
+		std::stringstream str;
+		str << "SELECT discription FROM BookInfoDatabase WHERE bookID=" << m_Id;
+		m_pDatabase->executeSQL(str.str().c_str(), &BIRecordset);
+		BIRecordset->setData("discription", m_Description);
+		BIRecordset->updateDatabase();	//赋值操作
+	}
 	return true;
 }
 bool CBook::deleteBook(int number)
@@ -69,17 +98,26 @@ bool CBook::deleteBook(int number)
 	m_CBBI.count -= number;
 	IRecordset * BIRecordset;
 	std::stringstream str;
-	str << "SELECT * FROM BookInfoDatabase WHERE bookID=" << m_Id;
-	m_pDatabase->executeSQL(str.str().c_str(), &BIRecordset);
-	BIRecordset->setData("count", m_CBBI.count);
-	BIRecordset->updateDatabase();	//赋值操作
-	return true;
+	if (m_CBBI.count)
+	{
+		str << "SELECT * FROM BookInfoDatabase WHERE bookID=" << m_Id;
+		m_pDatabase->executeSQL(str.str().c_str(), &BIRecordset);
+		BIRecordset->setData("count", m_CBBI.count);
+		BIRecordset->updateDatabase();	//赋值操作
+		return true;
+	}
+	else
+	{
+		str << "DELETE FROM BookInfoDatabse WHERE bookID=" << m_Id;
+		m_pDatabase->executeSQL(str.str().c_str(), nullptr);
+		return true;
+	}
 }
 bool CBook::getBorrowInfo(std::vector<TBorrowInfo> &binfo)
 {
 	if (!is_from_Database)	//判断是否来自数据库
 	{
-		setError(InvalidParam, 7, "This book is not in the library.");
+		setError(InvalidParam, 1, "This book is not valid.");
 		return false;	//不是来自数据库的书，不可借阅，返回false
 	}
 	binfo.clear();
@@ -108,3 +146,30 @@ bool CBook::getBorrowInfo(std::vector<TBorrowInfo> &binfo)
 	} while (BRecordset->nextRecord());	//合法，塞进容器并移向下一条
 	return true;
 }
+bool CBook::insert()
+{
+	if (is_from_Database)
+	{
+		setError(InvalidParam, 10, "Only new books can be inserted.");
+		return false;
+	}
+	if (!check(m_CBBI))
+	{
+		setError(InvalidParam, 1, "This book is not valid.");
+		return false;
+	}
+	IRecordset * BIRecordset;
+	m_pDatabase->getTable("BookInfoDatabase", &BIRecordset);
+	BIRecordset->addNew();
+	m_Id = m_pDatabase->executeSQL("SELECT MAX(id) FROM BookInfoDatabase", nullptr);
+	BIRecordset->setData("id", m_Id);
+	BIRecordset->setData("count", m_CBBI.count);
+	BIRecordset->setData("name", m_CBBI.name);
+	BIRecordset->setData("author", m_CBBI.author);
+	BIRecordset->setData("publisher", m_CBBI.publisher);
+	BIRecordset->setData("ISBN", m_CBBI.isbn);
+	BIRecordset->setData("discription", m_Description);
+	BIRecordset->updateDatabase();	//赋值操作
+	return true;
+}
+
