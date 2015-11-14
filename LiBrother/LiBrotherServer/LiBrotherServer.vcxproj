@@ -22,11 +22,13 @@
     <ClCompile Include="book.cpp" />
     <ClCompile Include="factory.cpp" />
     <ClCompile Include="netserver_win.cpp" />
+    <ClCompile Include="library.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="book.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="factory.h" />
+    <ClInclude Include="library.h" />
     <ClInclude Include="netserver.h" />
     <ClInclude Include="session.h" />
   </ItemGroup>
