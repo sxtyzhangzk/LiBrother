@@ -88,7 +88,7 @@ interface IUser : public IAbstract
 	virtual bool setPassword(const char * strPWD) = 0;
 
 	//获取已经借阅的图书
-	virtual bool getBorrowedBooks(IFvector& vBooks) = 0;
+	virtual bool getBorrowedBooks(std::vector<TBorrowInfo> &binfo) = 0;
 
 	//借阅一本图书
 	virtual bool borrowBook(IBook * pBook) = 0;
