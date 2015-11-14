@@ -13,7 +13,14 @@ CBook::CBook(IDatabase * DatabaseFile)
 CBook::~CBook()
 {
 }
-
+bool CBook::check(TBookBasicInfo info_to_check)
+{
+	return true;
+}
+bool CBook::bcheck(TBorrowInfo info_to_check)
+{
+	return true;
+}
 bool CBook::getBasicInfo(TBookBasicInfo& info)
 {
 	if (!check(m_CBBI) || !is_from_Database)	//检查书本基本信息是否合法以及是否来自数据库
@@ -57,7 +64,7 @@ bool CBook::setBasicInfo(const TBookBasicInfo& info)
 	}
 	return true;
 }
-bool CBook::setDescription(const char * description)	//还未完成
+bool CBook::setDescription(const char * description)
 {
 	if (!description)	//判断指针是否为空
 	{
@@ -72,6 +79,7 @@ bool CBook::setDescription(const char * description)	//还未完成
 		str << "SELECT discription FROM BookInfoDatabase WHERE bookID=" << m_Id;
 		m_pDatabase->executeSQL(str.str().c_str(), &BIRecordset);
 		BIRecordset->setData("discription", m_Description);
+		BIRecordset->updateDatabase();	//赋值操作
 	}
 	return true;
 }
@@ -90,11 +98,20 @@ bool CBook::deleteBook(int number)
 	m_CBBI.count -= number;
 	IRecordset * BIRecordset;
 	std::stringstream str;
-	str << "SELECT * FROM BookInfoDatabase WHERE bookID=" << m_Id;
-	m_pDatabase->executeSQL(str.str().c_str(), &BIRecordset);
-	BIRecordset->setData("count", m_CBBI.count);
-	BIRecordset->updateDatabase();	//赋值操作
-	return true;
+	if (m_CBBI.count)
+	{
+		str << "SELECT * FROM BookInfoDatabase WHERE bookID=" << m_Id;
+		m_pDatabase->executeSQL(str.str().c_str(), &BIRecordset);
+		BIRecordset->setData("count", m_CBBI.count);
+		BIRecordset->updateDatabase();	//赋值操作
+		return true;
+	}
+	else
+	{
+		str << "DELETE FROM BookInfoDatabse WHERE bookID=" << m_Id;
+		m_pDatabase->executeSQL(str.str().c_str(), nullptr);
+		return true;
+	}
 }
 bool CBook::getBorrowInfo(std::vector<TBorrowInfo> &binfo)
 {
@@ -141,6 +158,18 @@ bool CBook::insert()
 		setError(InvalidParam, 1, "This book is not valid.");
 		return false;
 	}
-	std::stringstream str;
-	str << "INSERT INTO BookInfoDatabase ();
+	IRecordset * BIRecordset;
+	m_pDatabase->getTable("BookInfoDatabase", &BIRecordset);
+	BIRecordset->addNew();
+	m_Id = m_pDatabase->executeSQL("SELECT MAX(id) FROM BookInfoDatabase", nullptr);
+	BIRecordset->setData("id", m_Id);
+	BIRecordset->setData("count", m_CBBI.count);
+	BIRecordset->setData("name", m_CBBI.name);
+	BIRecordset->setData("author", m_CBBI.author);
+	BIRecordset->setData("publisher", m_CBBI.publisher);
+	BIRecordset->setData("ISBN", m_CBBI.isbn);
+	BIRecordset->setData("discription", m_Description);
+	BIRecordset->updateDatabase();	//赋值操作
+	return true;
 }
+
