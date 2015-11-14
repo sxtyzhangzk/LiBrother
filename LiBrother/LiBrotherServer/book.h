@@ -16,7 +16,8 @@ public:
 	virtual bool setDescription(const char * description) override;
 	virtual bool deleteBook(int number) override;
 	virtual bool getBorrowInfo(std::vector<TBorrowInfo> &binfo) override;
-	bool insert();
+	virtual bool insert() override;
+	virtual bool sign() override;
 	bool check(TBookBasicInfo info_to_check);
 	bool bcheck(TBorrowInfo info_to_check);
 	~CBook();

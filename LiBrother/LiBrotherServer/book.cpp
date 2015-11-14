@@ -76,9 +76,9 @@ bool CBook::setDescription(const char * description)
 	{
 		IRecordset * BIRecordset;
 		std::stringstream str;
-		str << "SELECT discription FROM BookInfoDatabase WHERE bookID=" << m_Id;
+		str << "SELECT description FROM BookInfoDatabase WHERE bookID=" << m_Id;
 		m_pDatabase->executeSQL(str.str().c_str(), &BIRecordset);
-		BIRecordset->setData("discription", m_Description);
+		BIRecordset->setData("description", m_Description);
 		BIRecordset->updateDatabase();	//赋值操作
 	}
 	return true;
@@ -172,4 +172,9 @@ bool CBook::insert()
 	BIRecordset->updateDatabase();	//赋值操作
 	return true;
 }
-
+bool CBook::sign()
+{
+	is_from_Database = 1;
+	m_Id = m_CBBI.id;
+	return true;
+}
