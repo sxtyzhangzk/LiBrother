@@ -1,7 +1,9 @@
 #include "config.h"
 #include "netserver.h"
 #include "session.h"
+#include "credentials_manager.h"
 
+#include <cassert>
 #include <ctime>
 #include <cstring>
 #include <vector>
@@ -9,10 +11,14 @@
 #include <map>
 #include <algorithm>
 
-#include <Windows.h>
+//#include <Windows.h>
 #include <WinSock2.h>
 #include <WS2tcpip.h>
 #include <MSWSock.h>
+
+#undef X942_DH_PARAMETERS
+#undef min
+#undef max
 
 #include <liblog.h>
 #include <botan/auto_rng.h>
@@ -32,7 +38,8 @@ const int Cleaner_Short_Wait_Time = 1000;	//清理线程的短等待时间
 enum TIOType
 {
 	IoAccept,
-	IoRecv
+	IoRecv,
+	IoSend
 };
 
 //工作线程的参数
@@ -67,53 +74,6 @@ struct TSessionEx
 	}
 };
 
-//套接字扩展类型
-struct TSocketEx
-{
-	SOCKET socket;			//套接字
-	sockaddr_in client;		//客户端连接信息
-	bool TLS;				//是否使用TLS加密
-	std::vector<TPerIOContext *> vPIOContexts;	//单IO上下文的列表，用于回收内存
-	std::string recvBuffer;	//缓存的数据
-
-	TSocketEx(SOCKET socket) : socket(socket), TLS(false)
-	{
-		memset(&client, 0, sizeof(client));
-	}
-	TSocketEx(SOCKET socket, sockaddr_in client, bool TLS) : socket(socket), client(client), TLS(TLS) {}
-
-	~TSocketEx()
-	{
-		if (socket != INVALID_SOCKET)
-			closesocket(socket);
-		//清理单IO上下文
-		for (auto i = vPIOContexts.begin(); i != vPIOContexts.end(); ++i)
-		{
-			if (*i)
-				delete (*i);
-		}
-		vPIOContexts.clear();
-	}
-
-	//创建一个单IO上下文
-	TPerIOContext * createIoContext(TIOType ioType)
-	{
-		TPerIOContext * ioContext = new TPerIOContext(ioType);
-		vPIOContexts.push_back(ioContext);
-		return ioContext;
-	}
-
-	//删除最后一个单IO上下文
-	void popIoContext()
-	{
-		if (vPIOContexts.empty())
-			return;
-		TPerIOContext * ioContext = vPIOContexts.back();
-		delete ioContext;
-		vPIOContexts.pop_back();
-	}
-};
-
 //单IO上下文类型
 struct TPerIOContext
 {
@@ -130,10 +90,63 @@ struct TPerIOContext
 	}
 };
 
+//套接字扩展类型
+struct TSocketEx
+{
+	//TODO: Use Critical Section to Protect vPIOContexts
+	SOCKET socket;			//套接字
+	sockaddr_in client;		//客户端连接信息
+	bool TLS;				//是否使用TLS加密
+	std::set<TPerIOContext *> vPIOContexts;	//单IO上下文的列表，用于回收内存
+	std::string recvBuffer;	//缓存的数据
+
+	Botan::TLS::Server * pTLSServer;
+
+	TSocketEx(SOCKET socket) : socket(socket), TLS(false), pTLSServer(nullptr)
+	{
+		memset(&client, 0, sizeof(client));
+	}
+	TSocketEx(SOCKET socket, sockaddr_in client, bool TLS) : socket(socket), client(client), TLS(TLS), pTLSServer(nullptr) {}
+
+	~TSocketEx()
+	{
+		if (pTLSServer)
+			delete pTLSServer;
+
+		if (socket != INVALID_SOCKET)
+			closesocket(socket);
+		//清理单IO上下文
+		for (auto i = vPIOContexts.begin(); i != vPIOContexts.end(); ++i)
+		{
+			if (*i)
+				delete (*i);
+		}
+		vPIOContexts.clear();
+	}
+
+	//创建一个单IO上下文
+	TPerIOContext * createIoContext(TIOType ioType)
+	{
+		TPerIOContext * ioContext = new TPerIOContext(ioType);
+		vPIOContexts.insert(ioContext);
+		return ioContext;
+	}
+
+	void eraseIoContext(TPerIOContext * ioContext)
+	{
+		vPIOContexts.erase(ioContext);
+		delete ioContext;
+	}
+};
+
+
 CNetServer::CNetServer() :
 	m_psockListen(nullptr),
 	m_psockListenTLS(nullptr),
-	m_hIOCP(NULL)
+	m_hIOCP(NULL),
+	m_pCredManager(nullptr),
+	m_pPolicy(nullptr),
+	m_pTLSSM(nullptr)
 {
 	m_vhThreads.clear();
 	m_pcsClientSocks = new CRITICAL_SECTION;
@@ -147,6 +160,12 @@ CNetServer::CNetServer() :
 
 CNetServer::~CNetServer()
 {
+	if (m_pCredManager)
+		delete m_pCredManager;
+	if (m_pPolicy)
+		delete m_pPolicy;
+	if (m_pTLSSM)
+		delete m_pTLSSM;
 	delete m_qCleanerHead;
 	delete m_qCleanerTail;
 	delete m_rng;
@@ -164,9 +183,9 @@ bool CNetServer::initNetServer()
 	return true;
 }
 
-bool CNetServer::startServer()
+bool CNetServer::startServer(ILibClassFactory * pClassFactory)
 {
-	
+	return true;
 }
 
 bool CNetServer::initIOCP()
@@ -196,6 +215,48 @@ bool CNetServer::initIOCP()
 		m_vhThreads.push_back(hThread);
 	}
 
+	return true;
+}
+
+bool CNetServer::initTLS()
+{
+	try
+	{
+		m_pCredManager = new CCredentialsManager(m_rng);
+		for (auto cert : g_configSvr.vCerts)
+		{
+			m_pCredManager->loadCertificate(cert.strCert, cert.strKey, cert.strPassphrase);
+		}
+		m_pPolicy = new Botan::TLS::Policy;
+		m_pTLSSM = new Botan::TLS::Session_Manager_In_Memory(*m_rng);
+	}
+	catch (std::exception& e)
+	{
+		return false;
+	}
+	return true;
+}
+
+bool CNetServer::createTLSSession(TSocketEx * pSocket)
+{
+	assert(pSocket);
+
+	try
+	{
+		auto fnOutput = std::bind(&CNetServer::sendData, *this, pSocket, std::placeholders::_1, std::placeholders::_2);
+		auto fnData = std::bind(&CNetServer::receivedData, *this, pSocket, std::placeholders::_1, std::placeholders::_2);
+		auto fnAlert = [](Botan::TLS::Alert alert, const Botan::byte * pData, size_t size) {};
+		auto fnHandshake = [](const Botan::TLS::Session& session)->bool { return true; };
+		pSocket->pTLSServer = new Botan::TLS::Server(
+			[&fnOutput](const Botan::byte * pData, size_t size) { fnOutput((const char *)pData, size); },
+			[&fnData](const Botan::byte * pData, size_t size) { fnData((const char *)pData, size); },
+			fnAlert, fnHandshake,
+			*m_pTLSSM, *m_pCredManager, *m_pPolicy, *m_rng);
+	}
+	catch (std::exception& e)
+	{
+		return false;
+	}
 	return true;
 }
 
@@ -284,9 +345,9 @@ TSocketEx * CNetServer::createListenSocket(int nPort)
 
 bool CNetServer::postAcceptRq(TSocketEx * pSocket, TPerIOContext * pIOContext)
 {
+	assert(pSocket);
+
 	bool bNewIOContext = false;
-	if (!pSocket)
-		return false;
 	if (!pIOContext)
 	{
 		//第一次创建IO上下文
@@ -298,7 +359,7 @@ bool CNetServer::postAcceptRq(TSocketEx * pSocket, TPerIOContext * pIOContext)
 	if (sockClient == INVALID_SOCKET)
 	{
 		if (bNewIOContext)
-			pSocket->popIoContext();
+			pSocket->eraseIoContext(pIOContext);
 		return false;
 	}
 
@@ -310,7 +371,7 @@ bool CNetServer::postAcceptRq(TSocketEx * pSocket, TPerIOContext * pIOContext)
 		if (WSAGetLastError() != WSA_IO_PENDING)
 		{
 			if (bNewIOContext)
-				pSocket->popIoContext();
+				pSocket->eraseIoContext(pIOContext);
 			return false;
 		}
 	}
@@ -322,9 +383,10 @@ bool CNetServer::postAcceptRq(TSocketEx * pSocket, TPerIOContext * pIOContext)
 
 bool CNetServer::postRecvRq(TSocketEx * pSocket, TPerIOContext * pIOContext)
 {
+	assert(pSocket);
+
 	bool bNewIOContext = false;
-	if (!pSocket)
-		return false;
+	
 	if (!pIOContext)
 	{
 		pIOContext = pSocket->createIoContext(IoRecv);
@@ -337,11 +399,38 @@ bool CNetServer::postRecvRq(TSocketEx * pSocket, TPerIOContext * pIOContext)
 	if (nRet == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING)
 	{
 		if (bNewIOContext)
-			pSocket->popIoContext();
+			pSocket->eraseIoContext(pIOContext);
 		return false;
 	}
 
 	return true;
+}
+
+bool CNetServer::postSendRq(TSocketEx * pSocket, TPerIOContext * pIOContext)
+{
+	assert(pSocket && pIOContext);
+
+	DWORD dwBytes, dwFlags = 0;
+	int nRet = WSASend(pSocket->socket, &pIOContext->wsaBuffer, 1, &dwBytes, 0, (LPOVERLAPPED)pIOContext, nullptr);
+	if (nRet == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING)
+		return false;
+	return true;
+}
+
+size_t CNetServer::sendData(TSocketEx * pSocket, const char * pData, size_t nLen)
+{
+	TPerIOContext * pIOContext = pSocket->createIoContext(IoSend);
+	if (nLen > BufferSize)
+		nLen = BufferSize;
+	memcpy_s(pIOContext->buffer, sizeof(pIOContext->buffer), pData, nLen);
+	pIOContext->wsaBuffer.len = nLen;
+	pIOContext->wsaBuffer.buf = pIOContext->buffer;
+	if (!postSendRq(pSocket, pIOContext))
+	{
+		pSocket->eraseIoContext(pIOContext);
+		return 0;
+	}
+	return nLen;
 }
 
 unsigned long WINAPI CNetServer::WorkerThread(void * pParam)
@@ -374,7 +463,7 @@ unsigned long WINAPI CNetServer::WorkerThread(void * pParam)
 			netServer->doRecv(pSocket, pPIOContext, dwBytes);
 			break;
 		default:
-
+			break;
 		}
 	}
 	delete param;
@@ -383,10 +472,8 @@ unsigned long WINAPI CNetServer::WorkerThread(void * pParam)
 
 int CNetServer::doAccept(TSocketEx * pSocket, TPerIOContext * pIOContext, size_t nDataSize)
 {
-	if (!pSocket || pSocket->socket == INVALID_SOCKET)
-		return -1;	//Fatal Error - Listen Socket Error
-	if (!pIOContext || pIOContext->sockClient == INVALID_SOCKET)
-		return -1;
+	assert(pSocket && pSocket->socket != INVALID_SOCKET);
+	assert(pIOContext && pIOContext->sockClient != INVALID_SOCKET);
 	
 	sockaddr_in *localAddr = nullptr, *remoteAddr = nullptr;
 	int sizeLocal = sizeof(localAddr), sizeRemote = sizeof(remoteAddr);
@@ -400,21 +487,35 @@ int CNetServer::doAccept(TSocketEx * pSocket, TPerIOContext * pIOContext, size_t
 
 	TSocketEx * pClientSocket = new TSocketEx(pIOContext->sockClient, *remoteAddr, pSocket->TLS);
 
+	bool bPostedAcceptRq = postAcceptRq(pSocket, pIOContext);
+	if (!bPostedAcceptRq)
+	{
+		//TODO:
+	}
+
+	if (pSocket->TLS && !createTLSSession(pClientSocket))
+	{
+		delete pClientSocket;
+		if (!bPostedAcceptRq)
+			return -1;
+		return 1;
+	}
 	//处理客户端发来的第一组数据
 	receivedData(pClientSocket, pIOContext->wsaBuffer.buf, nDataSize);
-
-	if (!postAcceptRq(pSocket, pIOContext))
-		return -1;
 
 	if (!CreateIoCompletionPort((HANDLE)pClientSocket->socket, m_hIOCP, (ULONG_PTR)pClientSocket, 0))
 	{
 		delete pClientSocket;
+		if (!bPostedAcceptRq)
+			return -1;
 		return 1;	//Error - Client Socket Error
 	}
 
 	if (!postRecvRq(pClientSocket, nullptr))
 	{
 		delete pClientSocket;
+		if (!bPostedAcceptRq)
+			return -1;
 		return 1;
 	}
 
@@ -422,13 +523,15 @@ int CNetServer::doAccept(TSocketEx * pSocket, TPerIOContext * pIOContext, size_t
 	m_vpClientSocks.insert(pClientSocket);
 	LeaveCriticalSection((LPCRITICAL_SECTION)m_pcsClientSocks);
 
+	if (!bPostedAcceptRq)
+		return -1;
 	return 0;	//Success
 }
 
 bool CNetServer::doRecv(TSocketEx * pSocket, TPerIOContext * pIOContext, size_t nDataSize)
 {
-	if (!pSocket || !pIOContext)
-		return false;
+	assert(pSocket && pIOContext);
+
 	if (nDataSize == 0)
 	{
 		//关闭连接
@@ -442,11 +545,25 @@ bool CNetServer::doRecv(TSocketEx * pSocket, TPerIOContext * pIOContext, size_t 
 	return postRecvRq(pSocket, pIOContext);
 }
 
+bool CNetServer::doSend(TSocketEx * pSocket, TPerIOContext * pIOContext, size_t nDataSize)
+{
+	assert(pSocket && pIOContext);
+
+	if (nDataSize == pIOContext->wsaBuffer.len)
+	{
+		pSocket->eraseIoContext(pIOContext);
+		return true;
+	}
+	pIOContext->wsaBuffer.buf += nDataSize;
+	pIOContext->wsaBuffer.len -= nDataSize;
+	return postSendRq(pSocket, pIOContext);
+}
+
 session_t CNetServer::createSession(const std::string& strClientIP, TSessionEx ** ppSession)
 {
 	session_t sessionID = generateSessionID();
 	TSessionEx * cltSession = new TSessionEx(sessionID);
-	if (!cltSession->session->startSession(strClientIP))
+	if (!cltSession->session->startSession(m_pClassFactory, strClientIP))
 	{
 		delete cltSession;
 		return 0;
@@ -515,8 +632,7 @@ bool CNetServer::verifySessionID(session_t sessionID)
 
 void CNetServer::addToCleanerQueue(TSessionEx * session)
 {
-	if (!session)
-		return;
+	assert(session);
 	session->prev = m_qCleanerTail->prev;
 	session->next = m_qCleanerTail->prev->next;
 	m_qCleanerTail->prev->next = session;
@@ -525,6 +641,7 @@ void CNetServer::addToCleanerQueue(TSessionEx * session)
 
 void CNetServer::removeFromCleanerQueue(TSessionEx * session)
 {
+	assert(session);
 	session->prev->next = session->next;
 	session->next->prev = session->prev;
 	session->prev = session->next = nullptr;
@@ -578,10 +695,49 @@ unsigned long WINAPI CNetServer::CleanerThread(void * pParam)
 
 void CNetServer::receivedData(TSocketEx * pSocket, const char * pData, size_t nLen)
 {
+	assert(pSocket);
 	
+	int nLine = 0;
+	if (pSocket->recvBuffer.back() == '\n')
+		nLine = 1;
+	for (size_t i = 0, lasti = 0; i < nLen; i++)
+	{
+		if (pData[i] == '\n')
+			nLine++;
+		else
+			nLine = 0;
+		if (nLine >= 2)
+		{
+			nLine = 0;
+			pSocket->recvBuffer.append(pData + lasti, i - lasti + 1);
+			pSocket->recvBuffer.erase(pSocket->recvBuffer.size() - 2, 2);
+			//TODO: Check Return Code
+			parseRequest(pSocket);
+			lasti = i + 1;
+		}
+	}
 }
 
 int CNetServer::parseRequest(TSocketEx * pSocket)
 {
+	assert(pSocket);
 
+	bool bKeepAlive = false;
+	std::string cmd;
+	size_t posLine, posLine2;
+	if ((posLine = pSocket->recvBuffer.find_first_of('\n')) == std::string::npos || posLine == 0)
+		return -1;
+	cmd.assign(pSocket->recvBuffer, posLine);
+	if (cmd == "KEEP-ALIVE")
+	{
+		bKeepAlive = true;
+		if (posLine2 = pSocket->recvBuffer.find_first_of('\n', posLine + 1) == std::string::npos)
+			return -1;
+		cmd.assign(pSocket->recvBuffer, posLine + 1, posLine2 - posLine - 1);
+	}
+	if (cmd == "DATA")
+	{
+
+	}
+	return 0;
 }

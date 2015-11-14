@@ -20,12 +20,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="book.cpp" />
+    <ClCompile Include="credentials_manager.cpp" />
     <ClCompile Include="factory.cpp" />
     <ClCompile Include="netserver_win.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="book.h" />
     <ClInclude Include="config.h" />
+    <ClInclude Include="credentials_manager.h" />
     <ClInclude Include="factory.h" />
     <ClInclude Include="netserver.h" />
     <ClInclude Include="session.h" />
