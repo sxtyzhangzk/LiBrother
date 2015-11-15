@@ -99,9 +99,6 @@ interface IUser : public IAbstract
 
 	//删除此用户
 	virtual bool deleteUser() = 0;
-
-	//乡下人进城
-	virtual bool insert() = 0;
 };
 
 /*
