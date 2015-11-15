@@ -8,8 +8,8 @@ bool CUserManager::getUserByID(int nID, IUser ** ppUser)
 	std::string strRequest;
 	std::string strRespond;
 	Json::Value value0;
-	value0["command"] = "getUserById";
-	value0["nID"] = nID;
+	value0["command"] = "usermanager_getUserById";
+	value0["id"] = nID;
 	Json::FastWriter writer;
 	std::string str = writer.write(value0);
 	sendRequest(strRequest, strRespond);
@@ -36,8 +36,8 @@ bool CUserManager::getUserByName(const char * strName, IUser ** ppUser)
 	std::string strRequest;
 	std::string strRespond;
 	Json::Value value0;
-	value0["command"] = "getUserByName";
-	value0["strName"] = strName;
+	value0["command"] = "usermanager_getUserByName";
+	value0["name"] = strName;
 	Json::FastWriter writer;
 	std::string str = writer.write(value0);
 	sendRequest(strRequest, strRespond);
@@ -62,7 +62,7 @@ bool CUserManager::insertUser(IUser * pUser)
 {
 	CUser *user = dynamic_cast<CUser*>(pUser);
 	Json::Value value0;
-	value0["command"] = "insertUser";
+	value0["command"] = "usermanager_insertUser";
 	TUserBasicInfo tem_user_basic_info;
 	user->getBasicInfo(tem_user_basic_info);
 	value0["id"] = tem_user_basic_info.id;

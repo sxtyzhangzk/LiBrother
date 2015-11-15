@@ -3,7 +3,7 @@
 #include <json/json.h>
 #include "book.h"
 
-CUser::CUser(TUserBasicInfo *basic_info0 = nullptr) :basic_info(basic_info0) {if(basic_info) id=basic_info->id};
+CUser::CUser(TUserBasicInfo *basic_info0) :basic_info(basic_info0) {}
 CUser::~CUser()
 {
 	if (basic_info) delete basic_info;
@@ -12,13 +12,18 @@ CUser::~CUser()
 //获取用户的基本信息
 bool CUser::getBasicInfo(TUserBasicInfo& info)
 {
-	info = *basic_info;
+	if (basic_info) {
+		info = *basic_info;
+		return true;
+	}
+	return false;
+	
 }
 
 bool CUser::setBasicInfo(const TUserBasicInfo& info)
 {
 	Json::Value value0;
-	value0["command"] = "setUserBasicInfo";
+	value0["command"] = "user_setBasicInfo";
 	value0["id"] = basic_info->id;
 	value0["gender"] = basic_info->gender;
 	value0["name"] = basic_info->name;
@@ -42,7 +47,7 @@ bool CUser::setBasicInfo(const TUserBasicInfo& info)
 bool CUser::verifyPassword(const char * strPWD)
 {
 	Json::Value value0;
-	value0["command"] = "verifyUserPassword";
+	value0["command"] = "user_verifyPassword";
 	value0["id"] = basic_info->id;
 	value0["password"] = strPWD;
 	Json::FastWriter writer;
@@ -65,7 +70,7 @@ bool CUser::verifyPassword(const char * strPWD)
 bool CUser::setPassword(const char * strPWD)
 {
 	Json::Value value0;
-	value0["command"] = "setUserPassword";//may require revision
+	value0["command"] = "user_setPassword";//may require revision
 	value0["id"] = basic_info->id;
 	//encryption
 	value0["password"] = strPWD;
@@ -83,14 +88,38 @@ bool CUser::setPassword(const char * strPWD)
 
 bool CUser::getBorrowedBooks(std::vector<TBorrowInfo> &binfo)//to be implemented
 {
-	return 1;
+	Json::Value value0;
+	value0["command"] = "user_getBorrowedBooks";
+	value0["id"] = basic_info->id;
+	Json::FastWriter writer;
+	std::string strRequest;
+	std::string strRespond;
+	strRequest = writer.write(value0);
+	sendRequest(strRequest, strRespond);
+	Json::Reader reader;
+	Json::Value value;
+	reader.parse(strRespond, value);
+	int num = value["result"].asInt();
+	if (num>0) {
+		for (int i = 1; i <= num; i++) {
+			Json::Value tem_value = value["1"];
+			TBorrowInfo borrow_info;
+			borrow_info.bookID = tem_value["bookID"].asInt();
+			borrow_info.userID = tem_value["userID"].asInt();
+			borrow_info.borrowTime = tem_value["borrowTime"].asInt64();
+			borrow_info.flag = tem_value["flag"].asBool();
+			binfo.push_back(borrow_info);
+		}
+		return true;
+	}
+	return false;
 }
 
 bool CUser::borrowBook(IBook * pBook)
 {
 	CBook *book=dynamic_cast <CBook*>(pBook);
 	Json::Value value0;
-	value0["command"] = "borrowBook";//may require revision
+	value0["command"] = "user_borrowBook";//may require revision
 	value0["userid"] = basic_info->id;
 	TBookBasicInfo tem_basic_info;
 	book->getBasicInfo(tem_basic_info);
@@ -111,7 +140,7 @@ bool CUser::returnBook(IBook * pBook)
 {
 	CBook *book = dynamic_cast <CBook*>(pBook);
 	Json::Value value0;
-	value0["command"] = "returnBook";//may require revision
+	value0["command"] = "user_returnBook";//may require revision
 	value0["userid"] = basic_info->id;
 	TBookBasicInfo tem_basic_info;
 	book->getBasicInfo(tem_basic_info);
@@ -131,7 +160,7 @@ bool CUser::returnBook(IBook * pBook)
 bool CUser::deleteUser()
 {
 	Json::Value value0;
-	value0["command"] = "deleteUser";
+	value0["command"] = "user_deleteUser";
 	value0["id"] = id;
 	Json::FastWriter writer;
 	std::string strRequest;

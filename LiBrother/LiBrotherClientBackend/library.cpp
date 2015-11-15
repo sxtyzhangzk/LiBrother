@@ -10,7 +10,7 @@ int CLibrary::queryByName(const char * strName, IFvector& vBooks, int nCount, in
 	std::string strRequest;
 	std::string strRespond;
 	Json::Value value0;
-	value0["command"] = "queryByName";
+	value0["command"] = "library_queryByName";
 	value0["name"] = strName;
 	value0["nCount"] = nCount;
 	value0["nTop"] = nTop;
@@ -46,7 +46,7 @@ bool CLibrary::queryById(int nID, IBook ** ppBook)
 	std::string strRequest;
 	std::string strRespond;
 	Json::Value value0;
-	value0["command"] = "queryById";
+	value0["command"] = "library_queryById";
 	value0["nID"] = nID;
 	Json::FastWriter writer;
 	std::string str=writer.write(value0);
@@ -79,8 +79,8 @@ bool CLibrary::queryByISBN(const char * strISBN, IBook ** ppBook)
 	std::string strRequest;
 	std::string strRespond;
 	Json::Value value0;
-	value0["command"] = "queryByISBN";
-	value0["strISBN"] = strISBN;
+	value0["command"] = "library_queryByISBN";
+	value0["isbn"] = strISBN;
 	Json::FastWriter writer;
 	std::string str = writer.write(value0);
 	sendRequest(strRequest, strRespond);//return ifok(1/0) and results 
@@ -109,11 +109,11 @@ bool CLibrary::queryByISBN(const char * strISBN, IBook ** ppBook)
 
 bool CLibrary::insertBook(IBook * pBook)
 {
-	CBook *book = dynamic_cast<CBook*>(pBook);
+	//CBook *book = dynamic_cast<CBook*>(pBook);
 	Json::Value value0;
-	value0["command"] = "insertBook";
+	value0["command"] = "library_insertBook";
 	TBookBasicInfo tem_book_basic_info;
-	book->getBasicInfo(tem_book_basic_info);
+	pBook->getBasicInfo(tem_book_basic_info);
 	value0["id"] = tem_book_basic_info.id;
 	value0["count"] = tem_book_basic_info.count;
 	value0["name"] = tem_book_basic_info.name;

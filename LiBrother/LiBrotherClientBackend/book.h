@@ -8,7 +8,7 @@ class CBook : public IBook
 {
 	IMPLEMENT_INTERFACE
 public:
-	CBook(TBookBasicInfo* =nullptr);
+	CBook();
 	~CBook();
 	virtual bool getBasicInfo(TBookBasicInfo& info) override;
 	virtual bool getDescription(std::string& description) override;

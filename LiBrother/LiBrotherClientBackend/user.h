@@ -42,7 +42,6 @@ public:
 	//É¾³ý´ËÓÃ»§
 	virtual bool deleteUser() override;
 protected:
-	int id;
 	TUserBasicInfo *basic_info;
 };
 
