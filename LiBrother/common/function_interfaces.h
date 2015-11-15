@@ -35,11 +35,6 @@ interface IBook : public IAbstract
 	//获取图书的借阅信息
 	virtual bool getBorrowInfo(std::vector<TBorrowInfo> &binfo) = 0;
 
-	//乡下书签证
-	virtual bool sign() = 0;
-
-	//乡下书进城
-	virtual bool insert() = 0;
 };
 
 /*
