@@ -2,17 +2,16 @@
 #include "sstream"
 #include "magicdb.h"
 #include "book.h"
-//#include "book.h"
 
-Clibrary::Clibrary(IDatabase * DatabaseFile)
+CLibrary::CLibrary(IDatabase * DatabaseFile)
 {
 	m_pDatabase = DatabaseFile;
 }
-Clibrary::~Clibrary()
+CLibrary::~CLibrary()
 {
 
 }
-int Clibrary::queryByName(const char * strName, IFvector& vBooks, int nCount, int nTop)
+int CLibrary::queryByName(const char * strName, IFvector& vBooks, int nCount, int nTop)
 {
 	IRecordset * BRecordset;
 	if (!m_pDatabase->getTable("BookInfoDatabase", &BRecordset))
@@ -47,8 +46,13 @@ int Clibrary::queryByName(const char * strName, IFvector& vBooks, int nCount, in
 	}
 	return count;
 }
-bool Clibrary::queryById(int nID, IBook ** ppBook)
+bool CLibrary::queryById(int nID, IBook ** ppBook)
 {
+	if (!ppBook)
+	{
+		setError(InvalidParam, 4, "The pointer is NULL.");
+		return false;
+	}
 	IRecordset * BRecordset;
 	std::stringstream str;
 	str << "SELECT * FROM BookInfoDatabase WHERE id=" << nID;
@@ -66,11 +70,16 @@ bool Clibrary::queryById(int nID, IBook ** ppBook)
 	Basicinfo.publisher= std::string(BRecordset->getData("publisher"));
 	(*ppBook)->setBasicInfo(Basicinfo);
 	(*ppBook)->setDescription(std::string(BRecordset->getData("description")).c_str());
-	(*ppBook)->sign();
+	((CBook*)(*ppBook))->sign();
 	return true;
 }
-bool Clibrary::queryByISBN(const char * strISBN, IBook ** ppBook)
+bool CLibrary::queryByISBN(const char * strISBN, IBook ** ppBook)
 {
+	if (!strISBN || !ppBook)
+	{
+		setError(InvalidParam, 4, "The pointer is NULL.");
+		return false;
+	}
 	IRecordset * BRecordset;
 	std::stringstream str;
 	str << "SELECT * FROM BookInfoDatabase WHERE ISBN=" << '"'<<strISBN<<'"';
@@ -88,10 +97,10 @@ bool Clibrary::queryByISBN(const char * strISBN, IBook ** ppBook)
 	Basicinfo.publisher = std::string(BRecordset->getData("publisher"));
 	(*ppBook)->setBasicInfo(Basicinfo);
 	(*ppBook)->setDescription(std::string(BRecordset->getData("description")).c_str());
-	(*ppBook)->sign();
+	((CBook*)(*ppBook))->sign();
 	return true;
 }
-bool Clibrary::insertBook(IBook * pBook)
+bool CLibrary::insertBook(IBook * pBook)
 {
 	return pBook->insert();
 }

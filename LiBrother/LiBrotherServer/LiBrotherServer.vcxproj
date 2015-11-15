@@ -22,8 +22,10 @@
     <ClCompile Include="book.cpp" />
     <ClCompile Include="credentials_manager.cpp" />
     <ClCompile Include="factory.cpp" />
+    <ClCompile Include="manager.cpp" />
     <ClCompile Include="netserver_win.cpp" />
     <ClCompile Include="library.cpp" />
+    <ClCompile Include="user.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="book.h" />
@@ -31,8 +33,10 @@
     <ClInclude Include="credentials_manager.h" />
     <ClInclude Include="factory.h" />
     <ClInclude Include="library.h" />
+    <ClInclude Include="manager.h" />
     <ClInclude Include="netserver.h" />
     <ClInclude Include="session.h" />
+    <ClInclude Include="user.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{7E8CFCD5-6F8C-4F52-9166-972F1C0B04FE}</ProjectGuid>

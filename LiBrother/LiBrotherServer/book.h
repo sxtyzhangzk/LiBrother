@@ -17,13 +17,12 @@ public:
 	virtual bool deleteBook(int number) override;
 	virtual bool getBorrowInfo(std::vector<TBorrowInfo> &binfo) override;
 	virtual bool insert() override;
-	virtual bool sign() override;
+	bool sign();
 	bool check(TBookBasicInfo info_to_check);
 	bool bcheck(TBorrowInfo info_to_check);
 	~CBook();
 protected:
 	IDatabase * m_pDatabase;
-	//IRecordset * m_pThisBook;
 	TBookBasicInfo m_CBBI;
 	std::string m_Description;
 	int is_from_Database;
