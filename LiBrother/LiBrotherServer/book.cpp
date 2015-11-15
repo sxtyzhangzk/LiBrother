@@ -124,8 +124,8 @@ bool CBook::getBorrowInfo(std::vector<TBorrowInfo> &binfo)
 	IRecordset * BRecordset;
 	std::stringstream str;
 	str << "SELECT * FROM BorrowDatabase WHERE bookID=" << m_Id;
-	m_pDatabase->executeSQL(str.str().c_str(),&BRecordset);
-	if (BRecordset->getSize() == -1)	//判断记录集是否为空
+	
+	if (!m_pDatabase->executeSQL(str.str().c_str(), &BRecordset))	//判断记录集是否为空
 	{
 		setError(InvalidParam, 8, "The book has no borrow information.");
 		return false;	//为空，返回false
@@ -161,7 +161,7 @@ bool CBook::insert()
 	IRecordset * BIRecordset;
 	m_pDatabase->getTable("BookInfoDatabase", &BIRecordset);
 	BIRecordset->addNew();
-	m_Id = m_pDatabase->executeSQL("SELECT MAX(id) FROM BookInfoDatabase", nullptr);
+	m_Id = m_pDatabase->executeSQL("SELECT MAX(id) FROM BookInfoDatabase", nullptr)+1;
 	BIRecordset->setData("id", m_Id);
 	BIRecordset->setData("count", m_CBBI.count);
 	BIRecordset->setData("name", m_CBBI.name);
@@ -174,6 +174,11 @@ bool CBook::insert()
 }
 bool CBook::sign()
 {
+	if (!check(m_CBBI))
+	{
+		setError(InvalidParam, 1, "This book is not valid.");
+		return false;
+	}
 	is_from_Database = 1;
 	m_Id = m_CBBI.id;
 	return true;
