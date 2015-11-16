@@ -158,6 +158,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		ILibrary *library;
 		m_pClassFactory->getLibrary(&library);
 		IBook *book;
+		m_pClassFactory->createEmptyBook(&book);
 		book->setBasicInfo(book_basic_info);
 		if (library->insertBook(book))  value["result"] = 1;
 		else value["result"] = 0;
@@ -214,6 +215,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		IUserManager *usermanager;
 		m_pClassFactory->getUserManager(&usermanager);
 		IUser *user;
+		m_pClassFactory->createEmptyUser(&user);
 		user->setBasicInfo(tem_user_basic_info);
 		if (usermanager->insertUser(user))  value["result"] = 1;
 		else value["result"] = 0;

@@ -6,7 +6,11 @@
 #include <fstream>
 #include <string>
 #include <yaml-cpp/yaml.h>
-
+#include "book.h"
+#include "user.h"
+#include "authmanager.h"
+#include "library.h"
+#include "usermanager.h"
 MODULE_LOG_NAME("Main");
 
 TConfig g_configClient;
@@ -16,11 +20,54 @@ static CClassFactory * g_mainFactory = nullptr;
 
 bool CClassFactory::createEmptyBook(IBook ** ppBook)
 {
-	//TODO: 创建(new)一个CBook *对象并赋给*ppBook
+	if (ppBook) {
+		CBook *book = new CBook;
+		book->AddRef();
+		*ppBook = book;
+		return true;
+	}
+	else return false;
 }
 bool CClassFactory::createEmptyUser(IUser ** ppUser)
 {
-	//TODO: 创建(new)一个CUser *对象并赋给*ppUser
+	if (ppUser) {
+		CUser *user = new CUser;
+		user->AddRef();
+		*ppUser = user;
+		return true;
+	}
+	else return false;
+}
+
+bool CClassFactory::getLibrary(ILibrary ** ppLibrary)
+{
+	if (ppLibrary) {
+		CLibrary *library = new CLibrary;
+		library->AddRef();
+		*ppLibrary = library;
+		return true;
+	}
+	else return false;
+}
+bool CClassFactory::getUserManager(IUserManager ** ppManager)
+{
+	if (ppManager) {
+		CUserManager *usermanager = new CUserManager;
+		usermanager->AddRef();
+		*ppManager = usermanager;
+		return true;
+	}
+	else return false;
+}
+bool CClassFactory::getAuthManager(IAuthManager ** ppAuthManager)
+{
+	if (ppAuthManager) {
+		CAuthManager *authmanager = new CAuthManager;
+		authmanager->AddRef();
+		*ppAuthManager = authmanager;
+		return true;
+	}
+	else return false;
 }
 
 bool initBackend(int argc, char * argv[], int& retcode)
