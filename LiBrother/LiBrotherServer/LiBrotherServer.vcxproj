@@ -26,6 +26,7 @@
     <ClCompile Include="netserver_win.cpp" />
     <ClCompile Include="library.cpp" />
     <ClCompile Include="session.cpp" />
+    <ClCompile Include="session_manager.cpp" />
     <ClCompile Include="user.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -37,6 +38,7 @@
     <ClInclude Include="manager.h" />
     <ClInclude Include="netserver.h" />
     <ClInclude Include="session.h" />
+    <ClInclude Include="session_manager.h" />
     <ClInclude Include="user.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
