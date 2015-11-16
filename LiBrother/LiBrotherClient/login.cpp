@@ -2,6 +2,9 @@
 #include "ui_login.h"
 #include "usermain.h"
 #include "mainwindow.h"
+#include "qmessagebox.h"
+#include "QMessageBox"
+#include "QString"
 
 login::login(QWidget *parent) :
     QDialog(parent),
@@ -15,14 +18,21 @@ login::~login()
     delete ui;
 }
 
-void login::on_pushButton_2_clicked()
-{
-    close();
-}
 
 void login::on_pushButton_clicked()
 {
-    close();
-    usermain user1;
-    user1.exec();
+    QString name;
+    QString password;
+    name = ui->lineEdit->text();
+    password = ui->lineEdit_2->text();
+    if(name == "lalala")
+    {
+        close();
+        usermain user1;
+        user1.exec();
+    }
+    else
+    {
+        QMessageBox::information(this,"Title","你傻逼啊，密码都输错");
+    }
 }

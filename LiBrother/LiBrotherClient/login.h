@@ -16,7 +16,6 @@ public:
     ~login();
 
 private slots:
-    void on_pushButton_2_clicked();
 
     void on_pushButton_clicked();
 
