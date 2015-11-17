@@ -8,9 +8,12 @@ userborrow::userborrow(QWidget *parent) :
     ui(new Ui::userborrow)
 {
     ui->setupUi(this);
-    ui->listWidget->addItem("现藏岳阳");
-    ui->listWidget->addItem("yueyangzangxian");
-    ui->listWidget->addItem("楼上是傻逼");
+    QListWidgetItem *item = new QListWidgetItem;
+    item->setText("王辰");
+    item->setData(Qt::UserRole,23);
+    ui->listWidget->addItem(item);
+    ui->listWidget->addItem("汪辰");
+    ui->listWidget->addItem("王晨");
     for(int i = 0; i <= 5; i++)
     {
         ui->listWidget->addItem(QString::number(i) + "lalala123");
@@ -62,10 +65,12 @@ userborrow::~userborrow()
 
 void userborrow::on_pushButton_clicked()
 {
+
     QListWidgetItem *item = ui->listWidget->currentItem();
+    int a = item->data(Qt::UserRole).toInt();
     bookdata bookdata1;
+    bookdata1.setBookName(QString::number(a));
     bookdata1.exec();
-    item->setTextColor(Qt::blue);
 }
 
 

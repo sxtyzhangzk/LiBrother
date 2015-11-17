@@ -1,6 +1,6 @@
 #ifndef BOOKDATA_H
 #define BOOKDATA_H
-
+#include <QString>
 #include <QDialog>
 
 namespace Ui {
@@ -14,6 +14,10 @@ class bookdata : public QDialog
 public:
     explicit bookdata(QWidget *parent = 0);
     ~bookdata();
+    void setBookName(const QString& name);
+
+protected:
+    QString m_strBookName;
 
 private:
     Ui::bookdata *ui;

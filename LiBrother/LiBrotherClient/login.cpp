@@ -33,6 +33,6 @@ void login::on_pushButton_clicked()
     }
     else
     {
-        QMessageBox::information(this,"Title","你傻逼啊，密码都输错");
+        QMessageBox::information(this,"Title","助教我们用户名是lalala，你们很聪明的，我们不是故意的");
     }
 }
