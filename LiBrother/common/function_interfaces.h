@@ -35,6 +35,11 @@ interface IBook : public IAbstract
 	//获取图书的借阅信息
 	virtual bool getBorrowInfo(std::vector<TBorrowInfo> &binfo) = 0;
 
+	//获取图书所需求的阅读权限，失败返回-1
+	virtual int getBookReadLevel() = 0;
+
+	//设置图书的阅读权限
+	virtual bool setBookReadLevel(int nReadLevel) = 0;
 };
 
 /*
@@ -99,6 +104,18 @@ interface IUser : public IAbstract
 
 	//删除此用户
 	virtual bool deleteUser() = 0;
+
+	//获取权限等级（失败返回-1）
+	virtual int getAuthLevel() = 0;
+
+	//获取阅读权限（失败返回-1）
+	virtual int getReadLevel() = 0;
+
+	//设置权限等级
+	virtual bool setAuthLevel(int nAuthLevel) = 0;
+
+	//设置阅读权限
+	virtual bool setReadLevel(int nReadLevel) = 0;
 };
 
 /*

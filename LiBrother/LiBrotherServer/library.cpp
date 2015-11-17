@@ -102,5 +102,5 @@ bool CLibrary::queryByISBN(const char * strISBN, IBook ** ppBook)
 }
 bool CLibrary::insertBook(IBook * pBook)
 {
-	return pBook->insert();
+	return ((CBook*)pBook)->insert();
 }
