@@ -29,8 +29,11 @@ struct TConfig
 };
 struct TPolicy
 {
-	std::string strLicense;
-	std::vector<TAuthorization> vAuthList;
+	std::string strLicense;					//用户协议的内容
+	std::vector<TAuthorization> vAuthList;	//不同权限等级对应的权限内容
+	int nDefaultUserAuthLevel;				//默认的用户权限等级
+	int nDefaultUserReadLevel;				//默认的用户阅读权限
+	int nDefaultBookReadLevel;				//默认的图书阅读权限
 };
 
 extern TConfig g_configSvr;
