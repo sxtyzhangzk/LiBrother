@@ -1,6 +1,7 @@
 #ifndef __CONFIG_SERVER_H__
 #define __CONFIG_SERVER_H__
 
+#include <common_types.h>
 #include <string>
 #include <vector>
 #include <utility>
@@ -26,7 +27,13 @@ struct TConfig
 	int nThreadPerCPU;
 	int nSessionTimeout;
 };
+struct TPolicy
+{
+	std::string strLicense;
+	std::vector<TAuthorization> vAuthList;
+};
 
 extern TConfig g_configSvr;
+extern TPolicy g_configPolicy;
 
 #endif
