@@ -1,6 +1,7 @@
 #include "book.h"
 #include "sstream"
 #include "magicdb.h"
+#include "config.h"
 
 CBook::CBook(IDatabase * DatabaseFile)
 {
@@ -146,6 +147,43 @@ bool CBook::getBorrowInfo(std::vector<TBorrowInfo> &binfo)
 	} while (BRecordset->nextRecord());	//合法，塞进容器并移向下一条
 	return true;
 }
+int CBook::getBookReadLevel()
+{
+	if (!is_from_Database)	//判断是否来自数据库
+	{
+		setError(InvalidParam, 1, "This book is not valid.");
+		return false;	//不是来自数据库的书，不可借阅，返回false
+	}
+	IRecordset * BRecordset;
+	std::stringstream str;
+	str << "SELECT * FROM BookInfoDatabase WHERE bookID=" << m_Id;
+	if (!m_pDatabase->executeSQL(str.str().c_str(), &BRecordset))
+	{
+		setError(DatabaseError, 9, "There is some wrong with our database.");
+		return false;
+	}
+	return BRecordset->getData("ReadLevel");
+}
+bool CBook::setBookReadLevel(int nReadLevel)
+{
+	if (!is_from_Database)	//判断是否来自数据库
+	{
+		setError(InvalidParam, 1, "This book is not valid.");
+		return false;	//不是来自数据库的书，不可借阅，返回false
+	}
+	if (nReadLevel == -1) return false;
+	IRecordset * BRecordset;
+	std::stringstream str;
+	str << "SELECT * FROM BookInfoDatabase WHERE bookID=" << m_Id;
+	if (!m_pDatabase->executeSQL(str.str().c_str(), &BRecordset))
+	{
+		setError(DatabaseError, 9, "There is some wrong with our database.");
+		return false;
+	}
+	BRecordset->setData("ReadLevel", nReadLevel);
+	return true;
+}
+
 bool CBook::insert()
 {
 	if (is_from_Database)
@@ -159,9 +197,15 @@ bool CBook::insert()
 		return false;
 	}
 	IRecordset * BIRecordset;
+	IRecordset * temp;
 	m_pDatabase->getTable("BookInfoDatabase", &BIRecordset);
 	BIRecordset->addNew();
-	m_Id = m_pDatabase->executeSQL("SELECT MAX(id) FROM BookInfoDatabase", nullptr)+1;
+	if (!m_pDatabase->executeSQL("SELECT MAX(id) FROM BookInfoDatabase", &temp))
+	{
+		setError(DatabaseError, 9, "There is some wrong with our database.");
+		return false;
+	}
+	m_Id = (int)(temp->getData("id")) + 1;
 	BIRecordset->setData("id", m_Id);
 	BIRecordset->setData("count", m_CBBI.count);
 	BIRecordset->setData("name", m_CBBI.name);
@@ -169,6 +213,7 @@ bool CBook::insert()
 	BIRecordset->setData("publisher", m_CBBI.publisher);
 	BIRecordset->setData("ISBN", m_CBBI.isbn);
 	BIRecordset->setData("discription", m_Description);
+	BIRecordset->setData("ReadLevel", g_configPolicy.nDefaultBookReadLevel);
 	BIRecordset->updateDatabase();	//赋值操作
 	return true;
 }
