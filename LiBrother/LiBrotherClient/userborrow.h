@@ -18,23 +18,20 @@ public:
 
 private slots:
 
+<<<<<<< HEAD
     void on_pushButton_4_clicked();
 
     //void on_listView_doubleClicked(const QModelIndex &index);
+=======
+>>>>>>> 11fd821d7be4093ee3f7b6985d1db12642c78d15
 
     void on_pushButton_clicked();
 
-    //void on_pushButton_4_clicked();
-
-   // void on_listWidget_doubleClicked(const QModelIndex &index);
 
 private:
     Ui::userborrow *ui;
     QStringList strList;
-    //QString name[100];
-    //int i = 1;
-    //QStringListModel *model;
-    //QStringListModel *model;
+
 };
 
 #endif // USERBORROW_H

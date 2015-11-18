@@ -3,16 +3,24 @@
 #include "QStringListModel"
 #include "QString"
 #include "bookdata.h"
+<<<<<<< HEAD
 #include <QLineEdit>
 #include "client_interfaces.h"
+=======
+#include "client_interfaces.h"
+
+>>>>>>> 11fd821d7be4093ee3f7b6985d1db12642c78d15
 userborrow::userborrow(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::userborrow)
 {
     ui->setupUi(this);
-    ui->listWidget->addItem("现藏岳阳");
-    ui->listWidget->addItem("yueyangzangxian");
-    ui->listWidget->addItem("楼上是傻逼");
+    QListWidgetItem *item = new QListWidgetItem;
+    item->setText("王辰");
+    item->setData(Qt::UserRole,23);
+    ui->listWidget->addItem(item);
+    ui->listWidget->addItem("汪辰");
+    ui->listWidget->addItem("王晨");
     for(int i = 0; i <= 5; i++)
     {
         ui->listWidget->addItem(QString::number(i) + "lalala123");
@@ -83,10 +91,15 @@ void userborrow::on_pushButton_4_clicked()    /*搜索按键*/
 
 void userborrow::on_pushButton_clicked()
 {
+
+
+
     QListWidgetItem *item = ui->listWidget->currentItem();
+    int a = item->data(Qt::UserRole).toInt();
     bookdata bookdata1;
+    bookdata1.setBookName(QString::number(a));
     bookdata1.exec();
-    item->setTextColor(Qt::blue);
 }
+
 
 

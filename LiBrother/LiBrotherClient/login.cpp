@@ -34,7 +34,11 @@ void login::on_pushButton_clicked()
     }
     else
     {
+<<<<<<< HEAD
         QMessageBox::information(this,"Title","用户名或密码输入错误！");
+=======
+        QMessageBox::information(this,"Title","助教我们用户名是lalala，你们很聪明的，我们不是故意的");
+>>>>>>> 11fd821d7be4093ee3f7b6985d1db12642c78d15
     }
 }
 

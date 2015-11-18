@@ -2,7 +2,7 @@
 #define __FACTORY_H__
 
 #include "function_interfaces.h"
-
+interface IDatabase;
 class Cfactory : public ILibClassFactory
 {
 	IMPLEMENT_INTERFACE

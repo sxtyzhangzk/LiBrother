@@ -44,7 +44,7 @@
     <rect>
      <x>160</x>
      <y>60</y>
-     <width>59</width>
+     <width>181</width>
      <height>71</height>
     </rect>
    </property>
@@ -91,29 +91,6 @@
     <string>您已借阅了以下书本：</string>
    </property>
   </widget>
-  <widget class="QColumnView" name="columnView">
-   <property name="geometry">
-    <rect>
-     <x>40</x>
-     <y>200</y>
-     <width>161</width>
-     <height>171</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="pushButton_2">
-   <property name="geometry">
-    <rect>
-     <x>220</x>
-     <y>200</y>
-     <width>115</width>
-     <height>32</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>继续借书</string>
-   </property>
-  </widget>
   <widget class="QPushButton" name="pushButton">
    <property name="geometry">
     <rect>
@@ -126,6 +103,42 @@
    <property name="text">
     <string>登出 Log out</string>
    </property>
+  </widget>
+  <widget class="QListWidget" name="listWidget">
+   <property name="geometry">
+    <rect>
+     <x>40</x>
+     <y>200</y>
+     <width>161</width>
+     <height>181</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QWidget" name="">
+   <property name="geometry">
+    <rect>
+     <x>220</x>
+     <y>200</y>
+     <width>115</width>
+     <height>66</height>
+    </rect>
+   </property>
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QPushButton" name="pushButton_2">
+      <property name="text">
+       <string>继续借书</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="pushButton_3">
+      <property name="text">
+       <string>归还此书</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
   </widget>
  </widget>
  <resources/>
