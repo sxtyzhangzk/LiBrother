@@ -54,11 +54,17 @@ bool CUser::setBasicInfo(const TUserBasicInfo& info)
 		std::stringstream str;
 		str << "SELECT * FROM UserInfoDatabase WHERE userID=" << m_Id;
 		m_pDatabase->executeSQL(str.str().c_str(), &UIRecordset);
+		if (!UIRecordset)
+		{
+			setError(InvalidParam, 4, "The pointer is NULL.");
+			return false;
+		}
 		UIRecordset->setData("id", m_CUBI.id);
 		UIRecordset->setData("gender", m_CUBI.gender);
 		UIRecordset->setData("email", m_CUBI.email);
 		UIRecordset->setData("name", m_CUBI.name);
 		UIRecordset->updateDatabase();	
+		UIRecordset->Release();
 	}
 	return true;
 }
@@ -82,7 +88,12 @@ bool CUser::getBorrowedBooks(std::vector<TBorrowInfo> &binfo)
 	std::stringstream str;
 	str << "SELECT * FROM BorrowDatabase WHERE userID=" << m_Id;
 	m_pDatabase->executeSQL(str.str().c_str(), &URecordset);
-	if (URecordset->getSize() == -1)	//判断记录集是否为空
+	if (!URecordset)
+	{
+		setError(InvalidParam, 4, "The pointer is NULL.");
+		return false;
+	}
+	if (URecordset->getSize() <1)	//判断记录集是否为空
 	{
 		setError(InvalidParam, 8, "The user has no borrow information.");
 		return false;	//为空，返回false
@@ -101,6 +112,7 @@ bool CUser::getBorrowedBooks(std::vector<TBorrowInfo> &binfo)
 		}
 		binfo.push_back(Info);
 	} while (URecordset->nextRecord());	//合法，塞进容器并移向下一条
+	URecordset->Release();
 	return true;
 }
 bool CUser::borrowBook(IBook * pBook)
@@ -128,12 +140,18 @@ bool CUser::borrowBook(IBook * pBook)
 	 }
 	 IRecordset * UIRecordset;
 	 m_pDatabase->getTable("BorrowDatabase", &UIRecordset);
+	 if (!UIRecordset)
+	 {
+		 setError(InvalidParam, 4, "The pointer is NULL.");
+		 return false;
+	 }
 	 UIRecordset->addNew();
 	 UIRecordset->setData("userID", m_Id);
 	 UIRecordset->setData("bookID", CBBI.id);
 	 UIRecordset->setData("borrowTime",time(0));
 	 UIRecordset->setData("flag", 0);
 	 ((CBook*)pBook)->deleteBook(1);
+	 UIRecordset->Release();
 	 return 0;
 }
 bool CUser::returnBook(IBook * pBook)

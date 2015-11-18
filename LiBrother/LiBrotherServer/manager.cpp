@@ -18,12 +18,13 @@ bool CManager::getUserByID(int nID, IUser ** ppUser)
 		setError(InvalidParam, 4, "The pointer is NULL.");
 		return false;
 	}
-	IRecordset * URecordset;
+	IRecordset * URecordset=nullptr;
 	std::stringstream str;
 	str << "SELECT * FROM UserInfoDatabase WHERE id=" << nID;
-	if (!m_pDatabase->executeSQL(str.str().c_str(), &URecordset))
+	m_pDatabase->executeSQL(str.str().c_str(), &URecordset);
+	if (!URecordset)
 	{
-		setError(InvalidParam, 142857, "No this user.");
+		setError(InvalidParam, 4, "The pointer is NULL.");
 		return false;
 	}
 	TUserBasicInfo BasicInfo;
@@ -34,6 +35,7 @@ bool CManager::getUserByID(int nID, IUser ** ppUser)
 	(*ppUser)->setBasicInfo(BasicInfo);
 	(*ppUser)->setPassword(std::string(URecordset->getData("password")).c_str());
 	((CUser*)(*ppUser))->sign();
+	URecordset->Release();
 	return true;
 }
 bool CManager::insertUser(IUser * pUser)
@@ -77,9 +79,10 @@ bool CManager::getUserByName(const char * strName, IUser ** ppUser)
 		IRecordset * URecordset;
 		std::stringstream str;
 		str << "SELECT * FROM UserInfoDatabase WHERE email=" <<'"'<<strName<<'"';
-		if (!m_pDatabase->executeSQL(str.str().c_str(), &URecordset))
+		m_pDatabase->executeSQL(str.str().c_str(), &URecordset);
+		if (!URecordset)
 		{
-			setError(InvalidParam, 142857, "No this user.");
+			setError(InvalidParam, 4, "The pointer is NULL.");
 			return false;
 		}
 		TUserBasicInfo BasicInfo;
@@ -90,6 +93,7 @@ bool CManager::getUserByName(const char * strName, IUser ** ppUser)
 		(*ppUser)->setBasicInfo(BasicInfo);
 		(*ppUser)->setPassword(std::string(URecordset->getData("password")).c_str());
 		((CUser*)(*ppUser))->sign();
+		URecordset->Release();
 		return true;
 	}
 	if (type == 2)
@@ -102,9 +106,10 @@ bool CManager::getUserByName(const char * strName, IUser ** ppUser)
 		IRecordset * URecordset;
 		std::stringstream str;
 		str << "SELECT * FROM UserInfoDatabase WHERE name=" <<'"'<< strName<<'"';
-		if (!m_pDatabase->executeSQL(str.str().c_str(), &URecordset))
+		m_pDatabase->executeSQL(str.str().c_str(), &URecordset);
+		if (!URecordset)
 		{
-			setError(InvalidParam, 142857, "No this user.");
+			setError(InvalidParam, 4, "The pointer is NULL.");
 			return false;
 		}
 		TUserBasicInfo BasicInfo;
@@ -115,7 +120,8 @@ bool CManager::getUserByName(const char * strName, IUser ** ppUser)
 		(*ppUser)->setBasicInfo(BasicInfo);
 		(*ppUser)->setPassword(std::string(URecordset->getData("password")).c_str());
 		((CUser*)(*ppUser))->sign();
+		URecordset->Release();
 		return true;
 	}
-	return true;
+	return false;
 }
