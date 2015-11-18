@@ -3,6 +3,8 @@
 #include "QStringListModel"
 #include "QString"
 #include "bookdata.h"
+#include "client_interfaces.h"
+
 userborrow::userborrow(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::userborrow)
@@ -66,11 +68,14 @@ userborrow::~userborrow()
 void userborrow::on_pushButton_clicked()
 {
 
+
+
     QListWidgetItem *item = ui->listWidget->currentItem();
     int a = item->data(Qt::UserRole).toInt();
     bookdata bookdata1;
     bookdata1.setBookName(QString::number(a));
     bookdata1.exec();
 }
+
 
 

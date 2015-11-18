@@ -124,26 +124,13 @@
     </item>
    </layout>
   </widget>
-  <widget class="QLabel" name="label_6">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>70</y>
-     <width>241</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>该书已被您借阅／该书没被您借阅</string>
-   </property>
-  </widget>
-  <widget class="QWidget" name="">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>110</y>
+     <y>80</y>
      <width>261</width>
-     <height>42</height>
+     <height>71</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -155,9 +142,16 @@
      </widget>
     </item>
     <item>
+     <widget class="QLabel" name="label_6">
+      <property name="text">
+       <string>出版社：</string>
+      </property>
+     </widget>
+    </item>
+    <item>
      <widget class="QLabel" name="label_5">
       <property name="text">
-       <string>编号：</string>
+       <string>ISBN号：</string>
       </property>
      </widget>
     </item>
