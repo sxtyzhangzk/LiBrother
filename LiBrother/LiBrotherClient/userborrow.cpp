@@ -3,6 +3,8 @@
 #include "QStringListModel"
 #include "QString"
 #include "bookdata.h"
+#include <QLineEdit>
+#include "client_interfaces.h"
 userborrow::userborrow(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::userborrow)
@@ -58,7 +60,26 @@ userborrow::~userborrow()
    //delete model;
 
 //}
-
+void userborrow::on_pushButton_4_clicked()    /*搜索按键*/
+{
+    QString ISBN;
+    ISBN = ui->lineEdit->text();
+    IClassFactoryClient *pFactory;
+    getClassFactory(&pFactory);
+    ILibrary *pLibrary;
+    pFactory->getLibrary(&pLibrary);
+    IBook *pBook;
+    pLibrary->queryByISBN(ISBN.toStdString().c_str(),&pBook);
+    TBookBasicInfo info;
+    pBook->getBasicInfo(info);
+    std::string name = info.name;
+    QString name1 = QString::fromStdString(name);
+    QLabel *qlabel;
+    qlabel->setText(name1);
+    pBook->Release();
+    pLibrary->Release();
+    pFactory->Release();
+}
 
 void userborrow::on_pushButton_clicked()
 {

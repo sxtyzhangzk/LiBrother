@@ -2,6 +2,8 @@
 #include "ui_mainwindow.h"
 #include "login.h"
 #include "signup.h"
+#include "announcement.h"
+#include "manager.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -35,3 +37,15 @@ void MainWindow::on_pushButton_4_clicked()
     //ui->tableView->
 
 }
+void MainWindow::on_pushButton_5_clicked()
+{
+    announcement announcement1;
+    announcement1.exec();
+}
+
+void MainWindow::on_pushButton_6_clicked()
+{
+    manager manager1;
+    manager1.exec();
+}
+

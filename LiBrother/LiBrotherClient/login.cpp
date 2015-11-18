@@ -5,6 +5,7 @@
 #include "qmessagebox.h"
 #include "QMessageBox"
 #include "QString"
+#include "client_interfaces.h"
 
 login::login(QWidget *parent) :
     QDialog(parent),
@@ -33,6 +34,7 @@ void login::on_pushButton_clicked()
     }
     else
     {
-        QMessageBox::information(this,"Title","你傻逼啊，密码都输错");
+        QMessageBox::information(this,"Title","用户名或密码输入错误！");
     }
 }
+
