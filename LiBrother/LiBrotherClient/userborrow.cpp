@@ -3,13 +3,10 @@
 #include "QStringListModel"
 #include "QString"
 #include "bookdata.h"
-<<<<<<< HEAD
+
 #include <QLineEdit>
 #include "client_interfaces.h"
-=======
-#include "client_interfaces.h"
 
->>>>>>> 11fd821d7be4093ee3f7b6985d1db12642c78d15
 userborrow::userborrow(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::userborrow)
