@@ -36,3 +36,4 @@ void login::on_pushButton_clicked()
         QMessageBox::information(this,"Title","助教我们用户名是lalala，你们很聪明的，我们不是故意的");
     }
 }
+

@@ -77,6 +77,9 @@
      <height>21</height>
     </rect>
    </property>
+   <property name="text">
+    <string/>
+   </property>
   </widget>
   <widget class="QLineEdit" name="lineEdit_2">
    <property name="geometry">
@@ -87,11 +90,31 @@
      <height>21</height>
     </rect>
    </property>
+   <property name="text">
+    <string/>
+   </property>
    <property name="echoMode">
     <enum>QLineEdit::Password</enum>
    </property>
   </widget>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>pushButton_2</sender>
+   <signal>clicked()</signal>
+   <receiver>login</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>230</x>
+     <y>95</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>251</x>
+     <y>72</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>
