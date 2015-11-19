@@ -24,7 +24,6 @@ SOURCES += main.cpp\
     usermain.cpp \
     bookdata.cpp \
     userborrow.cpp\
-    announcement.cpp\
     manager.cpp\
     managermain.cpp \
     changepassword.cpp
@@ -38,7 +37,6 @@ HEADERS  += mainwindow.h \
     bookdata.h \
     userborrow.h\
     manager.h\
-    announcement.h\
     managermain.h \
     changepassword.h
 
@@ -50,7 +48,6 @@ FORMS    += mainwindow.ui \
     usermain.ui \
     bookdata.ui \
     userborrow.ui\
-    announcement.ui\
     manager.ui\
     managermain.ui \
     changepassword.ui

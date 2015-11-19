@@ -6,34 +6,19 @@
 #include "client_interfaces.h"
 #include "QMessageBox"
 #include "qmessagebox.h"
-
 #include <QLineEdit>
-#include "client_interfaces.h"
 
 userborrow::userborrow(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::userborrow)
 {
     ui->setupUi(this);
-    /*
-    QListWidgetItem *item = new QListWidgetItem;
-    item->setText("王辰");
-    item->setData(Qt::UserRole,23);
-    ui->listWidget->addItem(item);
-    ui->listWidget->addItem("汪辰");
-    ui->listWidget->addItem("王晨");
-    for(int i = 0; i <= 5; i++)
-    {
-        ui->listWidget->addItem(QString::number(i) + "lalala123");
-    }
-    */
-    //model = new QStringListModel(strList);
+
 }
 
 userborrow::~userborrow()
 {
     delete ui;
-    //delete model;
 }
 
 
@@ -47,34 +32,11 @@ void userborrow::on_pushButton_clicked()//选择一本书本，进入书本具�
     int bID = item->data(Qt::UserRole).toInt();
     bookdata bookdata1;
     bookdata1.setBookID(bID);
-    //bookdata1.setCombo(ui->comboBox->currentText());
 
     bookdata1.exec();
 }
 
 
-
-//}
-void userborrow::on_pushButton_4_clicked()    /*搜索按键*/
-{
-    QString ISBN;
-    ISBN = ui->lineEdit->text();
-    IClassFactoryClient *pFactory;
-    getClassFactory(&pFactory);
-    ILibrary *pLibrary;
-    pFactory->getLibrary(&pLibrary);
-    IBook *pBook;
-    pLibrary->queryByISBN(ISBN.toStdString().c_str(),&pBook);
-    TBookBasicInfo info;
-    pBook->getBasicInfo(info);
-    std::string name = info.name;
-    QString name1 = QString::fromStdString(name);
-    QLabel *qlabel;
-    qlabel->setText(name1);
-    pBook->Release();
-    pLibrary->Release();
-    pFactory->Release();
-}
 
 void userborrow::on_pushButton_4_clicked()
 {
@@ -91,6 +53,8 @@ void userborrow::on_pushButton_4_clicked()
         std::string bOption1 = bOption.toStdString();
         TBookBasicInfo basic1;
         IBook *iBook1;
+
+
         QString bName1;
             if(bOption1 == "ISBN")//按照ISBN号找到唯一的一本
             {
@@ -105,12 +69,7 @@ void userborrow::on_pushButton_4_clicked()
             item->setData(Qt::UserRole,basic1.id);//data中存了之后要用到的书本ID号
             ui->listWidget->addItem(item);
             }
-            else
-            {
-
-                QMessageBox::information(this,"Title","操作错误");
-
-            }
+            else{QMessageBox::information(this,"Title","操作错误");}
             }
 
             else//按照书名就行搜索
@@ -120,7 +79,7 @@ void userborrow::on_pushButton_4_clicked()
             if(bNum > 0)
             {
             int i;
-            for(i=1;i<=bNum;i++)
+            for(i=0;i<bNum;i++)
                {
 
 
@@ -135,21 +94,9 @@ void userborrow::on_pushButton_4_clicked()
 
                 }
             }
-            else
-            {
-
-                QMessageBox::information(this,"Title","没有找到相关书本");
-
+            else{QMessageBox::information(this,"Title","没有找到相关书本");}
             }
-            }
-}
 
-
-    QListWidgetItem *item = ui->listWidget->currentItem();
-    int a = item->data(Qt::UserRole).toInt();
-    bookdata bookdata1;
-    bookdata1.setBookName(QString::number(a));
-    bookdata1.exec();
 }
 
 
