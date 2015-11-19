@@ -26,7 +26,8 @@ SOURCES += main.cpp\
     userborrow.cpp\
     manager.cpp\
     managermain.cpp \
-    changepassword.cpp
+    changepassword.cpp \
+    addbook.cpp
 
 
 HEADERS  += mainwindow.h \
@@ -38,7 +39,8 @@ HEADERS  += mainwindow.h \
     userborrow.h\
     manager.h\
     managermain.h \
-    changepassword.h
+    changepassword.h \
+    addbook.h
 
 
 FORMS    += mainwindow.ui \
@@ -50,7 +52,8 @@ FORMS    += mainwindow.ui \
     userborrow.ui\
     manager.ui\
     managermain.ui \
-    changepassword.ui
+    changepassword.ui \
+    addbook.ui
 
 
 DISTFILES +=

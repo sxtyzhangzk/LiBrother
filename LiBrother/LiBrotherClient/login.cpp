@@ -2,10 +2,10 @@
 #include "ui_login.h"
 #include "usermain.h"
 #include "mainwindow.h"
-#include "qmessagebox.h"
 #include "QMessageBox"
 #include "QString"
 #include "client_interfaces.h"
+#include "changepassword.h"
 
 login::login(QWidget *parent) :
     QDialog(parent),
@@ -46,4 +46,5 @@ void login::on_pushButton_clicked()
 
     factory1->Release();
 }
+
 

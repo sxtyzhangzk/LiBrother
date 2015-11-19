@@ -38,6 +38,31 @@ void userborrow::on_pushButton_clicked()//选择一本书本，进入书本具�
 
 
 
+
+
+
+void userborrow::on_pushButton_4_clicked()    /*搜索按键*/
+{
+      QString ISBN;
+      ISBN = ui->lineEdit->text();
+    IClassFactoryClient *pFactory;
+    getClassFactory(&pFactory);
+    ILibrary *pLibrary;
+    pFactory->getLibrary(&pLibrary);
+    IBook *pBook;
+    pLibrary->queryByISBN(ISBN.toStdString().c_str(),&pBook);
+    TBookBasicInfo info;
+      pBook->getBasicInfo(info);
+    std::string name = info.name;
+    QString name1 = QString::fromStdString(name);
+    QLabel *qlabel;
+    qlabel->setText(name1);
+    pBook->Release();
+    pLibrary->Release();
+    pFactory->Release();
+}
+
+
 void userborrow::on_pushButton_4_clicked()
 {
 

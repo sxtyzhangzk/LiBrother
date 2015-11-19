@@ -5,6 +5,7 @@
 #include "bookdata.h"
 #include "client_interfaces.h"
 #include "QMessageBox"
+#include "changepassword.h"
 
 usermain::usermain(QWidget *parent) ://开场直接显示所有用户已借的书本
     QDialog(parent),
@@ -77,6 +78,12 @@ usermain::usermain(QWidget *parent) ://开场直接显示所有用户已借的�
 usermain::~usermain()
 {
     delete ui;
+}
+
+void usermain::on_pushButton_4_clicked()
+{
+    ChangePassword ChangePassword1;
+    ChangePassword1.exec();
 }
 
 
