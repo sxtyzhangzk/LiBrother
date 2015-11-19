@@ -17,10 +17,14 @@ public:
 	virtual bool borrowBook(IBook * pBook) override;
 	virtual bool returnBook(IBook * pBook) override;
 	virtual bool deleteUser() override; 
+	virtual int getAuthLevel() override;
+	virtual int getReadLevel() override;
+	virtual bool setAuthLevel(int nAuthLevel) override;
+	virtual bool setReadLevel(int nReadLevel) override;
 	bool sign();
 	bool check(TUserBasicInfo info_to_check);
 	bool bcheck(TBorrowInfo info_to_check);
-	virtual bool insert() override;
+	bool insert();
 	~CUser();
 protected:
 	IDatabase * m_pDatabase;

@@ -14,6 +14,11 @@ class manager : public QDialog
 public:
     explicit manager(QWidget *parent = 0);
     ~manager();
+private slots:
+
+    void on_pushButton_6_clicked();
+    void on_pushButton_clicked();
+
 
 private:
     Ui::manager *ui;

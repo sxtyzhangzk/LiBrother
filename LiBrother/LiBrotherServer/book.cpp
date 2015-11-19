@@ -1,6 +1,7 @@
 #include "book.h"
 #include "sstream"
 #include "magicdb.h"
+#include "config.h"
 
 CBook::CBook(IDatabase * DatabaseFile)
 {
@@ -51,16 +52,22 @@ bool CBook::setBasicInfo(const TBookBasicInfo& info)
 	m_CBBI = info;	//操作合法，将info赋给书本基本信息
 	if (is_from_Database)
 	{
-		IRecordset * BIRecordset;
+		IRecordset * BIRecordset=nullptr;
 		std::stringstream str;
 		str << "SELECT * FROM BookInfoDatabase WHERE bookID=" << m_Id;
 		m_pDatabase->executeSQL(str.str().c_str(), &BIRecordset);
+		if (!BIRecordset)
+		{
+			setError(InvalidParam, 4, "The pointer is NULL.");
+			return false;
+		}
 		BIRecordset->setData("count", m_CBBI.count);
 		BIRecordset->setData("name", m_CBBI.name);
 		BIRecordset->setData("author", m_CBBI.author);
 		BIRecordset->setData("publisher", m_CBBI.publisher);
 		BIRecordset->setData("ISBN", m_CBBI.isbn);
 		BIRecordset->updateDatabase();	//赋值操作
+		BIRecordset->Release();
 	}
 	return true;
 }
@@ -74,12 +81,18 @@ bool CBook::setDescription(const char * description)
 	m_Description = description;	//不为空，将description赋给书的介绍
 	if (is_from_Database)
 	{
-		IRecordset * BIRecordset;
+		IRecordset * BIRecordset=nullptr;
 		std::stringstream str;
 		str << "SELECT description FROM BookInfoDatabase WHERE bookID=" << m_Id;
 		m_pDatabase->executeSQL(str.str().c_str(), &BIRecordset);
+		if (!BIRecordset)
+		{
+			setError(InvalidParam, 4, "The pointer is NULL.");
+			return false;
+		}
 		BIRecordset->setData("description", m_Description);
 		BIRecordset->updateDatabase();	//赋值操作
+		BIRecordset->Release();
 	}
 	return true;
 }
@@ -96,21 +109,26 @@ bool CBook::deleteBook(int number)
 		return false;	//删的太多，返回false
 	}
 	m_CBBI.count -= number;
-	IRecordset * BIRecordset;
+	IRecordset * BIRecordset=nullptr;
 	std::stringstream str;
 	if (m_CBBI.count)
 	{
 		str << "SELECT * FROM BookInfoDatabase WHERE bookID=" << m_Id;
 		m_pDatabase->executeSQL(str.str().c_str(), &BIRecordset);
+		if (!BIRecordset)
+		{
+			setError(InvalidParam, 4, "The pointer is NULL.");
+			return false;
+		}
 		BIRecordset->setData("count", m_CBBI.count);
 		BIRecordset->updateDatabase();	//赋值操作
+		BIRecordset->Release();
 		return true;
 	}
 	else
 	{
 		str << "DELETE FROM BookInfoDatabse WHERE bookID=" << m_Id;
-		m_pDatabase->executeSQL(str.str().c_str(), nullptr);
-		return true;
+		return m_pDatabase->executeSQL(str.str().c_str(), nullptr);
 	}
 }
 bool CBook::getBorrowInfo(std::vector<TBorrowInfo> &binfo)
@@ -121,11 +139,16 @@ bool CBook::getBorrowInfo(std::vector<TBorrowInfo> &binfo)
 		return false;	//不是来自数据库的书，不可借阅，返回false
 	}
 	binfo.clear();
-	IRecordset * BRecordset;
+	IRecordset * BRecordset=nullptr;
 	std::stringstream str;
 	str << "SELECT * FROM BorrowDatabase WHERE bookID=" << m_Id;
-	
-	if (!m_pDatabase->executeSQL(str.str().c_str(), &BRecordset))	//判断记录集是否为空
+	m_pDatabase->executeSQL(str.str().c_str(), &BRecordset);
+	if (!BRecordset)
+	{
+		setError(InvalidParam, 4, "The pointer is NULL.");
+		return false;
+	}
+	if (BRecordset->getSize() <1)	//判断记录集是否为空
 	{
 		setError(InvalidParam, 8, "The book has no borrow information.");
 		return false;	//为空，返回false
@@ -144,8 +167,51 @@ bool CBook::getBorrowInfo(std::vector<TBorrowInfo> &binfo)
 		}
 		binfo.push_back(Info);
 	} while (BRecordset->nextRecord());	//合法，塞进容器并移向下一条
+	BRecordset->Release();
 	return true;
 }
+int CBook::getBookReadLevel()
+{
+	if (!is_from_Database)	//判断是否来自数据库
+	{
+		setError(InvalidParam, 1, "This book is not valid.");
+		return false;	//不是来自数据库的书，不可借阅，返回false
+	}
+	IRecordset * BRecordset=nullptr;
+	std::stringstream str;
+	str << "SELECT * FROM BookInfoDatabase WHERE bookID=" << m_Id;
+	m_pDatabase->executeSQL(str.str().c_str(), &BRecordset);
+	if (!BRecordset)
+	{
+		setError(InvalidParam, 4, "The pointer is NULL.");
+		return false;
+	}
+	int r=BRecordset->getData("ReadLevel");
+	BRecordset->Release();
+	return r;
+}
+bool CBook::setBookReadLevel(int nReadLevel)
+{
+	if (!is_from_Database)	//判断是否来自数据库
+	{
+		setError(InvalidParam, 1, "This book is not valid.");
+		return false;	//不是来自数据库的书，不可借阅，返回false
+	}
+	if (nReadLevel == -1) return false;
+	IRecordset * BRecordset=nullptr;
+	std::stringstream str;
+	str << "SELECT * FROM BookInfoDatabase WHERE bookID=" << m_Id;
+	m_pDatabase->executeSQL(str.str().c_str(), &BRecordset);
+	if (!BRecordset)
+	{
+		setError(InvalidParam, 4, "The pointer is NULL.");
+		return false;
+	}
+	BRecordset->setData("ReadLevel", nReadLevel);
+	BRecordset->Release();
+	return true;
+}
+
 bool CBook::insert()
 {
 	if (is_from_Database)
@@ -158,10 +224,23 @@ bool CBook::insert()
 		setError(InvalidParam, 1, "This book is not valid.");
 		return false;
 	}
-	IRecordset * BIRecordset;
+	IRecordset * BIRecordset=nullptr;
+	IRecordset * temp=nullptr;
 	m_pDatabase->getTable("BookInfoDatabase", &BIRecordset);
+	if (!BIRecordset)
+	{
+		setError(InvalidParam, 4, "The pointer is NULL.");
+		return false;
+	}
 	BIRecordset->addNew();
-	m_Id = m_pDatabase->executeSQL("SELECT MAX(id) FROM BookInfoDatabase", nullptr)+1;
+	m_pDatabase->executeSQL("SELECT MAX(id) FROM BookInfoDatabase", &temp);
+	if (!temp)
+	{
+		setError(InvalidParam, 4, "The pointer is NULL.");
+		return false;
+	}
+	m_Id = (int)(temp->getData("id")) + 1;
+	temp->Release();
 	BIRecordset->setData("id", m_Id);
 	BIRecordset->setData("count", m_CBBI.count);
 	BIRecordset->setData("name", m_CBBI.name);
@@ -169,7 +248,9 @@ bool CBook::insert()
 	BIRecordset->setData("publisher", m_CBBI.publisher);
 	BIRecordset->setData("ISBN", m_CBBI.isbn);
 	BIRecordset->setData("discription", m_Description);
+	BIRecordset->setData("ReadLevel", g_configPolicy.nDefaultBookReadLevel);
 	BIRecordset->updateDatabase();	//赋值操作
+	BIRecordset->Release();
 	return true;
 }
 bool CBook::sign()

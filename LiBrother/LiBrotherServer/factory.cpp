@@ -3,6 +3,7 @@
 #include "library.h"
 #include "user.h"
 #include "magicdb.h"
+#include "manager.h"
 Cfactory::Cfactory(IDatabase * DatabaseFile) : m_Database(DatabaseFile)
 {
 }
