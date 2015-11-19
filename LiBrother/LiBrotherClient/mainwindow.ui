@@ -113,7 +113,7 @@ Log in</string>
      <rect>
       <x>205</x>
       <y>110</y>
-      <width>341</width>
+      <width>346</width>
       <height>32</height>
      </rect>
     </property>
@@ -130,11 +130,6 @@ Log in</string>
        <item>
         <property name="text">
          <string>书名</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>作者</string>
         </property>
        </item>
        <item>

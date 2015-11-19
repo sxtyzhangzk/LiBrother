@@ -23,10 +23,7 @@ SOURCES += main.cpp\
     signupmain.cpp \
     usermain.cpp \
     bookdata.cpp \
-    userborrow.cpp \
-    announcement.cpp \
-    manager.cpp \
-    managermain.cpp
+    userborrow.cpp
 
 HEADERS  += mainwindow.h \
     login.h \
@@ -34,10 +31,7 @@ HEADERS  += mainwindow.h \
     signupmain.h \
     usermain.h \
     bookdata.h \
-    userborrow.h \
-    announcement.h \
-    manager.h \
-    managermain.h
+    userborrow.h
 
 FORMS    += mainwindow.ui \
     login.ui \
@@ -45,9 +39,6 @@ FORMS    += mainwindow.ui \
     signupmain.ui \
     usermain.ui \
     bookdata.ui \
-    userborrow.ui \
-    announcement.ui \
-    manager.ui \
-    managermain.ui
+    userborrow.ui
 
 DISTFILES +=
