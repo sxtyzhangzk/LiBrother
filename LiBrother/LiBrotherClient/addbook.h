@@ -10,7 +10,9 @@ class AddBook;
 class AddBook : public QDialog
 {
     Q_OBJECT
-
+private slots:
+      void on_pushButton_clicked();
+      void on_pushButton_2_clicked();
 public:
     explicit AddBook(QWidget *parent = 0);
     ~AddBook();

@@ -78,6 +78,19 @@
     <string>退出</string>
    </property>
   </widget>
+  <widget class="QPushButton" name="pushButton_5">
+   <property name="geometry">
+    <rect>
+     <x>140</x>
+     <y>10</y>
+     <width>115</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>查看用户信息</string>
+   </property>
+  </widget>
  </widget>
  <resources/>
  <connections>

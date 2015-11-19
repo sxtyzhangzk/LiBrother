@@ -16,7 +16,6 @@ announcement::~announcement()
 
 void announcement::on_pushButton_5_clicked()
 {
-
    announcement announcement1;
    announcement1.exec();
 }

@@ -3,6 +3,7 @@
 #include "mainwindow.h"
 #include "userborrow.h"
 #include "bookdata.h"
+#include "changepassword.h"
 
 usermain::usermain(QWidget *parent) :
     QDialog(parent),
@@ -23,6 +24,12 @@ usermain::usermain(QWidget *parent) :
 usermain::~usermain()
 {
     delete ui;
+}
+
+void usermain::on_pushButton_4_clicked()
+{
+    ChangePassword ChangePassword1;
+    ChangePassword1.exec();
 }
 
 

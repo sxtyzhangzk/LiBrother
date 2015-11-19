@@ -67,8 +67,8 @@ userborrow::~userborrow()
 //}
 void userborrow::on_pushButton_4_clicked()    /*搜索按键*/
 {
-    QString ISBN;
-    ISBN = ui->lineEdit->text();
+      QString ISBN;
+      ISBN = ui->lineEdit->text();
     IClassFactoryClient *pFactory;
     getClassFactory(&pFactory);
     ILibrary *pLibrary;
@@ -76,7 +76,7 @@ void userborrow::on_pushButton_4_clicked()    /*搜索按键*/
     IBook *pBook;
     pLibrary->queryByISBN(ISBN.toStdString().c_str(),&pBook);
     TBookBasicInfo info;
-    pBook->getBasicInfo(info);
+      pBook->getBasicInfo(info);
     std::string name = info.name;
     QString name1 = QString::fromStdString(name);
     QLabel *qlabel;
@@ -85,6 +85,7 @@ void userborrow::on_pushButton_4_clicked()    /*搜索按键*/
     pLibrary->Release();
     pFactory->Release();
 }
+
 
 void userborrow::on_pushButton_clicked()
 {
