@@ -16,7 +16,7 @@ int CLibrary::queryByName(const char * strName, IFvector& vBooks, int nCount, in
 	value0["nTop"] = nTop;
 	Json::FastWriter writer;
 	strRequest = writer.write(value0);
-	if (!sendRequest(strRequest, strRespond))//respnod[0] 1:ok 0:no book
+	if (!sendRequest(strRequest, strRespond))
 	{
 		setError(NetworkError, 0, "Network Error");
 		return -1;
@@ -50,28 +50,34 @@ bool CLibrary::queryById(int nID, IBook ** ppBook)
 	value0["nID"] = nID;
 	Json::FastWriter writer;
 	std::string str=writer.write(value0);
-	sendRequest(strRequest, strRespond);//return ifok(1/0) and results 
-	Json::Reader reader;
-	Json::Value value;
-	reader.parse(strRespond, value);
-	if (value["result"].asInt() == 1) {
-		TBookBasicInfo *Info = new TBookBasicInfo;
-		Info->id = value["id"].asInt();
-		Info->count = value["count"].asInt();
-		Info->name = value["name"].asString();
-		Info->author = value["author"].asString();
-		Info->isbn = value["isbn"].asString();
-		Info->publisher = value["publisher"].asString();
-		CBook *book = new CBook(Info);
-		book->AddRef();
-		*ppBook = book;
-		return true;
+	if (sendRequest(strRequest, strRespond)) {
+		Json::Reader reader;
+		Json::Value value;
+		reader.parse(strRespond, value);
+		if (value["result"].asString() == "1") {
+			TBookBasicInfo *Info = new TBookBasicInfo;
+			Info->id = value["id"].asInt();
+			Info->count = value["count"].asInt();
+			Info->name = value["name"].asString();
+			Info->author = value["author"].asString();
+			Info->isbn = value["isbn"].asString();
+			Info->publisher = value["publisher"].asString();
+			CBook *book = new CBook();
+			book->AddRef();
+			book->setBasicInfo(*Info);
+			*ppBook = book;
+			return true;
+		}
+		else
+		{
+			if (value["result"].asString() == "DatabaseError")
+				setError(DatabaseError, 0, "database_error");
+			else setError(InvalidParam, 1, "Invalid ID");
+			return false;
+		}
 	}
-	else
-	{
-		setError(InvalidParam, 1, "Invalid ID");//jere w about 1
-		return false;
-	}
+	else setError(NetworkError, 0, "network_error");
+	return false;
 }
 
 bool CLibrary::queryByISBN(const char * strISBN, IBook ** ppBook)
@@ -83,28 +89,34 @@ bool CLibrary::queryByISBN(const char * strISBN, IBook ** ppBook)
 	value0["isbn"] = strISBN;
 	Json::FastWriter writer;
 	std::string str = writer.write(value0);
-	sendRequest(strRequest, strRespond);//return ifok(1/0) and results 
-	Json::Reader reader;
-	Json::Value value;
-	reader.parse(strRespond, value);
-	if (value["result"].asInt() == 1) {
-		TBookBasicInfo *Info = new TBookBasicInfo;
-		Info->id = value["id"].asInt();
-		Info->count = value["count"].asInt();
-		Info->name = value["name"].asString();
-		Info->author = value["author"].asString();
-		Info->isbn = value["isbn"].asString();
-		Info->publisher = value["publisher"].asString();
-		CBook *book = new CBook(Info);
-		book->AddRef();
-		*ppBook = book;
-		return true;
+	if (sendRequest(strRequest, strRespond)) {
+		Json::Reader reader;
+		Json::Value value;
+		reader.parse(strRespond, value);
+		if (value["result"].asString() == "1") {
+			TBookBasicInfo *Info = new TBookBasicInfo;
+			Info->id = value["id"].asInt();
+			Info->count = value["count"].asInt();
+			Info->name = value["name"].asString();
+			Info->author = value["author"].asString();
+			Info->isbn = value["isbn"].asString();
+			Info->publisher = value["publisher"].asString();
+			CBook *book = new CBook();
+			book->setBasicInfo(* Info);
+			book->AddRef();
+			*ppBook = book;
+			return true;
+		}
+		else
+		{
+			if (value["result"].asString() == "DatabaseError")
+				setError(DatabaseError, 0, "database_error");
+			else setError(InvalidParam, 1, "Invalid strISBN");//jere w about 1
+			return false;
+		}
 	}
-	else
-	{
-		setError(InvalidParam, 1, "Invalid strISBN");//jere w about 1
-		return false;
-	}
+	else setError(NetworkError, 0, "network_error");
+	return false;
 }
 
 bool CLibrary::insertBook(IBook * pBook)
@@ -124,10 +136,19 @@ bool CLibrary::insertBook(IBook * pBook)
 	std::string strRequest;
 	std::string strRespond;
 	strRequest = writer.write(value0);
-	sendRequest(strRequest, strRespond);
-	Json::Reader reader;
-	Json::Value value;
-	reader.parse(strRespond, value);
-	if (value["result"].asInt() == 1) return true;
+	if (sendRequest(strRequest, strRespond)) {
+		Json::Reader reader;
+		Json::Value value;
+		reader.parse(strRespond, value);
+		if (value["result"].asString() == "1") return true;
+		else
+		{
+			if (value["result"].asString() == "DatabaseError")
+				setError(DatabaseError, 0, "database_error");
+			else setError(InvalidParam, 0, "Invalid strISBN");
+			return false;
+		}
+	}
+	else setError(NetworkError, 0, "network_error");
 	return false;
 }

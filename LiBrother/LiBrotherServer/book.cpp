@@ -16,10 +16,13 @@ CBook::~CBook()
 }
 bool CBook::check(TBookBasicInfo info_to_check)
 {
+	if (info_to_check.id == -1 || info_to_check.count < 1) return false;
+	if (info_to_check.isbn.empty() || info_to_check.name.empty() || info_to_check.publisher.empty() || info_to_check.author.empty()) return false;
 	return true;
 }
 bool CBook::bcheck(TBorrowInfo info_to_check)
 {
+	if (info_to_check.bookID == -1 || info_to_check.userID == -1) return false;
 	return true;
 }
 bool CBook::getBasicInfo(TBookBasicInfo& info)
@@ -262,5 +265,32 @@ bool CBook::sign()
 	}
 	is_from_Database = 1;
 	m_Id = m_CBBI.id;
+	return true;
+}
+bool CBook::borrow(int number)
+{
+	if (!is_from_Database)	//判断是否来自数据库
+	{
+		setError(UnsupportedMethod, 5, "This book do not exist in the database.");
+		return false;	//不是来自数据库的书，不可删除，返回false
+	}
+	if (m_CBBI.count < number)	//判断删去的书本数目是否合法
+	{
+		setError(InvalidParam, 6, "The number of this book is not enough.");
+		return false;	//删的太多，返回false
+	}
+	m_CBBI.count -= number;
+	IRecordset * BIRecordset = nullptr;
+	std::stringstream str;
+	str << "SELECT * FROM BookInfoDatabase WHERE bookID=" << m_Id;
+	m_pDatabase->executeSQL(str.str().c_str(), &BIRecordset);
+	if (!BIRecordset)
+	{
+		setError(InvalidParam, 4, "The pointer is NULL.");
+		return false;
+	}
+	BIRecordset->setData("count", m_CBBI.count);
+	BIRecordset->updateDatabase();	//赋值操作
+	BIRecordset->Release();
 	return true;
 }

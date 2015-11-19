@@ -16,10 +16,13 @@ public:
 	virtual bool setDescription(const char * description) override;
 	virtual bool deleteBook(int number) override;
 	virtual bool getBorrowInfo(std::vector<TBorrowInfo> &binfo) override;
+	virtual int getBookReadLevel() override;
+	virtual bool setBookReadLevel(int nReadLevel) override;
 protected:
 	TBookBasicInfo * m_CBBI;
 	std::string m_Description;
-	int m_Id;
+	int id;
+	int read_level;
 };
 
 #endif

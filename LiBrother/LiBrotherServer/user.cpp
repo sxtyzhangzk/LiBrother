@@ -4,7 +4,8 @@
 #include"book.h"
 #include<time.h>
 #include "config.h"
-
+#include<botan\bcrypt.h>
+#include<botan\auto_rng.h>
 CUser::CUser(IDatabase * DatabaseFile)
 {
 	m_pDatabase = DatabaseFile;
@@ -19,10 +20,13 @@ CUser::~CUser()
 }
 bool CUser::check(TUserBasicInfo info_to_check)
 {
+	if (info_to_check.id == -1) return false;
+	if (info_to_check.email.empty() || info_to_check.name.empty()) return false;
 	return true;
 }
 bool CUser::bcheck(TBorrowInfo info_to_check)
 {
+	if (info_to_check.bookID == -1 || info_to_check.userID == -1) return false;
 	return true;
 }
 bool CUser::getBasicInfo(TUserBasicInfo& info)
@@ -70,10 +74,44 @@ bool CUser::setBasicInfo(const TUserBasicInfo& info)
 }
 bool CUser::verifyPassword(const char * strPWD)
 {
-	return true;
+	if (!strPWD)
+	{
+		setError(InvalidParam, 4, "The pointer is null.");
+		return false;
+	}
+	if (!is_from_Database)
+	{
+		setError(InvalidParam, 2, "This user is not valid.");
+		return false;
+	}
+	std::string password;
+	password = m_password;
+	return Botan::check_bcrypt(strPWD, password);
 }
 bool CUser::setPassword(const char * strPWD)
 {
+	if (!strPWD)
+	{
+		setError(InvalidParam, 4, "The pointer is null.");
+		return false;
+	}
+	Botan::AutoSeeded_RNG rng;
+	m_password = Botan::generate_bcrypt(strPWD, rng, 12);
+	if (is_from_Database)
+	{
+		IRecordset * UIRecordset;
+		std::stringstream str;
+		str << "SELECT * FROM UserInfoDatabase WHERE userID=" << m_Id;
+		m_pDatabase->executeSQL(str.str().c_str(), &UIRecordset);
+		if (!UIRecordset)
+		{
+			setError(InvalidParam, 4, "The pointer is NULL.");
+			return false;
+		}
+		UIRecordset->setData("password", strPWD);
+		UIRecordset->updateDatabase();
+		UIRecordset->Release();
+	}
 	return true;
 }
 bool CUser::getBorrowedBooks(std::vector<TBorrowInfo> &binfo)
@@ -150,7 +188,7 @@ bool CUser::borrowBook(IBook * pBook)
 	 UIRecordset->setData("bookID", CBBI.id);
 	 UIRecordset->setData("borrowTime",time(0));
 	 UIRecordset->setData("flag", 0);
-	 ((CBook*)pBook)->deleteBook(1);
+	 ((CBook*)pBook)->borrow(1);
 	 UIRecordset->Release();
 	 return 0;
 }
@@ -217,13 +255,19 @@ bool CUser::insert()
 		setError(InvalidParam, 1, "This user is not valid.");
 		return false;
 	}
-	IRecordset * UIRecordset;
-	IRecordset * temp;
+	IRecordset * UIRecordset=nullptr;
+	IRecordset * temp=nullptr;
 	m_pDatabase->getTable("UserInfoDatabase", &UIRecordset);
-	UIRecordset->addNew();
-	if (!m_pDatabase->executeSQL("SELECT MAX(id) FROM UserInfoDatabase", &temp))
+	if (!UIRecordset)
 	{
-		setError(DatabaseError, 9, "There is some wrong with our database.");
+		setError(InvalidParam, 4, "The pointer is NULL.");
+		return false;
+	}
+	UIRecordset->addNew();
+	!m_pDatabase->executeSQL("SELECT MAX(id) FROM UserInfoDatabase", &temp);
+	if (!temp)
+	{
+		setError(InvalidParam, 4, "The pointer is NULL.");
 		return false;
 	}
 	m_Id = (int)(temp->getData("id"))+ 1;
@@ -235,6 +279,8 @@ bool CUser::insert()
 	UIRecordset->setData("AuthLevel", g_configPolicy.nDefaultUserAuthLevel);
 	UIRecordset->setData("ReadLevel", g_configPolicy.nDefaultUserReadLevel);
 	UIRecordset->updateDatabase();
+	UIRecordset->Release();
+	temp->Release();
 	return true;
 }
 int CUser::getAuthLevel()
@@ -244,15 +290,16 @@ int CUser::getAuthLevel()
 		setError(InvalidParam, 1, "This user is not valid.");
 		return false;	//不是来自数据库的书，不可借阅，返回false
 	}
-	IRecordset * BRecordset;
+	IRecordset * URecordset=nullptr;
 	std::stringstream str;
 	str << "SELECT * FROM UserinfoDatabase WHERE userID=" << m_Id;
-	if (!m_pDatabase->executeSQL(str.str().c_str(), &BRecordset))
+	m_pDatabase->executeSQL(str.str().c_str(), &URecordset);
+	if (!URecordset)
 	{
-		setError(DatabaseError, 9, "There is some wrong with our database.");
+		setError(InvalidParam, 4, "The pointer is NULL.");
 		return false;
 	}
-	return BRecordset->getData("AuthLevel");
+	return URecordset->getData("AuthLevel");
 }
 int CUser::getReadLevel()
 {
@@ -279,15 +326,16 @@ bool CUser::setAuthLevel(int nAuthLevel)
 		return false;	//不是来自数据库的书，不可借阅，返回false
 	}
 	if (nAuthLevel == -1) return false;
-	IRecordset * BRecordset;
+	IRecordset * URecordset;
 	std::stringstream str;
 	str << "SELECT * FROM UserInfoDatabase WHERE userID=" << m_Id;
-	if (!m_pDatabase->executeSQL(str.str().c_str(), &BRecordset))
+	m_pDatabase->executeSQL(str.str().c_str(), &URecordset);
+	if (!URecordset)
 	{
 		setError(DatabaseError, 9, "There is some wrong with our database.");
 		return false;
 	}
-	BRecordset->setData("AuthLevel", nAuthLevel);
+	URecordset->setData("AuthLevel", nAuthLevel);
 	return true;
 }
 bool CUser::setReadLevel(int nReadLevel)
@@ -298,14 +346,15 @@ bool CUser::setReadLevel(int nReadLevel)
 		return false;	//不是来自数据库的书，不可借阅，返回false
 	}
 	if (nReadLevel == -1) return false;
-	IRecordset * BRecordset;
+	IRecordset * URecordset;
 	std::stringstream str;
 	str << "SELECT * FROM UserInfoDatabase WHERE userID=" << m_Id;
-	if (!m_pDatabase->executeSQL(str.str().c_str(), &BRecordset))
+	m_pDatabase->executeSQL(str.str().c_str(), &URecordset);
+	if (!URecordset)
 	{
 		setError(DatabaseError, 9, "There is some wrong with our database.");
 		return false;
 	}
-	BRecordset->setData("ReadLevel", nReadLevel);
+	URecordset->setData("ReadLevel", nReadLevel);
 	return true;
 }
