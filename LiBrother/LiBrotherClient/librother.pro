@@ -23,7 +23,7 @@ SOURCES += main.cpp\
     signupmain.cpp \
     usermain.cpp \
     bookdata.cpp \
-    userborrow.cpp \
+    userborrow.cpp\
     announcement.cpp\
     manager.cpp\
     managermain.cpp \

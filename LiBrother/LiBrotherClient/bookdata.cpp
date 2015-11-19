@@ -3,12 +3,35 @@
 #include "QString"
 #include "client_interfaces.h"
 
+#include "qmessagebox.h"
+#include "QMessageBox"
+
 
 bookdata::bookdata(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::bookdata)
 {
     ui->setupUi(this);
+
+    IClassFactoryClient *factory1;
+    getClassFactory(&factory1);
+    ILibrary *library1;
+    factory1->getLibrary(&library1);
+
+
+
+    //std::string m_strCombo1 = m_strCombo.toStdString();
+    //std::string m_strBookID1 = m_strBookID.toStdString();
+    std::string bDescription;
+    TBookBasicInfo basic1;
+    IBook *iBook1;
+
+    bool fPd = library1->queryById(m_strBookID,&iBook1);
+
+    if(fPd)
+    {
+    iBook1->setBasicInfo(basic1);
+    iBook1->getDescription(bDescription);
 
     IClassFactoryClient * factory1;
     getClassFactory(&factory1);
@@ -34,6 +57,7 @@ bookdata::bookdata(QWidget *parent) :
     QString bPublisher1 = QString::fromStdString(basic1.publisher);
     bPublisher1 = QString("出版社：") + bPublisher1;
 
+
     std::string bDescription;
     ((IBook*)vBooks[0])->getDescription(bDescription);
     QString bDescription1 = QString::fromStdString(bDescription);
@@ -45,8 +69,14 @@ bookdata::bookdata(QWidget *parent) :
     ui->label_5->setText(bIsbn1);
     ui->label_6->setText(bPublisher1);
     ui->textEdit->setText(bDescription1);
-
-
+    }
+    else
+    {
+        QMessageBox::information(this,"警告","该书ID号有误");
+    }
+    factory1->Release();
+    library1->Release();
+    iBook1->Release();
 
     //ui->lcdNumber->display(8);
     //ui->lcdNumber->setPalette(Qt::red);
@@ -63,7 +93,7 @@ bookdata::~bookdata()
     delete ui;
 }
 
-void bookdata::setBookName(const QString& name)
+void bookdata::setBookID(const int& bID1)//传入书本信息的ID号
 {
-    m_strBookName = name;
+    m_strBookID = bID1;
 }

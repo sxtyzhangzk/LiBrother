@@ -35,11 +35,6 @@
        </item>
        <item>
         <property name="text">
-         <string>作者</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
          <string>ISBN</string>
         </property>
        </item>
