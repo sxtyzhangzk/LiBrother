@@ -2,8 +2,10 @@
 #include "ui_bookdata.h"
 #include "QString"
 #include "client_interfaces.h"
+
 #include "qmessagebox.h"
 #include "QMessageBox"
+
 
 bookdata::bookdata(QWidget *parent) :
     QDialog(parent),
@@ -31,6 +33,17 @@ bookdata::bookdata(QWidget *parent) :
     iBook1->setBasicInfo(basic1);
     iBook1->getDescription(bDescription);
 
+    IClassFactoryClient * factory1;
+    getClassFactory(&factory1);
+    ILibrary * library1;
+    factory1->getLibrary(&library1);
+    IFvector vBooks;
+
+    std::string m_strBookName1 = m_strBookName.toStdString();
+    library1->queryByName(m_strBookName1.c_str(),vBooks,INT_MAX,1);
+
+    TBookBasicInfo basic1;
+    ((IBook*)vBooks[0])->getBasicInfo(basic1);
 
     QString bName1 = QString::fromStdString(basic1.name);
     int bCount = basic1.count;
@@ -44,6 +57,9 @@ bookdata::bookdata(QWidget *parent) :
     QString bPublisher1 = QString::fromStdString(basic1.publisher);
     bPublisher1 = QString("出版社：") + bPublisher1;
 
+
+    std::string bDescription;
+    ((IBook*)vBooks[0])->getDescription(bDescription);
     QString bDescription1 = QString::fromStdString(bDescription);
 
     ui->label_4->setText(bAuthor1);
@@ -53,7 +69,6 @@ bookdata::bookdata(QWidget *parent) :
     ui->label_5->setText(bIsbn1);
     ui->label_6->setText(bPublisher1);
     ui->textEdit->setText(bDescription1);
-
     }
     else
     {
