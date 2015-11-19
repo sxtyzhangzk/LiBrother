@@ -22,6 +22,7 @@ public:
 	bool sign();
 	bool check(TBookBasicInfo info_to_check);
 	bool bcheck(TBorrowInfo info_to_check);
+	bool borrow(int number);
 	~CBook();
 protected:
 	IDatabase * m_pDatabase;
