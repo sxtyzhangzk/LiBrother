@@ -23,6 +23,7 @@
     <ClCompile Include="connection_pool.cpp" />
     <ClCompile Include="credentials_manager.cpp" />
     <ClCompile Include="factory.cpp" />
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="manager.cpp" />
     <ClCompile Include="netserver_win.cpp" />
     <ClCompile Include="library.cpp" />

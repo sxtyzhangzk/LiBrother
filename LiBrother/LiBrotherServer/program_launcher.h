@@ -20,8 +20,9 @@ public:
 	int runProgram(
 		const std::string& strPath, 
 		const std::vector<std::string>& vArgs, 
+		const std::string& strWorkDir,
 		TLaunchType type, 
-		int nMilliseconds);
+		int nMilliseconds = -1);
 
 	bool stopProgram(int nID, int nTimeoutMillisecond, bool bTerminate);
 
@@ -35,6 +36,7 @@ protected:
 		handle_t hProcess;
 		std::string strPath;
 		std::vector<std::string> strArgs;
+		std::string strWorkDir;
 		int nWaitTime;
 
 		std::timed_mutex * pmutexLauncher;
