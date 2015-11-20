@@ -2,6 +2,7 @@
 #define USERMAIN_H
 
 #include <QDialog>
+#include <client_interfaces.h>
 
 namespace Ui {
 class usermain;
@@ -24,10 +25,9 @@ private slots:
 
     void on_pushButton_4_clicked();
 
-
-
 private:
     Ui::usermain *ui;
+    IClassFactoryClient *factory1;
 };
 
 #endif // USERMAIN_H

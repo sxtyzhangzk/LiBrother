@@ -4,6 +4,7 @@
 #include "mainwindow.h"
 #include "QMessageBox"
 #include "QString"
+#include "client_interfaces.h"
 #include "changepassword.h"
 
 login::login(QWidget *parent) :
@@ -21,20 +22,29 @@ login::~login()
 
 void login::on_pushButton_clicked()
 {
-    QString name;
-    QString password;
-    name = ui->lineEdit->text();
-    password = ui->lineEdit_2->text();
-    if(name == "lalala")
+    IClassFactoryClient *factory1;
+    getClassFactory(&factory1);
+    IAuthManager *iUser;
+    factory1->getAuthManager(&iUser);
+
+    QString uName = ui->lineEdit->text();//得到界面上的的用户名和密码
+    QString uPassword = ui->lineEdit_2->text();
+    std::string uName1 = uName.toStdString();
+    std::string uPassword1 = uPassword.toStdString();
+
+    bool Lpd = iUser->Login(uName1.c_str(),uPassword1.c_str());//登陆判断
+    if(Lpd)
     {
-        close();
         usermain user1;
+        close();
         user1.exec();
     }
     else
     {
-        QMessageBox::information(this,"Title","助教我们用户名是lalala，你们很聪明的，我们不是故意的");
+        QMessageBox::information(this,"Title","用户名或密码有误");
     }
+
+    factory1->Release();
 }
 
 
