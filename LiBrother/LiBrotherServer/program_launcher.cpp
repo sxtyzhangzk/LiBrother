@@ -4,7 +4,7 @@
 #include <Windows.h>
 
 int CProgramLauncher::runProgram(
-	const std::string& strPath, const std::vector<std::string>& vArgs,
+	const std::string& strPath, const std::vector<std::string>& vArgs, const std::string& strWorkDir,
 	TLaunchType type, int nMilliseconds)
 {
 	TTask * pTask = new TTask;
@@ -12,6 +12,7 @@ int CProgramLauncher::runProgram(
 	pTask->strPath = strPath;
 	for (auto arg : vArgs)
 		pTask->strArgs.push_back(arg);
+	pTask->strWorkDir = strWorkDir;
 	pTask->type = type;
 
 	switch (type)
@@ -109,7 +110,7 @@ bool CProgramLauncher::StartProcess(TTask& task)
 #endif
 	STARTUPINFOA startupInfo;
 	PROCESS_INFORMATION processInfo;
-	if (!CreateProcessA(task.strPath.c_str(), cCmd, NULL, NULL, FALSE, 0, NULL, NULL, &startupInfo, &processInfo))
+	if (!CreateProcessA(task.strPath.c_str(), cCmd, NULL, NULL, FALSE, 0, NULL, task.strWorkDir.c_str(), &startupInfo, &processInfo))
 		return false;
 	task.hProcess = processInfo.hProcess;
 	return true;
