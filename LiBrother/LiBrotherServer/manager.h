@@ -3,18 +3,19 @@
 
 #include "function_interfaces.h"
 #include "common_types.h"
+#include"connection_pool.h"
+#include <driver/mysql_public_iface.h>
 
-interface IDatabase;
 class CManager :public IUserManager
 {
 	IMPLEMENT_INTERFACE
 public:
-	CManager(IDatabase * DatabaseFile);
+	CManager(CConnectionPool * DatabaseFile);
 	virtual bool getUserByID(int nID, IUser ** ppUser) override;
 	virtual bool getUserByName(const char * strName, IUser ** ppUser) override;
 	virtual bool insertUser(IUser * pUser) override;
 	~CManager();
 protected:
-	IDatabase * m_pDatabase;
+	CConnectionPool * m_pDatabase;
 };
 #endif

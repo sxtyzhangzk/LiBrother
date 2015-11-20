@@ -8,7 +8,8 @@
 struct TBookBasicInfo
 {
 	int id;		//图书ID
-	int count;	//在馆数量
+	int count;	//在馆总数量
+	int bcount;		//在外数量
 	std::string name;	//图书名称
 	std::string author;	//图书作者
 	std::string isbn;	//ISBN号

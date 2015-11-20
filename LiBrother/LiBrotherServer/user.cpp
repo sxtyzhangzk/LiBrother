@@ -6,7 +6,7 @@
 #include "config.h"
 #include<botan\bcrypt.h>
 #include<botan\auto_rng.h>
-CUser::CUser(IDatabase * DatabaseFile)
+CUser::CUser(CConnectionPool * DatabaseFile)
 {
 	m_pDatabase = DatabaseFile;
 	m_Id = -1;
@@ -20,7 +20,7 @@ CUser::~CUser()
 }
 bool CUser::check(TUserBasicInfo info_to_check)
 {
-	if (info_to_check.id == -1) return false;
+	if (info_to_check.id == -1 || info_to_check.gender==-1) return false;
 	if (info_to_check.email.empty() || info_to_check.name.empty()) return false;
 	return true;
 }
@@ -54,21 +54,22 @@ bool CUser::setBasicInfo(const TUserBasicInfo& info)
 	m_CUBI = info;	
 	if (is_from_Database)
 	{
-		IRecordset * UIRecordset;
-		std::stringstream str;
-		str << "SELECT * FROM UserInfoDatabase WHERE userID=" << m_Id;
-		m_pDatabase->executeSQL(str.str().c_str(), &UIRecordset);
-		if (!UIRecordset)
+		try
 		{
-			setError(InvalidParam, 4, "The pointer is NULL.");
+			sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+			std::shared_ptr<sql::Statement> stat(c->createStatement());
+			std::stringstream str;
+			str << "UPDATE UserInfoDatabase SET name = " << '\'' << info.name << '\'' << ", " <<
+				"email = " << '\'' << info.email << '\'' << ", " <<
+				"gender = " << info.gender <<
+				" WHERE id = " << m_Id;
+			stat->execute(str.str());
+		}
+		catch (sql::SQLException& e)
+		{
+			setError(DatabaseError, 9, (std::string("There is some wrong with our database.\n") + e.what()).c_str());
 			return false;
 		}
-		UIRecordset->setData("id", m_CUBI.id);
-		UIRecordset->setData("gender", m_CUBI.gender);
-		UIRecordset->setData("email", m_CUBI.email);
-		UIRecordset->setData("name", m_CUBI.name);
-		UIRecordset->updateDatabase();	
-		UIRecordset->Release();
 	}
 	return true;
 }
@@ -99,18 +100,20 @@ bool CUser::setPassword(const char * strPWD)
 	m_password = Botan::generate_bcrypt(strPWD, rng, 12);
 	if (is_from_Database)
 	{
-		IRecordset * UIRecordset;
-		std::stringstream str;
-		str << "SELECT * FROM UserInfoDatabase WHERE userID=" << m_Id;
-		m_pDatabase->executeSQL(str.str().c_str(), &UIRecordset);
-		if (!UIRecordset)
+		try
 		{
-			setError(InvalidParam, 4, "The pointer is NULL.");
+			sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+			std::shared_ptr<sql::Statement> stat(c->createStatement());
+			std::stringstream str;
+			str << "UPDATE UserInfoDatabase SET password = " << '\'' << m_password << '\'' << " WHERE userID=" << m_Id;
+			stat->execute(str.str());
+			return true;
+		}
+		catch (sql::SQLException& e)
+		{
+			setError(DatabaseError, 9, (std::string("There is some wrong with our database.\n") + e.what()).c_str());
 			return false;
 		}
-		UIRecordset->setData("password", strPWD);
-		UIRecordset->updateDatabase();
-		UIRecordset->Release();
 	}
 	return true;
 }
@@ -122,35 +125,35 @@ bool CUser::getBorrowedBooks(std::vector<TBorrowInfo> &binfo)
 		return false;	//不是来自数据库的书，不可借阅，返回false
 	}
 	binfo.clear();
-	IRecordset * URecordset;
+	sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+	std::shared_ptr<sql::Statement> stat(c->createStatement());
 	std::stringstream str;
 	str << "SELECT * FROM BorrowDatabase WHERE userID=" << m_Id;
-	m_pDatabase->executeSQL(str.str().c_str(), &URecordset);
-	if (!URecordset)
+	stat->execute(str.str());
+	std::shared_ptr<sql::ResultSet> result(stat->getResultSet());
+	try
 	{
-		setError(InvalidParam, 4, "The pointer is NULL.");
+		while (result->next())
+		{
+			TBorrowInfo Info;
+			Info.userID = m_Id;
+			Info.bookID = result->getInt("bookID");
+			Info.borrowTime = result->getInt64("borrowTime");
+			Info.flag = result->getBoolean("flag");	//从数据库获取一个借阅信息
+			if (!bcheck(Info))	//判断得到的信息是否合法
+			{
+				setError(DatabaseError, 9, "There is some wrong with our database.");
+				return false;	//不合法，认为数据库异常，返回false
+			}
+			binfo.push_back(Info);
+		}	//合法，塞进容器并移向下一条
+		return true;
+	}
+	catch (sql::SQLException& e)
+	{
+		setError(DatabaseError, 9, (std::string("There is some wrong with our database.\n") + e.what()).c_str());
 		return false;
 	}
-	if (URecordset->getSize() <1)	//判断记录集是否为空
-	{
-		setError(InvalidParam, 8, "The user has no borrow information.");
-		return false;	//为空，返回false
-	}
-	do
-	{
-		TBorrowInfo Info;
-		Info.userID = m_Id;
-		Info.bookID = URecordset->getData("bookID");
-		Info.borrowTime = URecordset->getData("borrowTime");
-		Info.flag = URecordset->getData("flag");	//从数据库获取一个借阅信息
-		if (!bcheck(Info))	//判断得到的信息是否合法
-		{
-			setError(DatabaseError, 9, "There is some wrong with our database.");
-			return false;	//不合法，认为数据库异常，返回false
-		}
-		binfo.push_back(Info);
-	} while (URecordset->nextRecord());	//合法，塞进容器并移向下一条
-	URecordset->Release();
 	return true;
 }
 bool CUser::borrowBook(IBook * pBook)
@@ -165,32 +168,27 @@ bool CUser::borrowBook(IBook * pBook)
 		setError(PermissionDenied, 1258011, "The user has no permission.");
 		return false;
 	}
-	TBookBasicInfo CBBI;
-	if (!((CBook*)pBook)->getBasicInfo(CBBI))
+	if (((CBook*)pBook)->borrow(1))
 	{
-		setError(InvalidParam, 1, "This book is not valid.");
-		return false;
+		try
+		{
+			TBookBasicInfo info;
+			((CBook*)pBook)->getBasicInfo(info);
+			sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+			std::shared_ptr<sql::Statement> stat(c->createStatement());
+			std::stringstream str;
+			str << "INSERT INTO BorrowDatabase(id) VALUES ("<<info.id << " ," << m_Id << " ," << time(0) << " ," << 0<<")";
+			stat->execute(str.str());
+			return true;
+		}
+		catch (sql::SQLException& e)
+		{
+			((CBook*)pBook)->borrow(-1);
+			setError(DatabaseError, 9, (std::string("There is some wrong with our database.\n") + e.what()).c_str());
+			return false;
+		}
 	}
-	 if (!CBBI.count)
-	 {
-		 setError(Other, 12580, "This book has been borrowed.");
-		 return false;
-	 }
-	 IRecordset * UIRecordset;
-	 m_pDatabase->getTable("BorrowDatabase", &UIRecordset);
-	 if (!UIRecordset)
-	 {
-		 setError(InvalidParam, 4, "The pointer is NULL.");
-		 return false;
-	 }
-	 UIRecordset->addNew();
-	 UIRecordset->setData("userID", m_Id);
-	 UIRecordset->setData("bookID", CBBI.id);
-	 UIRecordset->setData("borrowTime",time(0));
-	 UIRecordset->setData("flag", 0);
-	 ((CBook*)pBook)->borrow(1);
-	 UIRecordset->Release();
-	 return 0;
+	return true;
 }
 bool CUser::returnBook(IBook * pBook)
 {
@@ -204,20 +202,26 @@ bool CUser::returnBook(IBook * pBook)
 		setError(PermissionDenied, 1258011, "The user has no permission.");
 		return false;
 	}
-	TBookBasicInfo CBBI;
-	if (!((CBook*)pBook)->getBasicInfo(CBBI))
+	if (((CBook*)pBook)->borrow(-1))
 	{
-		setError(InvalidParam, 12345, "This user is not valid.");
-		return false;
+		try
+		{
+			TBookBasicInfo info;
+			((CBook*)pBook)->getBasicInfo(info);
+			sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+			std::shared_ptr<sql::Statement> stat(c->createStatement());
+			std::stringstream str;
+			str << "INSERT INTO BorrowDatabase(id) VALUES (" << info.id << " ," << m_Id << " ," << time(0) << " ," << 1 << ")";
+			stat->execute(str.str());
+			return true;
+		}
+		catch (sql::SQLException& e)
+		{
+			((CBook*)pBook)->borrow(1);
+			setError(DatabaseError, 9, (std::string("There is some wrong with our database.\n") + e.what()).c_str());
+			return false;
+		}
 	}
-	IRecordset * UIRecordset;
-	m_pDatabase->getTable("BorrowDatabase", &UIRecordset);
-	UIRecordset->addNew();
-	UIRecordset->setData("userID", m_Id);
-	UIRecordset->setData("bookID", CBBI.id);
-	UIRecordset->setData("borrowTime", time(0));
-	UIRecordset->setData("flag", 1);
-	((CBook*)pBook)->deleteBook(-1);
 	return true;
 }
 bool CUser::deleteUser()
@@ -227,9 +231,19 @@ bool CUser::deleteUser()
 		setError(UnsupportedMethod, 4008517, "The user does not exist in the database");
 		return false;
 	}
-	std::stringstream str;
-	str << "DELETE FROM UserInfoDatabse WHERE userID=" << m_Id;
-	m_pDatabase->executeSQL(str.str().c_str(), nullptr);
+	try 
+	{
+		sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+		std::shared_ptr<sql::Statement> stat(c->createStatement());
+		std::stringstream str;
+		str << "DELETE FROM UserInfoDatabse WHERE userID=" << m_Id;
+		stat->execute(str.str());
+	}
+	catch (sql::SQLException& e)
+	{
+		setError(DatabaseError, 9, (std::string("There is some wrong with our database.\n") + e.what()).c_str());
+		return false;
+	}
 	return true;
 }
 bool CUser::sign()
@@ -255,32 +269,26 @@ bool CUser::insert()
 		setError(InvalidParam, 1, "This user is not valid.");
 		return false;
 	}
-	IRecordset * UIRecordset=nullptr;
-	IRecordset * temp=nullptr;
-	m_pDatabase->getTable("UserInfoDatabase", &UIRecordset);
-	if (!UIRecordset)
+	try
 	{
-		setError(InvalidParam, 4, "The pointer is NULL.");
+		sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+		std::shared_ptr<sql::Statement> stat(c->createStatement());
+		std::stringstream str;
+		str << "INSERT INTO UserInfoDatabase(id) VALUES (null)";
+		stat->execute(str.str());
+		sign();
+		setBasicInfo(m_CUBI);
+		setAuthLevel(g_configPolicy.nDefaultUserAuthLevel);
+		setReadLevel(g_configPolicy.nDefaultUserReadLevel);
+		str << "UPDATE UserInfoDatabase password = " << '\'' << m_password << '\'' << " WHERE id=" << m_Id;
+		stat->execute(str.str());
+		return true;
+	}
+	catch (sql::SQLException& e)
+	{
+		setError(DatabaseError, 9, (std::string("There is some wrong with our database.\n") + e.what()).c_str());
 		return false;
 	}
-	UIRecordset->addNew();
-	!m_pDatabase->executeSQL("SELECT MAX(id) FROM UserInfoDatabase", &temp);
-	if (!temp)
-	{
-		setError(InvalidParam, 4, "The pointer is NULL.");
-		return false;
-	}
-	m_Id = (int)(temp->getData("id"))+ 1;
-	UIRecordset->setData("id", m_Id);
-	UIRecordset->setData("gender", m_CUBI.gender);
-	UIRecordset->setData("email", m_CUBI.email);
-	UIRecordset->setData("name", m_CUBI.name);
-	UIRecordset->setData("password", m_password);
-	UIRecordset->setData("AuthLevel", g_configPolicy.nDefaultUserAuthLevel);
-	UIRecordset->setData("ReadLevel", g_configPolicy.nDefaultUserReadLevel);
-	UIRecordset->updateDatabase();
-	UIRecordset->Release();
-	temp->Release();
 	return true;
 }
 int CUser::getAuthLevel()
@@ -290,16 +298,22 @@ int CUser::getAuthLevel()
 		setError(InvalidParam, 1, "This user is not valid.");
 		return false;	//不是来自数据库的书，不可借阅，返回false
 	}
-	IRecordset * URecordset=nullptr;
-	std::stringstream str;
-	str << "SELECT * FROM UserinfoDatabase WHERE userID=" << m_Id;
-	m_pDatabase->executeSQL(str.str().c_str(), &URecordset);
-	if (!URecordset)
+	try
 	{
-		setError(InvalidParam, 4, "The pointer is NULL.");
+		sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+		std::shared_ptr<sql::Statement> stat(c->createStatement());
+		std::stringstream str;
+		str << "SELECT AuthLevel FROM UserInfoDatabase WHERE userID = " << m_Id;
+		stat->execute(str.str());
+		std::shared_ptr<sql::ResultSet> result(stat->getResultSet());
+		return result->getInt("AuthLevel");
+	}
+	catch (sql::SQLException& e)
+	{
+		setError(DatabaseError, 9, (std::string("There is some wrong with our database.\n") + e.what()).c_str());
 		return false;
 	}
-	return URecordset->getData("AuthLevel");
+	return true;
 }
 int CUser::getReadLevel()
 {
@@ -308,15 +322,22 @@ int CUser::getReadLevel()
 		setError(InvalidParam, 1, "This user is not valid.");
 		return false;	//不是来自数据库的书，不可借阅，返回false
 	}
-	IRecordset * BRecordset;
-	std::stringstream str;
-	str << "SELECT * FROM UserinfoDatabase WHERE userID=" << m_Id;
-	if (!m_pDatabase->executeSQL(str.str().c_str(), &BRecordset))
+	try
 	{
-		setError(DatabaseError, 9, "There is some wrong with our database.");
+		sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+		std::shared_ptr<sql::Statement> stat(c->createStatement());
+		std::stringstream str;
+		str << "SELECT ReadLevel FROM UserInfoDatabase WHERE userID = " << m_Id;
+		stat->execute(str.str());
+		std::shared_ptr<sql::ResultSet> result(stat->getResultSet());
+		return result->getInt("ReadLevel");
+	}
+	catch (sql::SQLException& e)
+	{
+		setError(DatabaseError, 9, (std::string("There is some wrong with our database.\n") + e.what()).c_str());
 		return false;
 	}
-	return BRecordset->getData("ReadLevel");
+	return true;
 }
 bool CUser::setAuthLevel(int nAuthLevel)
 {
@@ -325,17 +346,20 @@ bool CUser::setAuthLevel(int nAuthLevel)
 		setError(InvalidParam, 1, "This book is not valid.");
 		return false;	//不是来自数据库的书，不可借阅，返回false
 	}
-	if (nAuthLevel == -1) return false;
-	IRecordset * URecordset;
-	std::stringstream str;
-	str << "SELECT * FROM UserInfoDatabase WHERE userID=" << m_Id;
-	m_pDatabase->executeSQL(str.str().c_str(), &URecordset);
-	if (!URecordset)
+	try
 	{
-		setError(DatabaseError, 9, "There is some wrong with our database.");
+		sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+		std::shared_ptr<sql::Statement> stat(c->createStatement());
+		std::stringstream str;
+		str << "UPDATE FROM UserInfoDatabase AuthLevel = "<<nAuthLevel<<" WHERE userID = " << m_Id;
+		stat->execute(str.str());
+		return true;
+	}
+	catch (sql::SQLException& e)
+	{
+		setError(DatabaseError, 9, (std::string("There is some wrong with our database.\n") + e.what()).c_str());
 		return false;
 	}
-	URecordset->setData("AuthLevel", nAuthLevel);
 	return true;
 }
 bool CUser::setReadLevel(int nReadLevel)
@@ -345,16 +369,24 @@ bool CUser::setReadLevel(int nReadLevel)
 		setError(InvalidParam, 1, "This book is not valid.");
 		return false;	//不是来自数据库的书，不可借阅，返回false
 	}
-	if (nReadLevel == -1) return false;
-	IRecordset * URecordset;
-	std::stringstream str;
-	str << "SELECT * FROM UserInfoDatabase WHERE userID=" << m_Id;
-	m_pDatabase->executeSQL(str.str().c_str(), &URecordset);
-	if (!URecordset)
+	try
 	{
-		setError(DatabaseError, 9, "There is some wrong with our database.");
+		sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+		std::shared_ptr<sql::Statement> stat(c->createStatement());
+		std::stringstream str;
+		str << "UPDATE FROM UserInfoDatabase ReadLevel = " << nReadLevel << " WHERE userID = " << m_Id;
+		stat->execute(str.str());
+		return true;
+	}
+	catch (sql::SQLException& e)
+	{
+		setError(DatabaseError, 9, (std::string("There is some wrong with our database.\n") + e.what()).c_str());
 		return false;
 	}
-	URecordset->setData("ReadLevel", nReadLevel);
+	return true;
+}
+bool CUser::straightsetpassword(const char * strPWD)
+{
+	m_password = strPWD;
 	return true;
 }
