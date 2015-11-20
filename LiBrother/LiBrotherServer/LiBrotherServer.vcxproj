@@ -20,11 +20,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="book.cpp" />
+    <ClCompile Include="connection_pool.cpp" />
     <ClCompile Include="credentials_manager.cpp" />
     <ClCompile Include="factory.cpp" />
     <ClCompile Include="manager.cpp" />
     <ClCompile Include="netserver_win.cpp" />
     <ClCompile Include="library.cpp" />
+    <ClCompile Include="program_launcher.cpp" />
     <ClCompile Include="session.cpp" />
     <ClCompile Include="session_manager.cpp" />
     <ClCompile Include="user.cpp" />

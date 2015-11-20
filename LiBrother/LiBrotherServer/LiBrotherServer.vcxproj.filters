@@ -80,5 +80,11 @@
     <ClCompile Include="session_manager.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="connection_pool.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="program_launcher.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

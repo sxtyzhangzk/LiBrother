@@ -27,7 +27,11 @@ struct TErrInfo
 	char description[ErrorDescriptionSize];	//错误的描述[不使用时置为nullptr]
 	TErrInfo(ErrType type = None, int code = 0, const char * description = nullptr) : type(type), code(code)
 	{
-		strncpy(this->description, description, ErrorDescriptionSize);
+#if _MSC_VER >= 1500
+		strncpy_s(this->description, description, ErrorDescriptionSize - 1);
+#else
+		strncpy(this->description, description, ErrorDescriptionSize - 1);
+#endif
 	}
 };
 

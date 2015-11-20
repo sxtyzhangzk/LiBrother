@@ -3,8 +3,8 @@
 
 #include <string>
 #include <vector>
-#include <queue>
-#include <chrono>
+#include <thread>
+#include <mutex>
 
 class CProgramLauncher
 {
@@ -23,7 +23,7 @@ public:
 		TLaunchType type, 
 		int nMilliseconds);
 
-	bool waitForStop(int nID, int nTimeoutMillisecond, bool bTerminate);
+	bool stopProgram(int nID, int nTimeoutMillisecond, bool bTerminate);
 
 protected:
 #ifdef _WIN32
@@ -31,12 +31,22 @@ protected:
 #endif
 	struct TTask
 	{
+		TLaunchType type;
+		handle_t hProcess;
 		std::string strPath;
-		std::vector<std::string> vArgs;
-		std::chrono::time_point<std::chrono::system_clock> lastRun;
+		std::vector<std::string> strArgs;
+		int nWaitTime;
+
+		std::timed_mutex * pmutexLauncher;
 	};
-	std::vector<handle_t> m_vBackendProcesses;
-	std::priority_queue<TTask> m_qTasks;
+
+	int getAvaliableTaskID();
+	bool StartProcess(TTask& task);
+	bool WaitForProcess(TTask& task, int nTimeout, bool bTerminate);
+	void LauncherThread(TTask * task);
+
+protected:
+	std::vector<TTask *> m_vTasks;
 };
 
 
