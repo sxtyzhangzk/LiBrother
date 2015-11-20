@@ -32,11 +32,13 @@
   <ItemGroup>
     <ClInclude Include="book.h" />
     <ClInclude Include="config.h" />
+    <ClInclude Include="connection_pool.h" />
     <ClInclude Include="credentials_manager.h" />
     <ClInclude Include="factory.h" />
     <ClInclude Include="library.h" />
     <ClInclude Include="manager.h" />
     <ClInclude Include="netserver.h" />
+    <ClInclude Include="program_launcher.h" />
     <ClInclude Include="session.h" />
     <ClInclude Include="session_manager.h" />
     <ClInclude Include="user.h" />

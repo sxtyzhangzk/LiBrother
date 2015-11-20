@@ -45,6 +45,12 @@
     <ClInclude Include="session_manager.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="connection_pool.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="program_launcher.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="netserver_win.cpp">

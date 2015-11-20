@@ -6,6 +6,9 @@
 #include <vector>
 #include <utility>
 
+const int REGID_MYSQL_CONN = 0;
+const int REGID_SPHINX_CONN = 1;
+
 struct TCertFile
 {
 	std::string strCert;

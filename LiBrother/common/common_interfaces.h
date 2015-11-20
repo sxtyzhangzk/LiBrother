@@ -1,11 +1,14 @@
 #ifndef __COMMON_INTERFACES_H__
 #define __COMMON_INTERFACES_H__
 
+#include <cstring>
 #include <vector>
 
 #ifndef interface
 #define interface struct
 #endif
+
+const int ErrorDescriptionSize = 200;
 
 //错误类型
 enum ErrType
@@ -21,8 +24,11 @@ struct TErrInfo
 {
 	ErrType type;		//类型
 	int code;			//错误代码
-	const char * description;	//错误的描述[不使用时置为nullptr]
-	TErrInfo(ErrType type = None, int code = 0, const char * description = nullptr) : type(type), code(code), description(description) {}
+	char description[ErrorDescriptionSize];	//错误的描述[不使用时置为nullptr]
+	TErrInfo(ErrType type = None, int code = 0, const char * description = nullptr) : type(type), code(code)
+	{
+		strncpy(this->description, description, ErrorDescriptionSize);
+	}
 };
 
 /*	用于实现一个接口，在定义class时加入
