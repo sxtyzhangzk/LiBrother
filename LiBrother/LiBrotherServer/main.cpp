@@ -58,7 +58,7 @@ void loadDefaultConfig()
 	g_configPolicy.nDefaultBookReadLevel = 10;
 	g_configPolicy.nDefaultUserAuthLevel = 0;
 	g_configPolicy.vAuthList.push_back({ 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0 });
-	g_configPolicy.vAuthList.push_back({ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1 });
+	g_configPolicy.vAuthList.push_back({ 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1 });
 	g_configPolicy.vAuthList.push_back({ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 });
 }
 
