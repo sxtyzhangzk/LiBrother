@@ -45,6 +45,15 @@
     <ClInclude Include="session_manager.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="connection_pool.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="program_launcher.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="utils.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="netserver_win.cpp">
@@ -72,6 +81,15 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="session_manager.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="connection_pool.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="program_launcher.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

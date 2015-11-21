@@ -8,7 +8,8 @@
 struct TBookBasicInfo
 {
 	int id;		//图书ID
-	int count;	//在馆数量
+	int count;	//在馆总数量
+	int bcount;		//在外数量
 	std::string name;	//图书名称
 	std::string author;	//图书作者
 	std::string isbn;	//ISBN号
@@ -18,6 +19,7 @@ struct TBookBasicInfo
 //用户的基本信息
 struct TUserBasicInfo
 {
+	bool LoginStatus;   //True=登入,False=未登入
 	int id;				//用户ID
 	int gender;			//性别 male:0
 	std::string name;	//用户名

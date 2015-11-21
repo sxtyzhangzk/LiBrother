@@ -2,9 +2,10 @@
 #include "book.h"
 #include "library.h"
 #include "user.h"
-#include "magicdb.h"
 #include "manager.h"
-Cfactory::Cfactory(IDatabase * DatabaseFile) : m_Database(DatabaseFile)
+#include"connection_pool.h"
+#include"config.h"
+Cfactory::Cfactory(CConnectionPool * DatabaseFile) : m_Database(DatabaseFile)
 {
 }
 bool Cfactory :: createEmptyBook(IBook ** ppBook)

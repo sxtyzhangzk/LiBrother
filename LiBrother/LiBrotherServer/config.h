@@ -6,6 +6,9 @@
 #include <vector>
 #include <utility>
 
+const int REGID_MYSQL_CONN = 0;
+const int REGID_SPHINX_CONN = 1;
+
 struct TCertFile
 {
 	std::string strCert;
@@ -25,7 +28,26 @@ struct TConfig
 
 	//Performance
 	int nThreadPerCPU;
-	int nSessionTimeout;
+	int nSessionTimeout;	//seconds
+
+	//MySQL
+	int nMySQLType;	//1 Local, 2 Remote
+	std::string strMySQLHost;
+	int nMySQLPort;
+	std::string strUser;
+	std::string strPWD;
+	std::string strSchema;
+	std::string strMySQLDIR;
+	std::string strPathMysqld;
+	std::string strPathMysqlAdmin;
+
+	//Sphinx
+	int nSphinxType;	//0 Disabled, 1 Local, 2 Remote
+	std::string strSphinxHost;
+	int nSphinxPort;
+	std::string strSphinxDIR;
+	std::string strPathSearchd;
+	std::string strPathIndexer;
 };
 struct TPolicy
 {

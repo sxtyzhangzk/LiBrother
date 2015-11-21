@@ -166,6 +166,7 @@
     <ClCompile Include="netclient.cpp" />
     <ClCompile Include="user.cpp" />
     <ClCompile Include="usermanager.cpp" />
+    <ClCompile Include="authmanager.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -38,6 +38,9 @@ interface IAuthManager : public IAbstract
 	//返回：权限等级，-1表示操作出现错误
 	virtual int getAuthLevel() = 0;
 
+	//获取当前的权限内容
+	virtual bool getAuthItems(TAuthorization& auth) = 0;
+
 	//获取用户协议的内容
 	virtual bool getLicense(std::string& strLicense) = 0;
 };
