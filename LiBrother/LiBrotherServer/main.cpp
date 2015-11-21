@@ -9,6 +9,12 @@
 #include <string>
 #include <sstream>
 
+#include <signal.h>
+
+#ifdef _WIN32
+#include <Windows.h>
+#endif
+
 #include <liblog.h>
 #include <yaml-cpp/yaml.h>
 
@@ -16,6 +22,43 @@ MODULE_LOG_NAME("Main");
 
 TConfig g_configSvr;
 TPolicy g_configPolicy;
+
+#ifdef _WIN32
+HANDLE g_hExitEvent;
+#endif
+
+std::string int2str(int num)
+{
+	std::stringstream sstream;
+	sstream << num;
+	return sstream.str();
+}
+
+void loadDefaultConfig()
+{
+	g_configSvr.nTLS = 0;
+	g_configSvr.nThreadPerCPU = 2;
+	g_configSvr.nSessionTimeout = 300;
+	g_configSvr.strMySQLHost = "localhost";
+	g_configSvr.nMySQLPort = 3306;
+	g_configSvr.strSchema = "librother";
+	g_configSvr.strMySQLDIR = "./mysql/";
+	g_configSvr.nSphinxType = 0;
+	g_configSvr.strMySQLHost = "localhost";
+	g_configSvr.nSphinxPort = 9306;
+	g_configSvr.strSphinxDIR = "./sphinx/";
+#ifdef _WIN32
+	g_configSvr.strPathSearchd = "searchd.exe";
+	g_configSvr.strPathIndexer = "indexer.exe";
+	g_configSvr.strPathMysqld = "mysqld.exe";
+	g_configSvr.strPathMysqlAdmin = "mysqladmin.exe";
+#else
+	g_configSvr.strPathSearchd = "searchd";
+	g_configSvr.strPathIndexer = "indexer";
+	g_configSvr.strPathMysqld = "mysqld";
+	g_configSvr.strPathMysqlAdmin = "mysqladmin";
+#endif
+}
 
 bool loadConfig(const std::string& strFile)
 {
@@ -31,14 +74,17 @@ bool loadConfig(const std::string& strFile)
 		YAML::Node network = doc["network"];
 		g_configSvr.strServerIP = network["host"].as<std::string>();
 		g_configSvr.nPort = network["port"].as<int>();
-		temp = network["tls"].as<std::string>();
-		std::transform(temp.begin(), temp.end(), temp.begin(), toupper);
-		if (temp == "ENABLED")
-			g_configSvr.nTLS = 1;
-		else if (temp == "FORCED")
-			g_configSvr.nTLS = 2;
-		else
-			g_configSvr.nTLS = 0;
+		if (network["tls"].IsDefined())
+		{
+			temp = network["tls"].as<std::string>();
+			std::transform(temp.begin(), temp.end(), temp.begin(), toupper);
+			if (temp == "ENABLED")
+				g_configSvr.nTLS = 1;
+			else if (temp == "FORCED")
+				g_configSvr.nTLS = 2;
+			else
+				g_configSvr.nTLS = 0;
+		}
 		if (g_configSvr.nTLS)
 		{
 			g_configSvr.nTLSPort = network["tls-port"].as<int>();
@@ -102,6 +148,8 @@ bool loadConfig(const std::string& strFile)
 		{
 			if (mysql["mysqld-bin"].IsDefined())
 				g_configSvr.strPathMysqld = mysql["mysqld-bin"].as<std::string>();
+			if (mysql["mysqladmin-bin"].IsDefined())
+				g_configSvr.strPathMysqlAdmin = mysql["mysqladmin-bin"].as<std::string>();
 			if (mysql["dir"].IsDefined())
 				g_configSvr.strMySQLDIR = mysql["dir"].as<std::string>();
 		}
@@ -152,6 +200,66 @@ bool initMySQL(CConnectionPool& connPool)
 		g_configSvr.strSchema);
 }
 
+bool initSphinx(CConnectionPool& connPool)
+{
+	std::string connURL = "tcp://";
+	connURL += g_configSvr.strSphinxHost;
+	connURL += ":";
+	connURL += g_configSvr.nSphinxPort;
+	return connPool.registerConnection(
+		REGID_SPHINX_CONN, connURL, "", "", "");
+}
+
+void stopSphinx(CProgramLauncher& progLauncher, int nSearchd, int nIndexer)
+{
+	if(nIndexer >= 0)
+		progLauncher.stopProgram(nIndexer, -1, false);
+	if (nSearchd >= 0)
+	{
+		std::vector<std::string> vecArgs;
+		vecArgs.push_back("--stop");
+		progLauncher.runProgram(
+			g_configSvr.strPathSearchd, vecArgs, g_configSvr.strSphinxDIR,
+			CProgramLauncher::RunWait);
+		progLauncher.stopProgram(nSearchd, 30000, true);
+	}
+}
+
+void stopMysql(CProgramLauncher& progLauncher, int nMysqld)
+{
+	if (nMysqld < 0)
+		return;
+	std::vector<std::string> vecArgs;
+	vecArgs.push_back(std::string("--host=") + g_configSvr.strMySQLHost);
+	vecArgs.push_back(std::string("--port=") + int2str(g_configSvr.nMySQLPort));
+	vecArgs.push_back(std::string("--user=") + g_configSvr.strUser);
+	vecArgs.push_back(std::string("--password=") + g_configSvr.strPWD);
+	vecArgs.push_back("shutdown");
+	progLauncher.runProgram(
+		g_configSvr.strPathMysqlAdmin, vecArgs, g_configSvr.strMySQLDIR,
+		CProgramLauncher::RunWait);
+	progLauncher.stopProgram(nMysqld, 30000, true);
+}
+
+void signalHandler(int sig)
+{
+	if (sig == SIGINT)
+	{
+		std::cout << "SIGINT received" << std::endl;
+		SetEvent(g_hExitEvent);
+	}
+}
+
+void waitForSigint()
+{
+#ifdef _WIN32
+	g_hExitEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	signal(SIGINT, signalHandler);
+	WaitForSingleObject(g_hExitEvent, INFINITE);
+	CloseHandle(g_hExitEvent);
+#endif
+}
+
 int main(int argc, char * argv[])
 {
 	//TODO: parse cmdline
@@ -167,7 +275,7 @@ int main(int argc, char * argv[])
 	CProgramLauncher progLauncher;
 	CConnectionPool connPool;
 
-	int nMysqld = -1, nSearchd = -1;
+	int nMysqld = -1, nSearchd = -1, nIndexer = -1;
 	if (g_configSvr.nMySQLType == 1)
 	{
 		nMysqld = progLauncher.runProgram(
@@ -183,6 +291,7 @@ int main(int argc, char * argv[])
 	if (!initMySQL(connPool))
 	{
 		lprintf_e("Failed to init MySQL");
+		stopMysql(progLauncher, nMysqld);
 		CloseLog();
 		return 3;
 	}
@@ -195,13 +304,64 @@ int main(int argc, char * argv[])
 		if (nSearchd < 0)
 		{
 			lprintf_w("Failed to execute searchd, will disable sphinx support");
+			g_configSvr.nSphinxType = 0;
 		}
 		else
 		{
 			//TODO: Launch Indexer
+			std::vector<std::string> vecArgs;
+			vecArgs.push_back("book_delta");
+			vecArgs.push_back("--rotate");
+			nIndexer = progLauncher.runProgram(
+				g_configSvr.strPathIndexer, vecArgs, g_configSvr.strSphinxDIR, 
+				CProgramLauncher::RunAsTask, 300000);
+			if (nIndexer < 0)
+			{
+				lprintf_w("Failed to add task Indexer");
+			}
 		}
 	}
-	
+	if (g_configSvr.nSphinxType)
+	{
+		if (!initSphinx(connPool))
+		{
+			lprintf_w("Failed to init Sphinx");
+			stopSphinx(progLauncher, nSearchd, nIndexer);
+			nSearchd = nIndexer = -1;
+		}
+	}
+
+	CNetServer netServer;
+	if (!netServer.initNetServer())
+	{
+		lprintf_e("Failed to init NetServer");
+		stopSphinx(progLauncher, nSearchd, nIndexer);
+		stopMysql(progLauncher, nMysqld);
+		CloseLog();
+		return 4;
+	}
+	Cfactory *pClassFactory = new Cfactory(&connPool);
+	pClassFactory->AddRef();
+	if (!netServer.startServer(dynamic_cast<ILibClassFactory*>(pClassFactory)))
+	{
+		lprintf_e("Failed to start NetServer");
+		delete pClassFactory;
+		stopSphinx(progLauncher, nSearchd, nIndexer);
+		stopMysql(progLauncher, nMysqld);
+		CloseLog();
+		return 5;
+	}
+	lprintf("Server started successfully.");
+
+	waitForSigint();
+
+	lprintf("Stopping server");
+	netServer.stopServer();
+	delete pClassFactory;
+	stopSphinx(progLauncher, nSearchd, nIndexer);
+	stopMysql(progLauncher, nMysqld);
+	lprintf("Server stopped");
+
 	CloseLog();
 	return 0;
 }

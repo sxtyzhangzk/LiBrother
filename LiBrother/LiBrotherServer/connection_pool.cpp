@@ -76,7 +76,8 @@ bool CConnectionPool::createConnection(TSQLConn& sqlConn)
 	try
 	{
 		conn = m_pDriver->connect(sqlConn.host, sqlConn.user, sqlConn.pwd);
-		conn->setSchema(sqlConn.db);
+		if(sqlConn.db != "")
+			conn->setSchema(sqlConn.db);
 		sqlConn.pConn.insert(conn);
 	}
 	catch (sql::SQLException& e)

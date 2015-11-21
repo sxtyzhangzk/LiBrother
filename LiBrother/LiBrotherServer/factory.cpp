@@ -2,7 +2,6 @@
 #include "book.h"
 #include "library.h"
 #include "user.h"
-#include "magicdb.h"
 #include "manager.h"
 #include"connection_pool.h"
 #include"config.h"

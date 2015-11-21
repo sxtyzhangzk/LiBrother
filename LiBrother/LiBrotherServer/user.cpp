@@ -1,6 +1,5 @@
 #include"user.h"
 #include"sstream"
-#include"magicdb.h"
 #include"book.h"
 #include<time.h>
 #include "config.h"

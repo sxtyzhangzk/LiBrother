@@ -28,7 +28,7 @@ struct TConfig
 
 	//Performance
 	int nThreadPerCPU;
-	int nSessionTimeout;
+	int nSessionTimeout;	//seconds
 
 	//MySQL
 	int nMySQLType;	//1 Local, 2 Remote
@@ -39,6 +39,7 @@ struct TConfig
 	std::string strSchema;
 	std::string strMySQLDIR;
 	std::string strPathMysqld;
+	std::string strPathMysqlAdmin;
 
 	//Sphinx
 	int nSphinxType;	//0 Disabled, 1 Local, 2 Remote
