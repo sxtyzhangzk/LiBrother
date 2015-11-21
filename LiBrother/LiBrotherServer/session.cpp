@@ -22,7 +22,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 	Json::Reader reader;
 	Json::Value value0;
 	reader.parse(strRequest,value0);
-	std::string request = value0["command"].asString;
+	std::string request = value0["command"].asString();
 	Json::FastWriter writer;
 	Json::Value value;
 

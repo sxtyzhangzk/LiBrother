@@ -6,10 +6,14 @@
 
 class CAuthManager :public IAuthManager
 {
+	IMPLEMENT_INTERFACE
 public:
+	CAuthManager(TUserBasicInfo *current_user = nullptr);
+	~CAuthManager();
+
 	//用户登录
 	//参数：strUser 登录表示符，允许用户名/邮箱/用户ID; strPWD 用户密码
-	virtual bool Login(const char * strUser, const char * strPWD) = 0;
+	virtual bool Login(const  char * strUser, const char * strPWD) = 0;
 
 	//用户注销
 	virtual bool Logout() = 0;

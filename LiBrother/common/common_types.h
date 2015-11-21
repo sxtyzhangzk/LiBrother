@@ -18,6 +18,7 @@ struct TBookBasicInfo
 //用户的基本信息
 struct TUserBasicInfo
 {
+	bool LoginStatus;   //True=登入,False=未登入
 	int id;				//用户ID
 	int gender;			//性别 male:0
 	std::string name;	//用户名
