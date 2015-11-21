@@ -16,6 +16,14 @@ const socket_t INVALID_SOCKET = 0;
 #include <vector>
 
 typedef void * handle_t;				//WinAPI HANDLE
+#else
+
+#include <thread>
+#include <mutex>
+#include <memory>
+#include <boost/asio.hpp>
+using namespace boost::asio;
+
 #endif
 
 #include <set>
@@ -30,7 +38,6 @@ class CCredentialsManager;
 namespace Botan
 {
 	class RandomNumberGenerator;
-	//class Basic_Credentials_Manager;
 	namespace TLS
 	{
 		class Policy;
@@ -58,10 +65,7 @@ protected:
 	//初始化监听套接字
 	bool initListenSocket();
 
-	//创建一个指定端口上的套接字
-	TSocketEx * createListenSocket(int nPort);
-
-	//发送数据，返回将要发送的字节数
+	//发送数据
 	bool sendData(TSocketEx * pSocket, const char * pData, size_t nLen);
 
 	//处理接收到的数据
@@ -83,6 +87,9 @@ protected:
 	void setSocketClose(TSocketEx * pSocket);
 
 #ifdef _WIN32
+	//创建一个指定端口上的套接字
+	TSocketEx * createListenSocket(int nPort);
+
 	//初始化完成端口
 	bool initIOCP();
 
@@ -105,14 +112,26 @@ protected:
 
 	//完成端口 - 处理Send请求
 	bool doSend(TSocketEx * pSocket, TPerIOContext * pIOContext, size_t nDataSize);
+#else
+	//新建一个套接字
+	void createNewSocket(bool bTLS);
+
+	//处理完成的Accept操作
+	void doAccept(TSocketEx * pSocket, boost::system::error_code errcode);
+
+	//处理完成的Recv操作
+	void doRecv(TSocketEx * pSocket, size_t nLen, boost::system::error_code errcode);
+
+	//处理完成的Send操作
+	void doSend(TSocketEx * pSocket, size_t nLen, boost::system::error_code errcode);
+
+	//IO Service工作线程
+	void workerThread();
 #endif
 
 protected:
-	CSessionManager * m_pSManager;
-	TSocketEx * m_psockListen;							//监听套接字
-	TSocketEx * m_psockListenTLS;						//监听套接字(TLS)
+	CSessionManager * m_pSManager;						//会话管理器
 	std::set<TSocketEx *> m_vpClientSocks;				//连接套接字
-	
 	Botan::RandomNumberGenerator * m_rng;				//Botan - 随机数生成器
 
 	CCredentialsManager * m_pCredManager;				//TLS 凭据管理器
@@ -120,11 +139,19 @@ protected:
 	Botan::TLS::Policy * m_pPolicy;						//TLS 配置
 
 #ifdef _WIN32
+	TSocketEx * m_psockListen;			//监听套接字
+	TSocketEx * m_psockListenTLS;		//监听套接字(TLS)
 	handle_t m_hIOCP;					//完成端口的句柄
 	std::vector<handle_t> m_vhThreads;	//工作线程列表
 	void * m_pfn_AcceptEx;				//Winsock - AcceptEx函数的指针
 	void * m_pfn_GetAcceptExSockAddrs;	//Winsock - GetAcceptExSockAddrs函数的指针
 	void * m_pcsClientSocks;			//保护m_vpClientSocks的临界区
+#else
+	io_service m_ioService;									//ASIO IO Service
+	ip::tcp::acceptor * m_pacceptorMain;					//监听套接字
+	ip::tcp::acceptor * m_pacceptorTLS;						//监听套接字(TLS)
+	std::mutex m_mutexClientSocks;							//保护m_vpClientSocks的互斥器
+	std::vector<std::shared_ptr<std::thread> > m_vThreads;	//工作线程列表
 #endif
 };
 

@@ -56,9 +56,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="netserver_win.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="book.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -90,6 +87,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="netserver_win.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

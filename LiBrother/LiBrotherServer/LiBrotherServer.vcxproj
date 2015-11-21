@@ -25,8 +25,8 @@
     <ClCompile Include="factory.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="manager.cpp" />
-    <ClCompile Include="netserver_win.cpp" />
     <ClCompile Include="library.cpp" />
+    <ClCompile Include="netserver_win.cpp" />
     <ClCompile Include="program_launcher.cpp" />
     <ClCompile Include="session.cpp" />
     <ClCompile Include="session_manager.cpp" />
