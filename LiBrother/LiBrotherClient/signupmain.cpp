@@ -32,7 +32,7 @@ void signupmain::on_pushButton_2_clicked()
     factory1->createEmptyUser(&iUser);
 
     TUserBasicInfo basic1;
-    QString uName = ui->lineEdit->text();
+    QString uName = ui->lineEdit->text();//读入用户所有添加的信息，并register
     QString uPassword = ui->lineEdit_2->text();
     QString u2Password = ui->lineEdit_3->text();
     QString uTName = ui->lineEdit_4->text();

@@ -34,7 +34,7 @@ void MainWindow::on_pushButton_2_clicked()
 
 void MainWindow::on_pushButton_4_clicked()
 {
-    //清空listwidge
+        ui->listWidget->clear();
         IClassFactoryClient *factory1;
         getClassFactory(&factory1);
         ILibrary *library1;
@@ -69,21 +69,21 @@ void MainWindow::on_pushButton_4_clicked()
                 int bNum = library1->queryByName(bSearch1.c_str(),vBooks,INT_MAX,1);
                 if(bNum > 0)
                 {
-                int i;
-                for(i=1;i<=bNum;i++)
-                   {
+                    int i;
+                    for(i=1;i<=bNum;i++)
+                       {
 
 
-                     ((IBook*)vBooks[i])->getBasicInfo(basic1);
-                    bName1 = QString::fromStdString(basic1.name);
+                         ((IBook*)vBooks[i])->getBasicInfo(basic1);
+                        bName1 = QString::fromStdString(basic1.name);
 
-                    QListWidgetItem *item = new QListWidgetItem;
-                    item->setText(bName1);
-                    item->setData(Qt::UserRole,basic1.id);
-                    ui->listWidget->addItem(item);
+                        QListWidgetItem *item = new QListWidgetItem;
+                        item->setText(bName1);
+                        item->setData(Qt::UserRole,basic1.id);
+                        ui->listWidget->addItem(item);
 
 
-                    }
+                        }
                 }
                 else{QMessageBox::information(this,"Title","没有找到相关书本");}
             }
@@ -96,7 +96,7 @@ void MainWindow::on_pushButton_4_clicked()
 
 
 
-void MainWindow::on_pushButton_5_clicked()
+void MainWindow::on_pushButton_5_clicked()//主界面中搜索出来的书目，跳转到该书的信息窗口
 {
     QListWidgetItem *item = ui->listWidget->currentItem();
     int bID = item->data(Qt::UserRole).toInt();

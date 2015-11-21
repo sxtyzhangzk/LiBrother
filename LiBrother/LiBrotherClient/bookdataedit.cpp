@@ -20,10 +20,9 @@ bookdataedit::bookdataedit(QWidget *parent) :
     IBook *iBook1;
 
     bool fPd = library1->queryById(m_strBookID,&iBook1);
-
     if(fPd)
-        {
-        iBook1->setBasicInfo(basic1);
+    {
+        iBook1->setBasicInfo(basic1);//找到书本的信息并显示在窗口中，便于用户进行更改操作
         iBook1->getDescription(bDescription);
 
 
@@ -46,15 +45,12 @@ bookdataedit::bookdataedit(QWidget *parent) :
         ui->lineEdit_5->setText(bIsbn1);
         ui->textEdit->setText(bDescription1);
 
-        }
-        else
-         {
-              QMessageBox::information(this,"警告","该书ID号有误");
-         }
+    }
+    else{QMessageBox::information(this,"警告","该书ID号有误");}
 
-          factory1->Release();
-          iBook1->Release();
-          library1->Release();
+    factory1->Release();
+    iBook1->Release();
+    library1->Release();
 }
 
 bookdataedit::~bookdataedit()
@@ -74,7 +70,6 @@ void bookdataedit::on_pushButton_clicked()
     ILibrary *library2;
     factory2->getLibrary(&library2);
 
-
     std::string bDescription;
     TBookBasicInfo basic2;
     IBook *iBook2;
@@ -82,9 +77,9 @@ void bookdataedit::on_pushButton_clicked()
     bool fPd = library2->queryById(m_strBookID,&iBook2);
 
     if(fPd)
-        {
+    {
 
-        QString nbName1 = ui->lineEdit->text();
+        QString nbName1 = ui->lineEdit->text();//依次读入书本的新信息
 
         QString nCount = ui->lineEdit_2->text();
         int nbCount = nCount.toInt();
@@ -107,18 +102,12 @@ void bookdataedit::on_pushButton_clicked()
         if(iBook2->setBasicInfo(basic2)){}else{QMessageBox::information(this,"警告","录入失败，请检查输入格式");}
         if(iBook2->setDescription(nbDescription01.c_str())){}else{QMessageBox::information(this,"警告","录入失败");}
 
+    }
+    else{QMessageBox::information(this,"警告","该书ID号有误");}
 
-        }
-        else
-         {
-              QMessageBox::information(this,"警告","该书ID号有误");
-         }
-
-          factory2->Release();
-          iBook2->Release();
-          library2->Release();
-
-
+    factory2->Release();
+    iBook2->Release();
+    library2->Release();
 
 }
 

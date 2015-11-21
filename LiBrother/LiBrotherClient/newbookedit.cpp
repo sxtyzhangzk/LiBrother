@@ -29,7 +29,7 @@ void newbookedit::on_pushButton_3_clicked()
 
 
 
-        QString nbName1 = ui->lineEdit_6->text();
+        QString nbName1 = ui->lineEdit_6->text();//增加新书操作，一次读入所有新书信息，并insertbook
 
         QString nCount = ui->lineEdit_7->text();
         int nbCount = nCount.toInt();

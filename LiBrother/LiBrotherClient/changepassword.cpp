@@ -28,19 +28,19 @@ void ChangePassword::on_pushButton_clicked()
     IAuthManager *iUser;
     factory1->getAuthManager(&iUser);
 
-    QString passOld= ui->lineEdit->text();
+    QString passOld= ui->lineEdit->text();//依次读入新老密码
     QString passNew = ui->lineEdit_2->text();
     QString passNew2 = ui->lineEdit_3->text();
     std::string passOld1 = passOld.toStdString();
     std::string passNew1 = passNew.toStdString();
-    std::string passNew12 = passNew2.toStdString();
-    if(passNew1 == passNew12)
+    std::string passNew12 = passNew2.toStdString();//重复输入老密码
+    if(passNew1 == passNew12)//两次密码输入比对
     {
         if(iUser->changePassword(passOld1.c_str(),passNew1.c_str()))
         {
-            close();
+            close();//成功更改密码之后自动退出
         }
-    else{QMessageBox::information(this,"Warning","修改密码失败");}
+        else{QMessageBox::information(this,"Warning","修改密码失败");}
     }
     else{QMessageBox::information(this,"Warning","两次密码输入不一致");}
 
