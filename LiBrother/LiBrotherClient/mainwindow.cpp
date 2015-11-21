@@ -2,7 +2,6 @@
 #include "ui_mainwindow.h"
 #include "login.h"
 #include "signup.h"
-#include "manager.h"
 #include "client_interfaces.h"
 #include "qlistwidget.h"
 #include "QMessageBox"
@@ -88,13 +87,13 @@ void MainWindow::on_pushButton_4_clicked()
                 }
                 else{QMessageBox::information(this,"Title","没有找到相关书本");}
             }
+
+            factory1->Release();
+            library1->Release();
+            iBook1->Release();
 }
 
-void MainWindow::on_pushButton_6_clicked()
-{
-    manager manager1;
-    manager1.exec();
-}
+
 
 
 void MainWindow::on_pushButton_5_clicked()
@@ -103,6 +102,7 @@ void MainWindow::on_pushButton_5_clicked()
     int bID = item->data(Qt::UserRole).toInt();
     bookdata bookdata1;
     bookdata1.setBookID(bID);
-
     bookdata1.exec();
+
+
 }

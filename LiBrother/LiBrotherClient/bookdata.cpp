@@ -59,6 +59,7 @@ bookdata::bookdata(QWidget *parent) :
         }
         factory1->Release();
         library1->Release();
+        iBook1->Release();
 }
 
 bookdata::~bookdata()
@@ -69,4 +70,38 @@ bookdata::~bookdata()
 void bookdata::setBookID(const int& bID1)//传入书本信息的ID号
 {
     m_strBookID = bID1;
+}
+
+void bookdata::on_pushButton_clicked()
+{
+    IClassFactoryClient *factory1;
+    getClassFactory(&factory1);
+    ILibrary *library1;
+    factory1->getLibrary(&library1);
+    IAuthManager *IAManager;
+    factory1->getAuthManager(&IAManager);
+    IUser *iUser1;
+    IBook *iBook1;
+    if(IAManager->getCurrentUser(&iUser1))
+    {
+        if(library1->queryById(m_strBookID,&iBook1))
+        {
+            if(iUser1->borrowBook(iBook1)){}
+            else{QMessageBox::information(this,"警告","借书失败");}
+
+        }
+        else{QMessageBox::information(this,"警告","请先选择所要借阅的书籍");}
+    }
+    else{QMessageBox::information(this,"警告","请先登录");}
+
+    factory1->Release();
+    library1->Release();
+    IAManager->Release();
+    iUser1->Release();
+    iBook1->Release();
+}
+
+void bookdata::on_pushButton_2_clicked()
+{
+    close();
 }

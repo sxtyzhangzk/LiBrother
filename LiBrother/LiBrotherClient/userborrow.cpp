@@ -7,6 +7,7 @@
 #include "QMessageBox"
 #include "qmessagebox.h"
 #include <QLineEdit>
+#include "bookdataedit.h"
 
 userborrow::userborrow(QWidget *parent) :
     QDialog(parent),
@@ -38,31 +39,6 @@ void userborrow::on_pushButton_clicked()//选择一本书本，进入书本具�
 
 
 
-
-
-
-void userborrow::on_pushButton_4_clicked()    /*搜索按键*/
-{
-      QString ISBN;
-      ISBN = ui->lineEdit->text();
-    IClassFactoryClient *pFactory;
-    getClassFactory(&pFactory);
-    ILibrary *pLibrary;
-    pFactory->getLibrary(&pLibrary);
-    IBook *pBook;
-    pLibrary->queryByISBN(ISBN.toStdString().c_str(),&pBook);
-    TBookBasicInfo info;
-      pBook->getBasicInfo(info);
-    std::string name = info.name;
-    QString name1 = QString::fromStdString(name);
-    QLabel *qlabel;
-    qlabel->setText(name1);
-    pBook->Release();
-    pLibrary->Release();
-    pFactory->Release();
-}
-
-
 void userborrow::on_pushButton_4_clicked()
 {
 
@@ -83,18 +59,18 @@ void userborrow::on_pushButton_4_clicked()
         QString bName1;
             if(bOption1 == "ISBN")//按照ISBN号找到唯一的一本
             {
-            bool bPd = library1->queryByISBN(bSearch1.c_str(), &iBook1);
-            if(bPd)
-            {
-            iBook1->getBasicInfo(basic1);
-            bName1 = QString::fromStdString(basic1.name);
+                bool bPd = library1->queryByISBN(bSearch1.c_str(), &iBook1);
+                if(bPd)
+                {
+                    iBook1->getBasicInfo(basic1);
+                    bName1 = QString::fromStdString(basic1.name);
 
-            QListWidgetItem *item = new QListWidgetItem;
-            item->setText(bName1);
-            item->setData(Qt::UserRole,basic1.id);//data中存了之后要用到的书本ID号
-            ui->listWidget->addItem(item);
-            }
-            else{QMessageBox::information(this,"Title","操作错误");}
+                    QListWidgetItem *item = new QListWidgetItem;
+                    item->setText(bName1);
+                    item->setData(Qt::UserRole,basic1.id);//data中存了之后要用到的书本ID号
+                    ui->listWidget->addItem(item);
+                }
+                else{QMessageBox::information(this,"Title","操作错误");}
             }
 
             else//按照书名就行搜索
@@ -121,8 +97,30 @@ void userborrow::on_pushButton_4_clicked()
             }
             else{QMessageBox::information(this,"Title","没有找到相关书本");}
             }
-
+            factory1->Release();
+            library1->Release();
+            iBook1->Release();
 }
 
 
 
+
+void userborrow::on_pushButton_2_clicked()
+{
+    IClassFactoryClient *factory3;
+    getClassFactory(&factory3);
+    IAuthManager *iUser;
+    factory3->getAuthManager(&iUser);
+    if(iUser->getAuthLevel() >= 1)
+    {
+        QListWidgetItem *item = ui->listWidget->currentItem();
+        int bID = item->data(Qt::UserRole).toInt();
+        bookdataedit bookdataedit1;
+        bookdataedit1.setBookID(bID);
+        bookdataedit1.exec();
+    }
+    else{QMessageBox::information(this,"Warning","对不起，您没有权限");}
+
+    factory3->Release();
+    iUser->Release();
+}

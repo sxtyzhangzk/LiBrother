@@ -1,8 +1,8 @@
 #include "managermain.h"
 #include "ui_managermain.h"
-#include "announcement.h"
 #include "qstring.h"
-#include "addbook.h"
+#include "userborrow.h"
+#include "newbookedit.h"
 
 managermain::managermain(QWidget *parent) :
     QDialog(parent),
@@ -18,22 +18,17 @@ managermain::~managermain()
 
 void managermain::on_pushButton_clicked()
 {
-
+    userborrow userborrow1;
+    userborrow1.exec();
 }
 void managermain::on_pushButton_2_clicked()
 {
-    AddBook addbook;
-    addbook.exec();
+    newbookedit newbookedit1;
+    newbookedit1.exec();
 }
 
-void managermain::on_pushButton_3_clicked()
+
+void managermain::on_pushButton_4_clicked()
 {
-    QString content;
-    announcement announcement1;
-    announcement1.exec();
+    close();
 }
-
-
-
-
-

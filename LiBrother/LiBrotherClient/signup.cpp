@@ -22,7 +22,7 @@ void signup::on_pushButton_2_clicked()
 
 void signup::on_pushButton_clicked()
 {
-    close();
     signupmain sigmain;
     sigmain.exec();
+    close();
 }
