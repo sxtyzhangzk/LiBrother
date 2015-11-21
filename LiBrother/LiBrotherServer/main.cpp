@@ -34,6 +34,7 @@ std::string int2str(int num)
 	return sstream.str();
 }
 
+//加载默认配置
 void loadDefaultConfig()
 {
 	g_configSvr.nTLS = 0;
@@ -58,8 +59,15 @@ void loadDefaultConfig()
 	g_configSvr.strPathMysqld = "mysqld";
 	g_configSvr.strPathMysqlAdmin = "mysqladmin";
 #endif
+	g_configPolicy.nDefaultUserReadLevel = 10;
+	g_configPolicy.nDefaultBookReadLevel = 10;
+	g_configPolicy.nDefaultUserAuthLevel = 0;
+	g_configPolicy.vAuthList.push_back({ 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0 });
+	g_configPolicy.vAuthList.push_back({ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1 });
+	g_configPolicy.vAuthList.push_back({ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 });
 }
 
+//加载配置文件
 bool loadConfig(const std::string& strFile)
 {
 	std::ifstream fconfig;
@@ -188,6 +196,7 @@ bool loadConfig(const std::string& strFile)
 	return true;
 }
 
+//初始化MySQL连接
 bool initMySQL(CConnectionPool& connPool)
 {
 	std::string connURL = "tcp://";
@@ -200,6 +209,7 @@ bool initMySQL(CConnectionPool& connPool)
 		g_configSvr.strSchema);
 }
 
+//初始化SphinxQL连接
 bool initSphinx(CConnectionPool& connPool)
 {
 	std::string connURL = "tcp://";
@@ -210,6 +220,7 @@ bool initSphinx(CConnectionPool& connPool)
 		REGID_SPHINX_CONN, connURL, "", "", "");
 }
 
+//停止Sphinx服务器
 void stopSphinx(CProgramLauncher& progLauncher, int nSearchd, int nIndexer)
 {
 	if(nIndexer >= 0)
@@ -225,6 +236,7 @@ void stopSphinx(CProgramLauncher& progLauncher, int nSearchd, int nIndexer)
 	}
 }
 
+//停止MySQL服务器
 void stopMysql(CProgramLauncher& progLauncher, int nMysqld)
 {
 	if (nMysqld < 0)
@@ -250,6 +262,7 @@ void signalHandler(int sig)
 	}
 }
 
+//等待服务结束命令
 void waitForSigint()
 {
 #ifdef _WIN32
@@ -269,7 +282,7 @@ int main(int argc, char * argv[])
 	{
 		lprintf_e("Failed to load config");
 		CloseLog();
-		return 1;
+		return 1;	//加载配置文件失败
 	}
 
 	CProgramLauncher progLauncher;
@@ -285,7 +298,7 @@ int main(int argc, char * argv[])
 		{
 			lprintf_e("Failed to execute mysqld");
 			CloseLog();
-			return 2;
+			return 2;	//启动本地MySQL服务器失败
 		}
 	}
 	if (!initMySQL(connPool))
@@ -293,7 +306,7 @@ int main(int argc, char * argv[])
 		lprintf_e("Failed to init MySQL");
 		stopMysql(progLauncher, nMysqld);
 		CloseLog();
-		return 3;
+		return 3;	//连接MySQL服务器失败
 	}
 
 	if (g_configSvr.nSphinxType == 1)
@@ -338,7 +351,7 @@ int main(int argc, char * argv[])
 		stopSphinx(progLauncher, nSearchd, nIndexer);
 		stopMysql(progLauncher, nMysqld);
 		CloseLog();
-		return 4;
+		return 4;	//初始化网络服务器失败
 	}
 	Cfactory *pClassFactory = new Cfactory(&connPool);
 	pClassFactory->AddRef();
@@ -349,7 +362,7 @@ int main(int argc, char * argv[])
 		stopSphinx(progLauncher, nSearchd, nIndexer);
 		stopMysql(progLauncher, nMysqld);
 		CloseLog();
-		return 5;
+		return 5;	//启动网络服务器失败
 	}
 	lprintf("Server started successfully.");
 
