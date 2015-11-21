@@ -2,13 +2,13 @@
 #define __USER_H__
 #include "function_interfaces.h"
 #include "common_types.h"
-
-interface IDatabase;
+#include"connection_pool.h"
+#include <driver/mysql_public_iface.h>
 class CUser:public IUser
 {
 	IMPLEMENT_INTERFACE
 public:
-	CUser(IDatabase * DatabaseFile);
+	CUser(CConnectionPool * DatabaseFile);
 	virtual bool getBasicInfo(TUserBasicInfo& info) override;
 	virtual bool setBasicInfo(const TUserBasicInfo& info) override;
 	virtual bool verifyPassword(const char * strPWD) override;
@@ -25,9 +25,10 @@ public:
 	bool check(TUserBasicInfo info_to_check);
 	bool bcheck(TBorrowInfo info_to_check);
 	bool insert();
+	bool straightsetpassword(const char * strPWD);
 	~CUser();
 protected:
-	IDatabase * m_pDatabase;
+	CConnectionPool * m_pDatabase;
 	TUserBasicInfo m_CUBI;
 	int m_Id;
 	std::string m_password;

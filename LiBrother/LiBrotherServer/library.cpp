@@ -1,9 +1,8 @@
 #include "library.h"
 #include "sstream"
-#include "magicdb.h"
 #include "book.h"
-
-CLibrary::CLibrary(IDatabase * DatabaseFile)
+#include"config.h"
+CLibrary::CLibrary(CConnectionPool *  DatabaseFile)
 {
 	m_pDatabase = DatabaseFile;
 }
@@ -11,16 +10,17 @@ CLibrary::~CLibrary()
 {
 
 }
-int CLibrary::queryByName(const char * strName, IFvector& vBooks, int nCount, int nTop)
+/*int CLibrary::queryByName(const char * strName, IFvector& vBooks, int nCount, int nTop)			//Äã×Ô¼º¸ã¶¨°É
 {
-	IRecordset * BRecordset;
-	if (!m_pDatabase->getTable("BookInfoDatabase", &BRecordset))
+	IRecordset * BIRecordset;
+	m_pDatabase->getTable("BookInfoDatabase", &BIRecordset);
+	if (!BIRecordset)
 	{
-		setError(DatabaseError, 9, "There is some wrong with our database.");
+		setError(InvalidParam, 4, "The pointer is NULL.");
 		return false;
 	}
 	int flag = nTop-1;
-	while (BRecordset->findNext("name", Clike, strName) && flag)
+	while (BIRecordset->findNext("name", Clike, strName) && flag)
 		flag--;
 	if (flag)
 	{
@@ -28,24 +28,25 @@ int CLibrary::queryByName(const char * strName, IFvector& vBooks, int nCount, in
 		return false;
 	}
 	int count = 0;
-	while (count<nCount && BRecordset->findNext("name", Clike, strName))
+	while (count<nCount && BIRecordset->findNext("name", Clike, strName))
 	{
 		CBook * ppBook = new CBook(m_pDatabase);
 		TBookBasicInfo Basicinfo;
-		Basicinfo.author = std::string(BRecordset->getData("author"));
-		Basicinfo.count = BRecordset->getData("count");
-		Basicinfo.id = BRecordset->getData("id");
-		Basicinfo.isbn = std::string(BRecordset->getData("ISBN"));
-		Basicinfo.name = std::string(BRecordset->getData("name"));
-		Basicinfo.publisher = std::string(BRecordset->getData("publisher"));
+		Basicinfo.author = std::string(BIRecordset->getData("author"));
+		Basicinfo.count = BIRecordset->getData("count");
+		Basicinfo.id = BIRecordset->getData("id");
+		Basicinfo.isbn = std::string(BIRecordset->getData("ISBN"));
+		Basicinfo.name = std::string(BIRecordset->getData("name"));
+		Basicinfo.publisher = std::string(BIRecordset->getData("publisher"));
 		ppBook->setBasicInfo(Basicinfo);
-		ppBook->setDescription(std::string(BRecordset->getData("description")).c_str());
+		ppBook->setDescription(std::string(BIRecordset->getData("description")).c_str());
 		ppBook->sign();
 		vBooks.push_back(ppBook);
 		count++;
 	}
+	BIRecordset->Release();
 	return count;
-}
+}*/
 bool CLibrary::queryById(int nID, IBook ** ppBook)
 {
 	if (!ppBook)
@@ -53,24 +54,33 @@ bool CLibrary::queryById(int nID, IBook ** ppBook)
 		setError(InvalidParam, 4, "The pointer is NULL.");
 		return false;
 	}
-	IRecordset * BRecordset;
-	std::stringstream str;
-	str << "SELECT * FROM BookInfoDatabase WHERE id=" << nID;
-	if (!m_pDatabase->executeSQL(str.str().c_str(), &BRecordset))
+	try
 	{
-		setError(InvalidParam, 11, "No this book.");
+		sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+		std::shared_ptr<sql::Statement> stat(c->createStatement());
+		std::stringstream str;
+		str << "SELECT * FROM BookInfoDatabase WHERE id = " << nID;
+		stat->execute(str.str());
+		std::shared_ptr<sql::ResultSet> result(stat->getResultSet());
+		TBookBasicInfo Basicinfo;
+		Basicinfo.author = result->getString("author");
+		Basicinfo.count = result->getInt("count");
+		Basicinfo.bcount = result->getInt("bcount");
+		Basicinfo.id = result->getInt("id");
+		Basicinfo.isbn = result->getString("isbn");
+		Basicinfo.name = result->getString("name");
+		Basicinfo.publisher = result->getString("publisher");
+		(*ppBook)->setBookReadLevel(result->getInt("ReadLevel"));
+		(*ppBook)->setBasicInfo(Basicinfo);
+		(*ppBook)->setDescription(result->getString("description").c_str());
+		((CBook*)(*ppBook))->sign();
+		return true;
+	}
+	catch (sql::SQLException& e)
+	{
+		setError(DatabaseError, 9, (std::string("There is some wrong with our database.\n") + e.what()).c_str());
 		return false;
 	}
-	TBookBasicInfo Basicinfo;
-	Basicinfo.author = std::string(BRecordset->getData("author"));
-	Basicinfo.count= BRecordset->getData("count");
-	Basicinfo.id = BRecordset->getData("id");
-	Basicinfo.isbn = std::string(BRecordset->getData("ISBN"));
-	Basicinfo.name= std::string(BRecordset->getData("name"));
-	Basicinfo.publisher= std::string(BRecordset->getData("publisher"));
-	(*ppBook)->setBasicInfo(Basicinfo);
-	(*ppBook)->setDescription(std::string(BRecordset->getData("description")).c_str());
-	((CBook*)(*ppBook))->sign();
 	return true;
 }
 bool CLibrary::queryByISBN(const char * strISBN, IBook ** ppBook)
@@ -80,24 +90,33 @@ bool CLibrary::queryByISBN(const char * strISBN, IBook ** ppBook)
 		setError(InvalidParam, 4, "The pointer is NULL.");
 		return false;
 	}
-	IRecordset * BRecordset;
-	std::stringstream str;
-	str << "SELECT * FROM BookInfoDatabase WHERE ISBN=" << '"'<<strISBN<<'"';
-	if (!m_pDatabase->executeSQL(str.str().c_str(), &BRecordset))
+	try
 	{
-		setError(InvalidParam, 11, "No this book.");
+		sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+		std::shared_ptr<sql::Statement> stat(c->createStatement());
+		std::stringstream str;
+		str << "SELECT * FROM BookInfoDatabase WHERE isbn = " <<'\''<<strISBN<<'\'';
+		stat->execute(str.str());
+		std::shared_ptr<sql::ResultSet> result(stat->getResultSet());
+		TBookBasicInfo Basicinfo;
+		Basicinfo.author = result->getString("author");
+		Basicinfo.count = result->getInt("count");
+		Basicinfo.bcount = result->getInt("bcount");
+		Basicinfo.id = result->getInt("id");
+		Basicinfo.isbn = result->getString("isbn");
+		Basicinfo.name = result->getString("name");
+		Basicinfo.publisher = result->getString("publisher");
+		(*ppBook)->setBookReadLevel(result->getInt("ReadLevel"));
+		(*ppBook)->setBasicInfo(Basicinfo);
+		(*ppBook)->setDescription(result->getString("description").c_str());
+		((CBook*)(*ppBook))->sign();
+		return true;
+	}
+	catch (sql::SQLException& e)
+	{
+		setError(DatabaseError, 9, (std::string("There is some wrong with our database.\n") + e.what()).c_str());
 		return false;
 	}
-	TBookBasicInfo Basicinfo;
-	Basicinfo.author = std::string(BRecordset->getData("author"));
-	Basicinfo.count = BRecordset->getData("count");
-	Basicinfo.id = BRecordset->getData("id");
-	Basicinfo.isbn = std::string(BRecordset->getData("ISBN"));
-	Basicinfo.name = std::string(BRecordset->getData("name"));
-	Basicinfo.publisher = std::string(BRecordset->getData("publisher"));
-	(*ppBook)->setBasicInfo(Basicinfo);
-	(*ppBook)->setDescription(std::string(BRecordset->getData("description")).c_str());
-	((CBook*)(*ppBook))->sign();
 	return true;
 }
 bool CLibrary::insertBook(IBook * pBook)

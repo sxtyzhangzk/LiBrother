@@ -3,13 +3,13 @@
 
 #include "function_interfaces.h"
 #include "common_types.h"
-interface IDatabase;
-
+#include"connection_pool.h"
+#include <driver/mysql_public_iface.h>
 class CBook : public IBook
 {
 	IMPLEMENT_INTERFACE
 public:
-	CBook(IDatabase * DatabaseFile);
+	CBook(CConnectionPool * DatabaseFile);
 	virtual bool getBasicInfo(TBookBasicInfo& info) override;
 	virtual bool getDescription(std::string& description) override;
 	virtual bool setBasicInfo(const TBookBasicInfo& info) override;
@@ -22,9 +22,10 @@ public:
 	bool sign();
 	bool check(TBookBasicInfo info_to_check);
 	bool bcheck(TBorrowInfo info_to_check);
+	bool borrow(int number);
 	~CBook();
 protected:
-	IDatabase * m_pDatabase;
+	CConnectionPool * m_pDatabase;
 	TBookBasicInfo m_CBBI;
 	std::string m_Description;
 	int is_from_Database;

@@ -14,7 +14,7 @@
 #include "mdberror.h"
 
 //记录集
-interface IRecordset
+interface IRecordset : public IAbstract
 {
 	//获取记录集大小，错误返回-1
 	virtual int getSize() = 0;
@@ -73,7 +73,7 @@ interface IRecordset
 	virtual bool updateDatabase() = 0;
 };
 
-interface IDatabase
+interface IDatabase : public IAbstract
 {
 	/*
 	获取一个数据表
@@ -86,7 +86,7 @@ interface IDatabase
 	virtual bool executeSQL(const char * strSQL, IRecordset ** ppRecordset) = 0;
 };
 
-interface IDBMS
+interface IDBMS : public IAbstract
 {
 	/*
 	打开一个现有的数据库

@@ -3,18 +3,19 @@
 
 #include "function_interfaces.h"
 #include "common_types.h"
-interface IDatabase;
+#include"connection_pool.h"
+#include <driver/mysql_public_iface.h>
 class CLibrary : public ILibrary
 {
 	IMPLEMENT_INTERFACE
 public:
-	CLibrary(IDatabase * DatabaseFile);
+	CLibrary(CConnectionPool * DatabaseFile);
 	virtual int queryByName(const char * strName, IFvector& vBooks, int nCount, int nTop) override;
 	virtual bool queryById(int nID, IBook ** ppBook) override;
 	virtual bool queryByISBN(const char * strISBN, IBook ** ppBook) override;
 	virtual bool insertBook(IBook * pBook) override;
 	~CLibrary();
 protected:
-	IDatabase * m_pDatabase;
+	CConnectionPool * m_pDatabase;
 };
 #endif

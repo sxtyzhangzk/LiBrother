@@ -14,10 +14,11 @@ class bookdata : public QDialog
 public:
     explicit bookdata(QWidget *parent = 0);
     ~bookdata();
-    void setBookName(const QString& name);
+    void setBookID(const int & bID1);
 
 protected:
-    QString m_strBookName;
+    int m_strBookID;
+    //QString m_strCombo;
 
 private:
     Ui::bookdata *ui;

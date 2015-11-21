@@ -61,6 +61,7 @@ bool CSessionManager::startServer(ILibClassFactory * pFactory)
 	//初始化清理线程
 	m_mutexExitSignal.lock();
 	m_pthreadCleaner = new std::thread(&CSessionManager::cleanerThread, this);
+	return true;
 }
 
 bool CSessionManager::stopServer()

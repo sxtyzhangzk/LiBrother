@@ -20,11 +20,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="book.cpp" />
+    <ClCompile Include="connection_pool.cpp" />
     <ClCompile Include="credentials_manager.cpp" />
     <ClCompile Include="factory.cpp" />
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="manager.cpp" />
     <ClCompile Include="netserver_win.cpp" />
     <ClCompile Include="library.cpp" />
+    <ClCompile Include="program_launcher.cpp" />
     <ClCompile Include="session.cpp" />
     <ClCompile Include="session_manager.cpp" />
     <ClCompile Include="user.cpp" />
@@ -32,11 +35,13 @@
   <ItemGroup>
     <ClInclude Include="book.h" />
     <ClInclude Include="config.h" />
+    <ClInclude Include="connection_pool.h" />
     <ClInclude Include="credentials_manager.h" />
     <ClInclude Include="factory.h" />
     <ClInclude Include="library.h" />
     <ClInclude Include="manager.h" />
     <ClInclude Include="netserver.h" />
+    <ClInclude Include="program_launcher.h" />
     <ClInclude Include="session.h" />
     <ClInclude Include="session_manager.h" />
     <ClInclude Include="user.h" />

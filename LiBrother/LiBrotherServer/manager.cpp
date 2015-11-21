@@ -1,9 +1,9 @@
 #include"manager.h"
-#include"magicdb.h"
 #include"user.h"
 #include<sstream>
+#include"config.h"
 
-CManager::CManager(IDatabase * DatabaseFile)
+CManager::CManager(CConnectionPool * DatabaseFile)
 {
 	m_pDatabase=DatabaseFile;
 }
@@ -18,22 +18,30 @@ bool CManager::getUserByID(int nID, IUser ** ppUser)
 		setError(InvalidParam, 4, "The pointer is NULL.");
 		return false;
 	}
-	IRecordset * URecordset;
-	std::stringstream str;
-	str << "SELECT * FROM UserInfoDatabase WHERE id=" << nID;
-	if (!m_pDatabase->executeSQL(str.str().c_str(), &URecordset))
+	try
 	{
-		setError(InvalidParam, 142857, "No this user.");
+		sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+		std::shared_ptr<sql::Statement> stat(c->createStatement());
+		std::stringstream str;
+		str << "SELECT * FROM UserInfoDatabase WHERE id = " << nID;
+		stat->execute(str.str());
+		std::shared_ptr<sql::ResultSet> result(stat->getResultSet());
+		TUserBasicInfo Basicinfo;
+		Basicinfo.email = result->getString("email");
+		Basicinfo.gender = result->getInt("gender");
+		Basicinfo.id = result->getInt("id");
+		Basicinfo.name = result->getString("name");
+		(*ppUser)->setReadLevel(result->getInt("ReadLevel"));
+		(*ppUser)->setBasicInfo(Basicinfo);
+		((CUser*)(*ppUser))->straightsetpassword(result->getString("password").c_str());
+		((CUser*)(*ppUser))->sign();
+		return true;
+	}
+	catch (sql::SQLException& e)
+	{
+		setError(DatabaseError, 9, (std::string("There is some wrong with our database.\n") + e.what()).c_str());
 		return false;
 	}
-	TUserBasicInfo BasicInfo;
-	BasicInfo.email = std::string(URecordset->getData("email"));
-	BasicInfo.name = std::string(URecordset->getData("name"));
-	BasicInfo.gender = URecordset->getData("gender");
-	BasicInfo.id = URecordset->getData("id");
-	(*ppUser)->setBasicInfo(BasicInfo);
-	(*ppUser)->setPassword(std::string(URecordset->getData("password")).c_str());
-	((CUser*)(*ppUser))->sign();
 	return true;
 }
 bool CManager::insertUser(IUser * pUser)
@@ -74,22 +82,30 @@ bool CManager::getUserByName(const char * strName, IUser ** ppUser)
 			setError(InvalidParam, 4, "The pointer is NULL.");
 			return false;
 		}
-		IRecordset * URecordset;
-		std::stringstream str;
-		str << "SELECT * FROM UserInfoDatabase WHERE email=" <<'"'<<strName<<'"';
-		if (!m_pDatabase->executeSQL(str.str().c_str(), &URecordset))
+		try
 		{
-			setError(InvalidParam, 142857, "No this user.");
+			sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+			std::shared_ptr<sql::Statement> stat(c->createStatement());
+			std::stringstream str;
+			str << "SELECT * FROM UserInfoDatabase WHERE email = " << '\''<<strName<<'\'';
+			stat->execute(str.str());
+			std::shared_ptr<sql::ResultSet> result(stat->getResultSet());
+			TUserBasicInfo Basicinfo;
+			Basicinfo.email = result->getString("email");
+			Basicinfo.gender = result->getInt("gender");
+			Basicinfo.id = result->getInt("id");
+			Basicinfo.name = result->getString("name");
+			(*ppUser)->setReadLevel(result->getInt("ReadLevel"));
+			(*ppUser)->setBasicInfo(Basicinfo);
+			((CUser*)(*ppUser))->straightsetpassword(result->getString("password").c_str());
+			((CUser*)(*ppUser))->sign();
+			return true;
+		}
+		catch (sql::SQLException& e)
+		{
+			setError(DatabaseError, 9, (std::string("There is some wrong with our database.\n") + e.what()).c_str());
 			return false;
 		}
-		TUserBasicInfo BasicInfo;
-		BasicInfo.email = std::string(URecordset->getData("email"));
-		BasicInfo.name = std::string(URecordset->getData("name"));
-		BasicInfo.gender = URecordset->getData("gender");
-		BasicInfo.id = URecordset->getData("id");
-		(*ppUser)->setBasicInfo(BasicInfo);
-		(*ppUser)->setPassword(std::string(URecordset->getData("password")).c_str());
-		((CUser*)(*ppUser))->sign();
 		return true;
 	}
 	if (type == 2)
@@ -99,23 +115,30 @@ bool CManager::getUserByName(const char * strName, IUser ** ppUser)
 			setError(InvalidParam, 4, "The pointer is NULL.");
 			return false;
 		}
-		IRecordset * URecordset;
-		std::stringstream str;
-		str << "SELECT * FROM UserInfoDatabase WHERE name=" <<'"'<< strName<<'"';
-		if (!m_pDatabase->executeSQL(str.str().c_str(), &URecordset))
+		try
 		{
-			setError(InvalidParam, 142857, "No this user.");
+			sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+			std::shared_ptr<sql::Statement> stat(c->createStatement());
+			std::stringstream str;
+			str << "SELECT * FROM UserInfoDatabase WHERE name = " << '\'' << strName << '\'';
+			stat->execute(str.str());
+			std::shared_ptr<sql::ResultSet> result(stat->getResultSet());
+			TUserBasicInfo Basicinfo;
+			Basicinfo.email = result->getString("email");
+			Basicinfo.gender = result->getInt("gender");
+			Basicinfo.id = result->getInt("id");
+			Basicinfo.name = result->getString("name");
+			(*ppUser)->setReadLevel(result->getInt("ReadLevel"));
+			(*ppUser)->setBasicInfo(Basicinfo);
+			((CUser*)(*ppUser))->straightsetpassword(result->getString("password").c_str());
+			((CUser*)(*ppUser))->sign();
+			return true;
+		}
+		catch (sql::SQLException& e)
+		{
+			setError(DatabaseError, 9, (std::string("There is some wrong with our database.\n") + e.what()).c_str());
 			return false;
 		}
-		TUserBasicInfo BasicInfo;
-		BasicInfo.email = std::string(URecordset->getData("email"));
-		BasicInfo.name = std::string(URecordset->getData("name"));
-		BasicInfo.gender = URecordset->getData("gender");
-		BasicInfo.id = URecordset->getData("id");
-		(*ppUser)->setBasicInfo(BasicInfo);
-		(*ppUser)->setPassword(std::string(URecordset->getData("password")).c_str());
-		((CUser*)(*ppUser))->sign();
-		return true;
 	}
-	return true;
+	return false;
 }
