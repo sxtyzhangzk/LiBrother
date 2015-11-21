@@ -26,7 +26,6 @@ struct ILibClassFactory;
 struct TSocketEx;
 struct TPerIOContext;
 class CSessionManager;
-class CSession;
 class CCredentialsManager;
 namespace Botan
 {
@@ -68,16 +67,20 @@ protected:
 	//处理接收到的数据
 	void receivedData(TSocketEx * pSocket, const char * pData, size_t nLen);
 
+	//向客户端发送响应
 	void sendResponse(TSocketEx * pSocket, const std::string& strResponse);
 
 	//初始化TLS
 	bool initTLS();
 
+	//建立一个TLS会话
 	bool createTLSSession(TSocketEx * pSocket);
+	
+	//处理刚收到的数据
+	void recvRawData(TSocketEx * pSocket, const char * pData, size_t nLen);
 
-	void TLSRecvData(TSocketEx * pSocket, const char * pData, size_t nLen);
-
-	//bool isReadyToClose(TSocketEx * pSocket);
+	//标记套接字即将结束的状态
+	void setSocketClose(TSocketEx * pSocket);
 
 #ifdef _WIN32
 	//初始化完成端口
@@ -100,6 +103,7 @@ protected:
 	//完成端口 - 处理Recv请求
 	bool doRecv(TSocketEx * pSocket, TPerIOContext * pIOContext, size_t nDataSize);
 
+	//完成端口 - 处理Send请求
 	bool doSend(TSocketEx * pSocket, TPerIOContext * pIOContext, size_t nDataSize);
 #endif
 
@@ -111,9 +115,9 @@ protected:
 	
 	Botan::RandomNumberGenerator * m_rng;				//Botan - 随机数生成器
 
-	CCredentialsManager * m_pCredManager;
-	Botan::TLS::Session_Manager_In_Memory * m_pTLSSM;
-	Botan::TLS::Policy * m_pPolicy;
+	CCredentialsManager * m_pCredManager;				//TLS 凭据管理器
+	Botan::TLS::Session_Manager_In_Memory * m_pTLSSM;	//TLS 会话管理器
+	Botan::TLS::Policy * m_pPolicy;						//TLS 配置
 
 #ifdef _WIN32
 	handle_t m_hIOCP;					//完成端口的句柄

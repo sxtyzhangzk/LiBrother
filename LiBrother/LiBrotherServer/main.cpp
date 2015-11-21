@@ -3,6 +3,7 @@
 #include "factory.h"
 #include "connection_pool.h"
 #include "program_launcher.h"
+#include "utils.h"
 
 #include <iostream>
 #include <fstream>
@@ -27,12 +28,6 @@ TPolicy g_configPolicy;
 HANDLE g_hExitEvent;
 #endif
 
-std::string int2str(int num)
-{
-	std::stringstream sstream;
-	sstream << num;
-	return sstream.str();
-}
 
 //¼ÓÔØÄ¬ÈÏÅäÖÃ
 void loadDefaultConfig()
@@ -75,6 +70,7 @@ bool loadConfig(const std::string& strFile)
 	if (!fconfig.is_open())
 		return false;
 
+	loadDefaultConfig();
 	try
 	{
 		std::string temp;
@@ -243,7 +239,7 @@ void stopMysql(CProgramLauncher& progLauncher, int nMysqld)
 		return;
 	std::vector<std::string> vecArgs;
 	vecArgs.push_back(std::string("--host=") + g_configSvr.strMySQLHost);
-	vecArgs.push_back(std::string("--port=") + int2str(g_configSvr.nMySQLPort));
+	vecArgs.push_back(std::string("--port=") + type2str(g_configSvr.nMySQLPort));
 	vecArgs.push_back(std::string("--user=") + g_configSvr.strUser);
 	vecArgs.push_back(std::string("--password=") + g_configSvr.strPWD);
 	vecArgs.push_back("shutdown");

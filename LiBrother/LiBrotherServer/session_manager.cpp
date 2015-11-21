@@ -1,6 +1,7 @@
 #include "config.h"
 #include "session_manager.h"
 #include "session.h"
+#include "utils.h"
 
 #include <cassert>
 #include <ctime>
@@ -73,6 +74,7 @@ bool CSessionManager::stopServer()
 	m_pthreadCleaner = nullptr;
 
 	//关闭还在打开状态的会话
+
 	for (auto session : m_mapSessions)
 	{
 		session.second->session->stopSession();
@@ -117,7 +119,9 @@ bool CSessionManager::recvRequest(const std::string& strClientIP, const std::str
 		}
 		else
 		{
+			session->mutexSession.lock();
 			session->session->recvRequest(request, response);
+			session->mutexSession.unlock();
 			strResponse = "OK\n" + response;
 		}
 	}
@@ -125,7 +129,7 @@ bool CSessionManager::recvRequest(const std::string& strClientIP, const std::str
 	{
 		//创建新的会话
 		sessionID = createSession(strClientIP, nullptr);
-		strResponse = sessionID;
+		strResponse = type2str(sessionID);
 	}
 	return bKeepAlive;
 }

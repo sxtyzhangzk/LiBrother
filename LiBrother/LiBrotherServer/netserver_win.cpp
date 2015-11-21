@@ -35,6 +35,7 @@ const size_t BufferSize = 1024;				//接收缓存区的大小
 const int Accept_Post_Count = 8;			//同时投递的Accept请求数
 const ULONG_PTR Exit_Key = 0;				//指示工作线程退出的CompletionKey
 const size_t IPLength = 50;
+const int WaitTime_WorkerThread = 30;
 
 //完成端口处理的请求类型
 enum TIOType
@@ -183,11 +184,14 @@ struct TSocketEx
 		{
 			if (bIsClientSock)
 			{
-				EnterCriticalSection((LPCRITICAL_SECTION)&pNetServer->m_pcsClientSocks);
+				LPCRITICAL_SECTION csClientSocks = (LPCRITICAL_SECTION)pNetServer->m_pcsClientSocks;
+				EnterCriticalSection(csClientSocks);
 				pNetServer->m_vpClientSocks.erase(this);
-				LeaveCriticalSection((LPCRITICAL_SECTION)&pNetServer->m_pcsClientSocks);
+				delete this;
+				LeaveCriticalSection(csClientSocks);
 			}
-			delete this;
+			else
+				delete this;
 		}
 		return refCount;
 	}
@@ -209,7 +213,7 @@ struct TSocketEx
 		{
 			pIOContext = new TPerIOContext(IoSend);
 			pIOContext->wsaBuffer.buf = buffer;
-			pIOContext->wsaBuffer.len = nLen;
+			pIOContext->wsaBuffer.len = (ULONG)nLen;
 			pIOContextSend = pIOContext;
 		}
 		LeaveCriticalSection(&csIOContext);
@@ -271,6 +275,54 @@ bool CNetServer::initNetServer()
 bool CNetServer::startServer(ILibClassFactory * pClassFactory)
 {
 	m_pSManager->startServer(pClassFactory);
+	if (!initIOCP())
+		return false;
+	if (g_configSvr.nTLS && !initTLS())
+	{
+		if (g_configSvr.nTLS == 2)
+			return false;
+		g_configSvr.nTLS = 0;
+		lprintf_w("TLS will be disabled");
+	}
+	if (!initListenSocket())
+		return false;
+	return true;
+}
+
+bool CNetServer::stopServer()
+{
+	EnterCriticalSection((LPCRITICAL_SECTION)m_pcsClientSocks);
+	for (auto clientSock : m_vpClientSocks)
+	{
+		if (!clientSock->bReadyToClose)
+			setSocketClose(clientSock);
+	}
+	LeaveCriticalSection((LPCRITICAL_SECTION)m_pcsClientSocks);
+
+	for (int i = 0; i < m_vhThreads.size(); i++)
+		PostQueuedCompletionStatus(m_hIOCP, 0, Exit_Key, nullptr);
+	if (WaitForMultipleObjects((DWORD)m_vhThreads.size(), &m_vhThreads[0], TRUE, WaitTime_WorkerThread * 1000) == WAIT_TIMEOUT)
+	{
+		lprintf_w("Worker Thread Timeout");
+		for (auto hThread : m_vhThreads)
+		{
+			DWORD dwExitCode;
+			GetExitCodeThread(hThread, &dwExitCode);
+			if (dwExitCode == STILL_ACTIVE)
+				TerminateThread(hThread, ~0UL);
+		}
+	}
+
+	if (!m_vpClientSocks.empty())
+	{
+		for (auto clientSock : m_vpClientSocks)
+			delete clientSock;
+	}
+	if (g_configSvr.nTLS)
+		delete m_psockListenTLS;
+	delete m_psockListen;
+
+	m_pSManager->stopServer();
 	return true;
 }
 
@@ -318,6 +370,7 @@ bool CNetServer::initTLS()
 	}
 	catch (std::exception& e)
 	{
+		lprintf_e("An error occurred while init TLS: \n%s", e.what());
 		return false;
 	}
 	return true;
@@ -342,6 +395,7 @@ bool CNetServer::createTLSSession(TSocketEx * pSocket)
 	}
 	catch (std::exception& e)
 	{
+		lprintf_e("An error occurred while creating TLS Session: \n%s", e.what());
 		return false;
 	}
 	return true;
@@ -663,7 +717,7 @@ bool CNetServer::doSend(TSocketEx * pSocket, TPerIOContext * pIOContext, size_t 
 		return true;
 	}
 	pIOContext->wsaBuffer.buf = buffer;
-	pIOContext->wsaBuffer.len = sizeBuffer;
+	pIOContext->wsaBuffer.len = (ULONG)sizeBuffer;
 	return postSendRq(pSocket, pIOContext);
 }
 
@@ -697,7 +751,8 @@ void CNetServer::receivedData(TSocketEx * pSocket, const char * pData, size_t nL
 			else
 				strResponse += "\n\n";
 			sendResponse(pSocket, strResponse);
-			pSocket->bReadyToClose = !bKeepAlive;
+			if (!bKeepAlive)
+				setSocketClose(pSocket);
 
 			lasti = i + 1;
 		}
@@ -716,4 +771,19 @@ void CNetServer::sendResponse(TSocketEx * pSocket, const std::string& strRespons
 	}
 	else
 		sendData(pSocket, strResponse.data(), strResponse.size());
+}
+
+void CNetServer::recvRawData(TSocketEx * pSocket, const char * pData, size_t nLen)
+{
+	if (pSocket->TLS)
+		pSocket->pTLSServer->received_data((const Botan::byte *)pData, nLen);
+	else
+		receivedData(pSocket, pData, nLen);
+}
+
+void CNetServer::setSocketClose(TSocketEx * pSocket)
+{
+	if (pSocket->TLS)
+		pSocket->pTLSServer->close();
+	pSocket->bReadyToClose = true;
 }

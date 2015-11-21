@@ -45,6 +45,7 @@
     <ClInclude Include="session.h" />
     <ClInclude Include="session_manager.h" />
     <ClInclude Include="user.h" />
+    <ClInclude Include="utils.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{7E8CFCD5-6F8C-4F52-9166-972F1C0B04FE}</ProjectGuid>
