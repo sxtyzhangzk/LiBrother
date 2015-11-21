@@ -59,6 +59,7 @@ bookdata::bookdata(QWidget *parent) :
         }
         factory1->Release();
         library1->Release();
+        iBook1->Release();
 }
 
 bookdata::~bookdata()

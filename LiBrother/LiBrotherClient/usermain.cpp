@@ -6,6 +6,8 @@
 #include "client_interfaces.h"
 #include "QMessageBox"
 #include "changepassword.h"
+#include "managermain.h"
+#include "useredit.h"
 
 usermain::usermain(QWidget *parent) ://开场直接显示所有用户已借的书本
     QDialog(parent),
@@ -80,12 +82,6 @@ usermain::~usermain()
     delete ui;
 }
 
-void usermain::on_pushButton_4_clicked()
-{
-    ChangePassword ChangePassword1;
-    ChangePassword1.exec();
-}
-
 
 
 
@@ -121,6 +117,50 @@ void usermain::on_pushButton_3_clicked()//还书操作
 
     ui->listWidget->takeItem(ui->listWidget->currentRow());//删除已还的书
 
+    library3->Release();
+    iBook1->Release();
+    iUser->Release();
+    iUser1->Release();
 }
 
 
+
+void usermain::on_pushButton_5_clicked()
+{
+    ChangePassword changePassword1;
+    changePassword1.exec();
+}
+
+void usermain::on_pushButton_4_clicked()
+{
+    IClassFactoryClient *factory3;
+    getClassFactory(&factory3);
+    IAuthManager *iUser;
+    factory3->getAuthManager(&iUser);
+    if(iUser->getAuthLevel() >= 1)
+    {
+        managermain managermain1;
+        managermain1.exec();
+    }
+    else{QMessageBox::information(this,"Warning","对不起，您没有权限");}
+
+    factory3->Release();
+    iUser->Release();
+}
+
+void usermain::on_pushButton_6_clicked()
+{
+    IClassFactoryClient *factory3;
+    getClassFactory(&factory3);
+    IAuthManager *iUser;
+    factory3->getAuthManager(&iUser);
+    if(iUser->getAuthLevel() >= 2)
+    {
+        useredit useredit1;
+        useredit1.exec();
+    }
+    else{QMessageBox::information(this,"Warning","对不起，您没有权限");}
+
+    factory3->Release();
+    iUser->Release();
+}
