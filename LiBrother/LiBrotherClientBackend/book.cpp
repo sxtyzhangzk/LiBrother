@@ -56,6 +56,7 @@ bool CBook::setBasicInfo(const TBookBasicInfo& info)
 	value0["publisher"] = m_CBBI->publisher;
 	value0["author"] = m_CBBI->author;
 	value0["isbn"] = m_CBBI->isbn;
+	value0["remain_num"] = m_CBBI->remain_num;
 	Json::FastWriter writer;
 	std::string strRequest;
 	std::string strRespond;
