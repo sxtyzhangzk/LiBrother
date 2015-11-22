@@ -358,4 +358,148 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		getDescription(strResponse);
 
 
+	if (request == "authmanager_Login") {
+		std::string tem_name = value0["name"].asString();
+		IUserManager *usermanager;
+		m_pClassFactory->getUserManager(&usermanager);
+		IUser *user;
+		if (usermanager->getUserByName(tem_name.c_str(), &user)) {
+			TUserBasicInfo *tem_user_basic_info;
+			user->getBasicInfo(*tem_user_basic_info);
+			/*if (tem_user_basic_info->LoginStatus) {
+				value["result"] = "Multipled log in";				//验证重复登入
+				strResponse = writer.write(value);
+				return;
+			}*/
+			value["result"] = 1;
+			strResponse = writer.write(value);
+			return;
+		}
+		value["result"] = "DatabaseError";
+		strResponse = writer.write(value);
+		return;
+	}
+
+	if (request == "authmanager_Logout") {
+		int tem_id = value0["id"].asInt();
+		IUserManager *usermanager;
+		m_pClassFactory->getUserManager(&usermanager);
+		IUser *user;
+		if (usermanager->getUserByID(tem_id, &user)) {
+			TUserBasicInfo *tem_user_basic_info;
+			user->getBasicInfo(*tem_user_basic_info);
+			if (!tem_user_basic_info->LoginStatus) {
+				value["result"] = "DatabaseError";				//验证登入
+				strResponse = writer.write(value);
+				return;
+			}
+			value["result"] = 1;
+			strResponse = writer.write(value);
+			return;
+		}
+		value["result"] = "DatabaseError";				
+		strResponse = writer.write(value);
+		return;
+	}
+
+	if (request == "authmanager_Register") {
+		IUserManager *usermanager;
+		m_pClassFactory->getUserManager(&usermanager);
+		IUser *user;
+		std::string tem_name = value0["name"].asString();
+		if (usermanager->getUserByName(tem_name.c_str(), &user)){
+			value["result"] = 0;
+			strResponse = writer.write(value);
+			return;
+		}
+		std::string tem_email = value0["rmail"].asString();
+		if (usermanager->getUserByName(tem_email.c_str(), &user)){
+			value["result"] = -1;
+			strResponse = writer.write(value);
+			return;
+		}
+		int newid=1;
+		while (usermanager->getUserByID(newid, &user)) ++newid;
+		m_pClassFactory->createEmptyUser(&user);
+		TUserBasicInfo *info;
+		info->id = newid;
+		info->email = tem_email;
+		info->name = tem_name;
+		info->gender = value["gender"].asInt();
+		info->LoginStatus = true;
+		user->setBasicInfo(*info);
+		value["result"] = 1;
+		value["id"] = newid;
+		strResponse = writer.write(value);
+		return;
+	}
+
+	if (request == "authmanager_changePassword") {
+		int tem_id = value0["id"].asInt();
+		IUserManager *usermanager;
+		m_pClassFactory->getUserManager(&usermanager);
+		IUser *user;
+		if (usermanager->getUserByID(tem_id, &user)) {
+			std::string oldPWD = value0["oldPWD"].asString();
+			const char *poldPWD = oldPWD.c_str();
+			if (user->verifyPassword(poldPWD)) {
+				std::string newPWD = value0["newPWD"].asString();
+				const char *pnewPWD = newPWD.c_str();
+				if (user->setPassword(pnewPWD)) {
+					value["result"] = 1;
+					strResponse = writer.write(value);
+					return;
+				}
+				value["result"] = -2;
+				strResponse = writer.write(value);
+				return;
+			}
+		}
+		value["result"] = -1;
+		strResponse = writer.write(value);
+		return;
+	}
+
+	if (request == "authmanager_getCurrentUser") {
+		int tem_id = value0["id"].asInt();
+		IUserManager *usermanager;
+		m_pClassFactory->getUserManager(&usermanager);
+		IUser *user;
+		if (usermanager->getUserByID(tem_id, &user)) {
+			TUserBasicInfo *Info;
+			user->getBasicInfo(*Info);
+			value["result"] = 1;
+			value["email"] = Info->email;
+			value["gender"] = Info->gender;
+			value["id"] = Info->id;
+			value["name"] = Info->name;
+			strResponse = writer.write(value);
+			return;
+		}
+		value["result"] = 0;
+		strResponse = writer.write(value);
+		return;
+	}
+
+	if (request == "authmanager_getAuthLevel") {
+		int tem_id = value0["id"].asInt();
+		IUserManager *usermanager;
+		m_pClassFactory->getUserManager(&usermanager);
+		IUser *user;
+		if (usermanager->getUserByID(tem_id, &user)) {
+			int AuthLevel = user->getAuthLevel;
+			if (AuthLevel == -1) {
+				value["result"] = -1;
+				strResponse = writer.write(value);
+				return;
+			}
+			value["result"] = 1;
+			value["AuthLevel"] = AuthLevel;
+			strResponse = writer.write(value);
+			return;
+		}
+		value["result"] = -1;
+		strResponse = writer.write(value);
+		return;
+	}
 }

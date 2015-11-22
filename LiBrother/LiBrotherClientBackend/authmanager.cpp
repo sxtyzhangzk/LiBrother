@@ -86,15 +86,18 @@ bool  CAuthManager::Register(IUser * pUser)
 	reader.parse(strRespond, value);
 	if (value["result"].asInt() == -1) {
 		setError(InvalidParam, 4, "Your email has been registered");
+		delete info;
 		return false;
 	}
 	if (value["result"].asInt() == 0) {
 		setError(InvalidParam, 4, "Your name has been registered");
+		delete info;
 		return false;
 	}
 	info->id=value["id"].asInt();
 	info->LoginStatus = true;
 	current_user = info;
+	delete info;
 	return true;
 }
 
@@ -129,7 +132,7 @@ bool CAuthManager::getCurrentUser(IUser **ppUser)
 		return false;
 	}
 	Json::Value value0;
-	value0["command"] = "authmanage_changePassword";
+	value0["command"] = "authmanager_getCurrentUser";
 	value0["id"] = current_user->id;
 	Json::FastWriter writer;
 	std::string strRequest;
@@ -148,6 +151,7 @@ bool CAuthManager::getCurrentUser(IUser **ppUser)
 		Info->LoginStatus = true;
 		IUser *user = new IUser(Info);
 		*ppUser = user;
+		delete Info;
 		return true;
 	}
 	return false;
@@ -160,7 +164,7 @@ int CAuthManager::getAuthLevel()
 		return -1;
 	}
 	Json::Value value0;
-	value0["command"] = "authmanage_getAuthLevel";
+	value0["command"] = "authmanager_getAuthLevel";
 	value0["id"] = current_user->id;
 	Json::FastWriter writer;
 	std::string strRequest;
