@@ -5,6 +5,9 @@
 #include "config.h"
 #include<botan\bcrypt.h>
 #include<botan\auto_rng.h>
+#include"utils.h"
+#include<liblog.h>
+MODULE_LOG_NAME("CUser");
 CUser::CUser(CConnectionPool * DatabaseFile)
 {
 	m_pDatabase = DatabaseFile;
@@ -12,6 +15,7 @@ CUser::CUser(CConnectionPool * DatabaseFile)
 	is_from_Database = 0;
 	m_CUBI.id = -1;
 	m_CUBI.gender = -1;
+	m_CUBI.num = 0;
 }
 CUser::~CUser()
 {
@@ -19,7 +23,7 @@ CUser::~CUser()
 }
 bool CUser::check(TUserBasicInfo info_to_check)
 {
-	if (info_to_check.id == -1 || info_to_check.gender==-1) return false;
+	if (info_to_check.id == -1 || info_to_check.gender==-1 || info_to_check.num<0) return false;
 	if (info_to_check.email.empty() || info_to_check.name.empty()) return false;
 	return true;
 }
@@ -55,12 +59,12 @@ bool CUser::setBasicInfo(const TUserBasicInfo& info)
 	{
 		try
 		{
-			sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+			std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN),MYSQL_CONN_RELEASER);
 			std::shared_ptr<sql::Statement> stat(c->createStatement());
 			std::stringstream str;
-			str << "UPDATE UserInfoDatabase SET name = " << '\'' << info.name << '\'' << ", " <<
-				"email = " << '\'' << info.email << '\'' << ", " <<
-				"gender = " << info.gender <<
+			str << "UPDATE UserInfoDatabase SET name = " << '\'' << str2sql(info.name) << '\'' << ", " <<
+				"email = " << '\'' << str2sql(info.email) << '\'' << ", " <<
+				"gender = " << info.gender << ", " << "num = " << info.num<<
 				" WHERE id = " << m_Id;
 			stat->execute(str.str());
 		}
@@ -101,15 +105,17 @@ bool CUser::setPassword(const char * strPWD)
 	{
 		try
 		{
-			sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+			std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN),MYSQL_CONN_RELEASER);
 			std::shared_ptr<sql::Statement> stat(c->createStatement());
 			std::stringstream str;
-			str << "UPDATE UserInfoDatabase SET password = " << '\'' << m_password << '\'' << " WHERE userID=" << m_Id;
+			str << "UPDATE UserInfoDatabase SET password = " << '\'' << str2sql(m_password) << '\'' << " WHERE userID=" << m_Id;
 			stat->execute(str.str());
+			lprintf("Password of user id = %d has changed.", m_Id);
 			return true;
 		}
 		catch (sql::SQLException& e)
 		{
+			lprintf_e("Fail to change password of user id = %d.", m_Id);
 			setError(DatabaseError, 9, (std::string("There is some wrong with our database.\n") + e.what()).c_str());
 			return false;
 		}
@@ -124,7 +130,7 @@ bool CUser::getBorrowedBooks(std::vector<TBorrowInfo> &binfo)
 		return false;	//不是来自数据库的书，不可借阅，返回false
 	}
 	binfo.clear();
-	sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+	std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN),MYSQL_CONN_RELEASER);
 	std::shared_ptr<sql::Statement> stat(c->createStatement());
 	std::stringstream str;
 	str << "SELECT * FROM BorrowDatabase WHERE userID=" << m_Id;
@@ -167,23 +173,35 @@ bool CUser::borrowBook(IBook * pBook)
 		setError(PermissionDenied, 1258011, "The user has no permission.");
 		return false;
 	}
+	if (!m_CUBI.num)
+	{
+		setError(PermissionDenied, 1258011, "The user has no permission");
+		return false;
+	}
+	m_CUBI.num--;
+	int b_id;
 	if (((CBook*)pBook)->borrow(1))
 	{
 		try
 		{
-			TBookBasicInfo info;
-			((CBook*)pBook)->getBasicInfo(info);
-			sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+			std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN), MYSQL_CONN_RELEASER);
 			std::shared_ptr<sql::Statement> stat(c->createStatement());
 			std::stringstream str;
-			str << "INSERT INTO BorrowDatabase(id) VALUES ("<<info.id << " ," << m_Id << " ," << time(0) << " ," << 0<<")";
+			str << "UPDATE UserInfoDatabase SET num = " << m_CUBI.num << " WHERE id=" << m_Id;
 			stat->execute(str.str());
+			TBookBasicInfo info;
+			((CBook*)pBook)->getBasicInfo(info);
+			b_id = info.id;
+			str << "INSERT INTO BorrowDatabase VALUES ("<<info.id << " ," << m_Id << " ," << time(0) << " ," << 0<<")";
+			stat->execute(str.str());
+			lprintf("User id = %d has borrowed a book id = %d.", m_Id,b_id);
 			return true;
 		}
 		catch (sql::SQLException& e)
 		{
+			lprintf_e("User id  =%d failed to borrow a book id = %d.", m_Id, b_id);
 			((CBook*)pBook)->borrow(-1);
-			setError(DatabaseError, 9, (std::string("There is some wrong with our database.\n") + e.what()).c_str());
+			setError(DatabaseError, 12450, (std::string("There is a fatal error in our database.\n") + e.what()).c_str());
 			return false;
 		}
 	}
@@ -201,21 +219,28 @@ bool CUser::returnBook(IBook * pBook)
 		setError(PermissionDenied, 1258011, "The user has no permission.");
 		return false;
 	}
+	int b_id;
+	m_CUBI.num++;
 	if (((CBook*)pBook)->borrow(-1))
 	{
 		try
 		{
-			TBookBasicInfo info;
-			((CBook*)pBook)->getBasicInfo(info);
-			sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+			std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN), MYSQL_CONN_RELEASER);
 			std::shared_ptr<sql::Statement> stat(c->createStatement());
 			std::stringstream str;
-			str << "INSERT INTO BorrowDatabase(id) VALUES (" << info.id << " ," << m_Id << " ," << time(0) << " ," << 1 << ")";
+			str << "UPDATE UserInfoDatabase SET num = " << m_CUBI.num << " WHERE id=" << m_Id;
 			stat->execute(str.str());
+			TBookBasicInfo info;
+			((CBook*)pBook)->getBasicInfo(info);
+			b_id = info.id;
+			str << "INSERT INTO BorrowDatabase VALUES (" << info.id << " ," << m_Id << " ," << time(0) << " ," << 1 << ")";
+			stat->execute(str.str());
+			lprintf("User id = %d has returned a book id = %d.", m_Id, b_id);
 			return true;
 		}
 		catch (sql::SQLException& e)
 		{
+			lprintf_e("User id = %d failed to return a book id = %d.", m_Id, b_id);
 			((CBook*)pBook)->borrow(1);
 			setError(DatabaseError, 9, (std::string("There is some wrong with our database.\n") + e.what()).c_str());
 			return false;
@@ -232,14 +257,16 @@ bool CUser::deleteUser()
 	}
 	try 
 	{
-		sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+		std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN),MYSQL_CONN_RELEASER);
 		std::shared_ptr<sql::Statement> stat(c->createStatement());
 		std::stringstream str;
 		str << "DELETE FROM UserInfoDatabse WHERE userID=" << m_Id;
 		stat->execute(str.str());
+		lprintf("User id = %d has been deleted", m_Id);
 	}
 	catch (sql::SQLException& e)
 	{
+		lprintf_e("User id = %d has failed to be deleted", m_Id);
 		setError(DatabaseError, 9, (std::string("There is some wrong with our database.\n") + e.what()).c_str());
 		return false;
 	}
@@ -270,7 +297,7 @@ bool CUser::insert()
 	}
 	try
 	{
-		sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+		std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN),MYSQL_CONN_RELEASER);
 		std::shared_ptr<sql::Statement> stat(c->createStatement());
 		std::stringstream str;
 		str << "INSERT INTO UserInfoDatabase(id) VALUES (null)";
@@ -279,12 +306,14 @@ bool CUser::insert()
 		setBasicInfo(m_CUBI);
 		setAuthLevel(g_configPolicy.nDefaultUserAuthLevel);
 		setReadLevel(g_configPolicy.nDefaultUserReadLevel);
-		str << "UPDATE UserInfoDatabase password = " << '\'' << m_password << '\'' << " WHERE id=" << m_Id;
+		str << "UPDATE UserInfoDatabase password = " << '\'' << str2sql(m_password) << '\'' << " WHERE id=" << m_Id;
 		stat->execute(str.str());
+		lprintf("A new user id = %d has been added", m_Id);
 		return true;
 	}
 	catch (sql::SQLException& e)
 	{
+		lprintf_e("The new user id = %d has failed to be added", m_Id);
 		setError(DatabaseError, 9, (std::string("There is some wrong with our database.\n") + e.what()).c_str());
 		return false;
 	}
@@ -299,7 +328,7 @@ int CUser::getAuthLevel()
 	}
 	try
 	{
-		sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+		std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN),MYSQL_CONN_RELEASER);
 		std::shared_ptr<sql::Statement> stat(c->createStatement());
 		std::stringstream str;
 		str << "SELECT AuthLevel FROM UserInfoDatabase WHERE userID = " << m_Id;
@@ -323,7 +352,7 @@ int CUser::getReadLevel()
 	}
 	try
 	{
-		sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+		std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN),MYSQL_CONN_RELEASER);
 		std::shared_ptr<sql::Statement> stat(c->createStatement());
 		std::stringstream str;
 		str << "SELECT ReadLevel FROM UserInfoDatabase WHERE userID = " << m_Id;
@@ -347,7 +376,7 @@ bool CUser::setAuthLevel(int nAuthLevel)
 	}
 	try
 	{
-		sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+		std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN),MYSQL_CONN_RELEASER);
 		std::shared_ptr<sql::Statement> stat(c->createStatement());
 		std::stringstream str;
 		str << "UPDATE FROM UserInfoDatabase AuthLevel = "<<nAuthLevel<<" WHERE userID = " << m_Id;
@@ -370,7 +399,7 @@ bool CUser::setReadLevel(int nReadLevel)
 	}
 	try
 	{
-		sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+		std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN),MYSQL_CONN_RELEASER);
 		std::shared_ptr<sql::Statement> stat(c->createStatement());
 		std::stringstream str;
 		str << "UPDATE FROM UserInfoDatabase ReadLevel = " << nReadLevel << " WHERE userID = " << m_Id;

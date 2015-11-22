@@ -2,7 +2,7 @@
 #include"user.h"
 #include<sstream>
 #include"config.h"
-
+#include"utils.h"
 CManager::CManager(CConnectionPool * DatabaseFile)
 {
 	m_pDatabase=DatabaseFile;
@@ -20,7 +20,7 @@ bool CManager::getUserByID(int nID, IUser ** ppUser)
 	}
 	try
 	{
-		sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+		std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN),MYSQL_CONN_RELEASER);
 		std::shared_ptr<sql::Statement> stat(c->createStatement());
 		std::stringstream str;
 		str << "SELECT * FROM UserInfoDatabase WHERE id = " << nID;
@@ -84,10 +84,10 @@ bool CManager::getUserByName(const char * strName, IUser ** ppUser)
 		}
 		try
 		{
-			sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+			std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN),MYSQL_CONN_RELEASER);
 			std::shared_ptr<sql::Statement> stat(c->createStatement());
 			std::stringstream str;
-			str << "SELECT * FROM UserInfoDatabase WHERE email = " << '\''<<strName<<'\'';
+			str << "SELECT * FROM UserInfoDatabase WHERE email = " << '\''<<str2sql(strName)<<'\'';
 			stat->execute(str.str());
 			std::shared_ptr<sql::ResultSet> result(stat->getResultSet());
 			TUserBasicInfo Basicinfo;
@@ -117,10 +117,10 @@ bool CManager::getUserByName(const char * strName, IUser ** ppUser)
 		}
 		try
 		{
-			sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+			std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN),MYSQL_CONN_RELEASER);
 			std::shared_ptr<sql::Statement> stat(c->createStatement());
 			std::stringstream str;
-			str << "SELECT * FROM UserInfoDatabase WHERE name = " << '\'' << strName << '\'';
+			str << "SELECT * FROM UserInfoDatabase WHERE name = " << '\'' << str2sql(strName) << '\'';
 			stat->execute(str.str());
 			std::shared_ptr<sql::ResultSet> result(stat->getResultSet());
 			TUserBasicInfo Basicinfo;
