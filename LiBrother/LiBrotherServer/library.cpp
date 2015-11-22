@@ -1,7 +1,21 @@
+#include "config.h"
 #include "library.h"
-#include "sstream"
 #include "book.h"
-#include"config.h"
+#include "connection_pool.h"
+
+#include <sstream>
+#include <memory>
+
+#include <liblog.h>
+
+MODULE_LOG_NAME("CLibrary");
+
+//TODO: SQL Injection Defense
+//TODO: Read Book Description (In CBook)
+
+static const char * strSelectSQL = 
+	"Select id, name, author, publisher, ISBN, count, bcount, ReadLevel From BookBasicInfo ";
+
 CLibrary::CLibrary(CConnectionPool *  DatabaseFile)
 {
 	m_pDatabase = DatabaseFile;
@@ -10,43 +24,80 @@ CLibrary::~CLibrary()
 {
 
 }
-/*int CLibrary::queryByName(const char * strName, IFvector& vBooks, int nCount, int nTop)			//Äã×Ô¼º¸ã¶¨°É
+
+int CLibrary::queryByName(const char * strName, IFvector& vBooks, int nCount, int nTop)
 {
-	IRecordset * BIRecordset;
-	m_pDatabase->getTable("BookInfoDatabase", &BIRecordset);
-	if (!BIRecordset)
+	if (!strName)
 	{
-		setError(InvalidParam, 4, "The pointer is NULL.");
+		setError(InvalidParam, 4, "Null Pointer");
 		return false;
 	}
-	int flag = nTop-1;
-	while (BIRecordset->findNext("name", Clike, strName) && flag)
-		flag--;
-	if (flag)
+
+	int ret = 0;
+
+	sql::Connection * pConn = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+	sql::Connection * pConnSphinx = nullptr;
+	if (g_configSvr.nSphinxType)
+		pConnSphinx = m_pDatabase->getConnection(REGID_SPHINX_CONN);
+
+	std::stringstream strSQL;
+	CBook * pBook = new CBook(m_pDatabase);
+	try
 	{
-		setError(InvalidParam, 12, "There's no so many books.");
-		return false;
+		std::shared_ptr<sql::Statement> pStat(pConn->createStatement());
+		
+		strSQL << strSelectSQL << "Where name='" << strName << "'";
+		std::shared_ptr<sql::ResultSet> pResult(pStat->executeQuery(strSQL.str()));
+		while (pResult->next())
+		{
+			readBookInfo(pResult, pBook);
+			pBook->sign();
+			vBooks.push_back(pBook);
+			ret++;
+			pBook = new CBook(m_pDatabase);
+		}
+
+		if (pConnSphinx)
+		{
+			std::shared_ptr<sql::Statement> pStatSphinx(pConnSphinx->createStatement());
+			strSQL.clear();
+			strSQL << "Select * From book Where Match('" << strName << "')";
+			std::shared_ptr<sql::ResultSet> pResultSphinx(pStatSphinx->executeQuery(strSQL.str()));
+			while (pResult->next())
+			{
+				int nID = pResultSphinx->getInt("id");
+				strSQL.clear();
+				strSQL << strSelectSQL << "Where id=" << nID;
+				std::shared_ptr<sql::ResultSet> pResultID(pStat->executeQuery(strSQL.str()));
+				if (pResultID->next())
+				{
+					readBookInfo(pResult, pBook);
+					pBook->sign();
+					vBooks.push_back(pBook);
+					ret++;
+					pBook = new CBook(m_pDatabase);
+				}
+			}
+		}
 	}
-	int count = 0;
-	while (count<nCount && BIRecordset->findNext("name", Clike, strName))
+	catch (sql::SQLException& e)
 	{
-		CBook * ppBook = new CBook(m_pDatabase);
-		TBookBasicInfo Basicinfo;
-		Basicinfo.author = std::string(BIRecordset->getData("author"));
-		Basicinfo.count = BIRecordset->getData("count");
-		Basicinfo.id = BIRecordset->getData("id");
-		Basicinfo.isbn = std::string(BIRecordset->getData("ISBN"));
-		Basicinfo.name = std::string(BIRecordset->getData("name"));
-		Basicinfo.publisher = std::string(BIRecordset->getData("publisher"));
-		ppBook->setBasicInfo(Basicinfo);
-		ppBook->setDescription(std::string(BIRecordset->getData("description")).c_str());
-		ppBook->sign();
-		vBooks.push_back(ppBook);
-		count++;
+		std::string strError = std::string("An error occurred while searching books: ") + e.what();
+		setError(DatabaseError, 9, strError.c_str());
+		ret = -1;
+		lprintf_e("%s", strError.c_str());
 	}
-	BIRecordset->Release();
-	return count;
-}*/
+
+	lprintf("queryByName called, name='%s', got %d result(s).", strName, ret);
+	
+	delete pBook;
+	if (pConn)
+		m_pDatabase->releaseConnection(REGID_MYSQL_CONN, pConn);
+	if (pConnSphinx)
+		m_pDatabase->releaseConnection(REGID_SPHINX_CONN, pConnSphinx);
+	return ret;
+}
+
 bool CLibrary::queryById(int nID, IBook ** ppBook)
 {
 	if (!ppBook)
@@ -54,35 +105,43 @@ bool CLibrary::queryById(int nID, IBook ** ppBook)
 		setError(InvalidParam, 4, "The pointer is NULL.");
 		return false;
 	}
+	bool ret = false;
+
+	sql::Connection *c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+	CBook *pBook = new CBook(m_pDatabase);
+
 	try
 	{
-		sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
 		std::shared_ptr<sql::Statement> stat(c->createStatement());
 		std::stringstream str;
-		str << "SELECT * FROM BookInfoDatabase WHERE id = " << nID;
-		stat->execute(str.str());
-		std::shared_ptr<sql::ResultSet> result(stat->getResultSet());
-		TBookBasicInfo Basicinfo;
-		Basicinfo.author = result->getString("author");
-		Basicinfo.count = result->getInt("count");
-		Basicinfo.bcount = result->getInt("bcount");
-		Basicinfo.id = result->getInt("id");
-		Basicinfo.isbn = result->getString("isbn");
-		Basicinfo.name = result->getString("name");
-		Basicinfo.publisher = result->getString("publisher");
-		(*ppBook)->setBookReadLevel(result->getInt("ReadLevel"));
-		(*ppBook)->setBasicInfo(Basicinfo);
-		(*ppBook)->setDescription(result->getString("description").c_str());
-		((CBook*)(*ppBook))->sign();
-		return true;
+		str << strSelectSQL << "WHERE id = " << nID;
+		std::shared_ptr<sql::ResultSet> result(stat->executeQuery(str.str()));
+		if (result->next())
+		{
+			readBookInfo(result, pBook);
+			pBook->sign();
+			pBook->AddRef();
+			*ppBook = pBook;
+			pBook = nullptr;
+			ret = true;
+		}
 	}
 	catch (sql::SQLException& e)
 	{
-		setError(DatabaseError, 9, (std::string("There is some wrong with our database.\n") + e.what()).c_str());
-		return false;
+		std::string strError = std::string("An error occurred while searching books by id: ") + e.what();
+		setError(DatabaseError, 9, strError.c_str());
+		ret = false;
+		lprintf_e("%s", strError.c_str());
 	}
-	return true;
+
+	lprintf("queryByID called, id=%d, got %d result(s)", nID, ret);
+
+	if (pBook)
+		delete pBook;
+	m_pDatabase->releaseConnection(REGID_MYSQL_CONN, c);
+	return ret;
 }
+
 bool CLibrary::queryByISBN(const char * strISBN, IBook ** ppBook)
 {
 	if (!strISBN || !ppBook)
@@ -90,36 +149,58 @@ bool CLibrary::queryByISBN(const char * strISBN, IBook ** ppBook)
 		setError(InvalidParam, 4, "The pointer is NULL.");
 		return false;
 	}
+	
+	bool ret = false;
+	sql::Connection *c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+	CBook *pBook = new CBook(m_pDatabase);
+
 	try
 	{
-		sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
 		std::shared_ptr<sql::Statement> stat(c->createStatement());
 		std::stringstream str;
-		str << "SELECT * FROM BookInfoDatabase WHERE isbn = " <<'\''<<strISBN<<'\'';
-		stat->execute(str.str());
-		std::shared_ptr<sql::ResultSet> result(stat->getResultSet());
-		TBookBasicInfo Basicinfo;
-		Basicinfo.author = result->getString("author");
-		Basicinfo.count = result->getInt("count");
-		Basicinfo.bcount = result->getInt("bcount");
-		Basicinfo.id = result->getInt("id");
-		Basicinfo.isbn = result->getString("isbn");
-		Basicinfo.name = result->getString("name");
-		Basicinfo.publisher = result->getString("publisher");
-		(*ppBook)->setBookReadLevel(result->getInt("ReadLevel"));
-		(*ppBook)->setBasicInfo(Basicinfo);
-		(*ppBook)->setDescription(result->getString("description").c_str());
-		((CBook*)(*ppBook))->sign();
-		return true;
+		str << strSelectSQL << "WHERE isbn='" << strISBN << "'";
+		std::shared_ptr<sql::ResultSet> result(stat->executeQuery(str.str()));
+		if (result->next())
+		{
+			readBookInfo(result, pBook);
+			pBook->sign();
+			pBook->AddRef();
+			*ppBook = pBook;
+			pBook = nullptr;
+			ret = true;
+		}
 	}
 	catch (sql::SQLException& e)
 	{
-		setError(DatabaseError, 9, (std::string("There is some wrong with our database.\n") + e.what()).c_str());
-		return false;
+		std::string strError = std::string("An error occurred while searching by ISBN: ") + e.what();
+		setError(DatabaseError, 9, strError.c_str());
+		ret = false;
+		lprintf_e("%s", strError);
 	}
+
+	lprintf("queryByISBN called, isbn='%s', got %d results", strISBN, ret);
+
+	if (pBook)
+		delete pBook;
+	m_pDatabase->releaseConnection(REGID_MYSQL_CONN, c);
 	return true;
 }
+
 bool CLibrary::insertBook(IBook * pBook)
 {
 	return ((CBook*)pBook)->insert();
+}
+
+void CLibrary::readBookInfo(std::shared_ptr<sql::ResultSet> pResultSet, CBook * pBook)
+{
+	TBookBasicInfo binfo;
+	binfo.id = pResultSet->getInt("id");
+	binfo.name = pResultSet->getString("name");
+	binfo.isbn = pResultSet->getString("isbn");
+	binfo.author = pResultSet->getString("author");
+	binfo.publisher = pResultSet->getString("publisher");
+	binfo.count = pResultSet->getInt("count");
+	binfo.bcount = pResultSet->getInt("bcount");
+	pBook->setBasicInfo(binfo);
+	pBook->setBookReadLevel(pResultSet->getInt("ReadLevel"));
 }
