@@ -41,7 +41,7 @@ void login::on_pushButton_clicked()
     }
     else
     {
-        QMessageBox::information(this,"Title","用户名或密码有误");
+        QMessageBox::information(this,"Warning","用户名或密码有误");
     }
 
     factory1->Release();

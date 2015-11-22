@@ -69,7 +69,7 @@ void userborrow::on_pushButton_4_clicked()
                     item->setData(Qt::UserRole,basic1.id);//data中存了之后要用到的书本ID号
                     ui->listWidget->addItem(item);
                 }
-                else{QMessageBox::information(this,"Title","操作错误");}
+                else{QMessageBox::information(this,"Warning","无法通过ISBN号查询到此书");}
             }
 
             else//按照书名就行搜索
@@ -94,7 +94,7 @@ void userborrow::on_pushButton_4_clicked()
 
                     }
                 }
-                else{QMessageBox::information(this,"Title","没有找到相关书本");}
+                else{QMessageBox::information(this,"Warning","无法找到相关书本");}
             }
             factory1->Release();
             library1->Release();

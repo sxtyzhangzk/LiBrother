@@ -46,7 +46,7 @@ bookdataedit::bookdataedit(QWidget *parent) :
         ui->textEdit->setText(bDescription1);
 
     }
-    else{QMessageBox::information(this,"警告","该书ID号有误");}
+    else{QMessageBox::information(this,"Warning","无法获取该书的基本信息");}
 
     factory1->Release();
     iBook1->Release();
@@ -99,11 +99,11 @@ void bookdataedit::on_pushButton_clicked()
         basic2.publisher = nbPublisher1.toStdString();
         std::string nbDescription01 = nbDescription1.toStdString();
 
-        if(iBook2->setBasicInfo(basic2)){}else{QMessageBox::information(this,"警告","录入失败，请检查输入格式");}
-        if(iBook2->setDescription(nbDescription01.c_str())){}else{QMessageBox::information(this,"警告","录入失败");}
+        if(iBook2->setBasicInfo(basic2)){}else{QMessageBox::information(this,"Warning","基础信息录入失败，请检查输入格式");}
+        if(iBook2->setDescription(nbDescription01.c_str())){}else{QMessageBox::information(this,"Warning","简洁录入失败");}
 
     }
-    else{QMessageBox::information(this,"警告","该书ID号有误");}
+    else{QMessageBox::information(this,"Warning","无法对当前书本信息进行修改");}
 
     factory2->Release();
     iBook2->Release();

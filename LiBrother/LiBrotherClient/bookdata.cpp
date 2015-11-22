@@ -52,7 +52,7 @@ bookdata::bookdata(QWidget *parent) :
         ui->textEdit->setText(bDescription1);
 
     }
-    else{QMessageBox::information(this,"警告","该书ID号有误");}
+    else{QMessageBox::information(this,"警告","ID号有误，无法通过ID查询到相关书目");}
     factory1->Release();
     library1->Release();
     iBook1->Release();
