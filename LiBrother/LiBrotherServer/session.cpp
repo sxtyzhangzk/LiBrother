@@ -380,6 +380,30 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		}
 	}
 
+	if (request=="user_getBorrowedBooks"){
+		int tem_id = value0["id"].asInt();
+		IUserManager *usermanager;
+		m_pClassFactory->getUserManager(&usermanager);
+		IUser *user;
+		if (usermanager->getUserByID(tem_id, &user)) {
+			ILibrary  *library;
+			m_pClassFactory->getLibrary(&library);
+			std::vector<TBorrowInfo> tem_binfo;
+			user->getBorrowedBooks(tem_binfo);
+			int num_of_records = tem_binfo.size();
+			value[0] = num_of_records;
+			Json::Value borinfoVal;
+			for (int i = 0; i < num_of_records; i++) {
+				borinfoVal[1] = tem_binfo[i].bookID;
+				borinfoVal[2] = tem_binfo[i].borrowTime;
+				borinfoVal[3] = tem_binfo[i].flag;
+				value[i + 1] = borinfoVal;
+		}
+		value[0] = 0;
+		strResponse = writer.write(value);
+		return;
+	}
+
 	if (request == "user_borrowBook") {
 		int tem_id = value0["userid"].asInt();
 		IUserManager *usermanager;
