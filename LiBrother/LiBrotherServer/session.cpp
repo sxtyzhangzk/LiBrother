@@ -346,16 +346,90 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 	}
 
 	
-	if (request == "user_verifyPassword")
-		getDescription(strResponse);
-	if (request == "user_setPassword")
-		getDescription(strResponse);
-	if (request == "user_borrowBook")
-		getDescription(strResponse);
-	if (request == "user_returnBook")
-		getDescription(strResponse);
-	if (request == "user_deleteUser")
-		getDescription(strResponse);
+	if (request == "user_verifyPassword") {
+		value["result"] = 0;
+		strResponse = writer.write(value);
+		return;
+	}
+
+	if (request == "user_setPassword") {
+		int tem_id = value0["id"].asInt();
+		IUserManager *usermanager;
+		m_pClassFactory->getUserManager(&usermanager);
+		IUser *user;
+		if (usermanager->getUserByID(tem_id, &user)) {
+			std::string newPWD = value0["password"].asString();
+			const char *pnewPWD = newPWD.c_str();
+			if (user->setPassword(pnewPWD)) {
+				value["result"] = 1;
+				strResponse = writer.write(value);
+				return;
+			}
+			value["result"] = 0;
+			strResponse = writer.write(value);
+			return;
+		}
+	}
+
+	if (request == "user_borrowBook") {
+		int tem_id = value0["userid"].asInt();
+		IUserManager *usermanager;
+		m_pClassFactory->getUserManager(&usermanager);
+		IUser *user;
+		if (usermanager->getUserByID(tem_id, &user)) {
+			ILibrary  *library;
+			m_pClassFactory->getLibrary(&library);
+			IBook *book;
+			if (library->queryById(value["bookid"].asInt, &book)) {
+				if (user->borrowBook(book)) {
+					value["result"] = 1;
+					strResponse = writer.write(value);
+					return;
+				}
+			}
+		}
+		value["result"] = 0;
+		strResponse = writer.write(value);
+		return;
+	}
+
+	if (request == "user_returnBook") {
+		int tem_id = value0["userid"].asInt();
+		IUserManager *usermanager;
+		m_pClassFactory->getUserManager(&usermanager);
+		IUser *user;
+		if (usermanager->getUserByID(tem_id, &user)) {
+			ILibrary  *library;
+			m_pClassFactory->getLibrary(&library);
+			IBook *book;
+			if (library->queryById(value["bookid"].asInt, &book)) {
+				if (user->returnBook(book)) {
+					value["result"] = 1;
+					strResponse = writer.write(value);
+					return;
+				}
+			}
+		}
+		value["result"] = 0;
+		strResponse = writer.write(value);
+		return;
+	}
+
+	if (request == "user_deleteUser") {
+		int tem_id = value0["id"].asInt();
+		IUserManager *usermanager;
+		m_pClassFactory->getUserManager(&usermanager);
+		IUser *user;
+		if (usermanager->getUserByID(tem_id, &user)) {
+			value["result"] = 1;
+			user->deleteUser();
+			strResponse = writer.write(value);
+			return;
+		}
+		value["result"] = 0;
+		strResponse = writer.write(value);
+		return;
+	}
 
 
 	if (request == "authmanager_Login") {
