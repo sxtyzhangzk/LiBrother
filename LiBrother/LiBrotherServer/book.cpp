@@ -1,6 +1,12 @@
 #include "book.h"
 #include "sstream"
 #include "config.h"
+#include "utils.h"
+
+#include <memory>
+#include <liblog.h>
+
+MODULE_LOG_NAME("CBook");
 
 // 顺序：id name author publisher ISBN count
 CBook::CBook(CConnectionPool * DatabaseFile)
@@ -36,11 +42,41 @@ bool CBook::getBasicInfo(TBookBasicInfo& info)
 	info = m_CBBI;	//合法，将书本基本信息赋给info
 	return true;
 }
+
 bool CBook::getDescription(std::string& description)
 {
-	description = m_Description;	//根本不能不合法，直接赋值
-	return true;
+	description.clear();
+	if (!is_from_Database || m_Description != "")
+	{
+		description = m_Description;
+		return true;
+	}
+
+	bool ret = false;
+	std::stringstream strSQL;
+	strSQL << "Select Uncompress(description) From BookInfoDatabase Where id=" << m_Id;
+
+	sql::Connection *pConn = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+	try
+	{
+		std::shared_ptr<sql::Statement> stat(pConn->createStatement());
+		std::shared_ptr<sql::ResultSet> result(stat->executeQuery(strSQL.str()));
+		if (result->next())
+			description = m_Description = result->getString("Uncompress(description)");
+		ret = true;
+	}
+	catch (sql::SQLException& e)
+	{
+		std::string strError = "An error occurred while getting description from database: ";
+		strError += e.what();
+		setError(DatabaseError, 9, strError.c_str());
+		lprintf_e("%s", strError.c_str());
+	}
+	
+	m_pDatabase->releaseConnection(REGID_MYSQL_CONN, pConn);
+	return ret;
 }
+
 bool CBook::setBasicInfo(const TBookBasicInfo& info)	
 {
 	if (!check(info))	//判断给予的基本信息是否合法
@@ -56,15 +92,17 @@ bool CBook::setBasicInfo(const TBookBasicInfo& info)
 	m_CBBI = info;	//操作合法，将info赋给书本基本信息
 	if (is_from_Database)
 	{
+		
 		try
 		{
-			sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+			//sql::Connection *c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+			std::shared_ptr<sql::Connection> c(m_pDatabase->getConnection(REGID_MYSQL_CONN), MYSQL_CONN_RELEASER);
 			std::shared_ptr<sql::Statement> stat(c->createStatement());
 			std::stringstream str;
-			str << "UPDATE BookInfoDatabase SET name = "<<'\''<<info.name<<'\''<<", "<<
-												"author = "<<'\''<<info.author<<'\''<< ", " <<
-												"publisher = " << '\'' << info.publisher << '\'' << ", " <<
-												"ISBN = " << '\'' << info.isbn << '\'' << ", " <<
+			str << "UPDATE BookInfoDatabase SET name = "<<'\''<< str2sql(info.name) <<'\''<<", "<<
+												"author = "<<'\''<< str2sql(info.author) <<'\''<< ", " <<
+												"publisher = " << '\'' << str2sql(info.publisher) << '\'' << ", " <<
+												"ISBN = " << '\'' << str2sql(info.isbn) << '\'' << ", " <<
 												"count = "<<info.count<<", "<<
 												"bcount = "<<info.bcount<<
 												" WHERE id = " << m_Id;
@@ -93,7 +131,7 @@ bool CBook::setDescription(const char * description)
 			sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
 			std::shared_ptr<sql::Statement> stat(c->createStatement());
 			std::stringstream str;
-			str << "UPDATE BookInfoDatabase SET description = " << '\'' << description << '\'' << " WHERE id=" << m_Id;
+			str << "UPDATE BookInfoDatabase SET description=Compress('" << str2sql(description) << "') WHERE id=" << m_Id;
 			stat->execute(str.str());
 		}
 		catch (sql::SQLException& e)
@@ -248,15 +286,27 @@ bool CBook::insert()
 	}
 	try
 	{
-		sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+		std::shared_ptr<sql::Connection> c(m_pDatabase->getConnection(REGID_MYSQL_CONN), MYSQL_CONN_RELEASER);
 		std::shared_ptr<sql::Statement> stat(c->createStatement());
 		std::stringstream str;
-		str << "INSERT INTO BookInfoDatabase(id) VALUES (null)";
-		sign();
-		setBasicInfo(m_CBBI);
-		setDescription(m_Description.c_str());
-		setBookReadLevel(g_configPolicy.nDefaultBookReadLevel);
-		return true;
+		str << "INSERT INTO BookInfoDatabase(id, name, author, publisher, isbn, count, bcount, description, ReadLevel) VALUES (null, ";
+		str << "'" << str2sql(m_CBBI.name) << "', ";
+		str << "'" << str2sql(m_CBBI.isbn) << "', ";
+		str << "'" << str2sql(m_CBBI.author) << "', ";
+		str << "'" << str2sql(m_CBBI.publisher) << "', ";
+		str << "'" << str2sql(m_CBBI.isbn) << "', ";
+		str << m_CBBI.count << ", ";
+		str << m_CBBI.bcount << ", ";
+		if (m_Description != "")
+			str << "Compress('" << str2sql(m_Description) << "'), ";
+		str << g_configPolicy.nDefaultBookReadLevel << ")";
+		stat->execute(str.str());
+		std::shared_ptr<sql::ResultSet> result(stat->executeQuery("Select LAST_INSERT_ID()"));
+		if (result->next())
+		{
+			m_CBBI.id = result->getInt("LAST_INSERT_ID()");
+			sign();
+		}
 	}
 	catch (sql::SQLException& e)
 	{

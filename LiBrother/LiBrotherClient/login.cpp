@@ -2,10 +2,10 @@
 #include "ui_login.h"
 #include "usermain.h"
 #include "mainwindow.h"
+#include "qmessagebox.h"
 #include "QMessageBox"
 #include "QString"
 #include "client_interfaces.h"
-#include "changepassword.h"
 
 login::login(QWidget *parent) :
     QDialog(parent),
@@ -41,10 +41,15 @@ void login::on_pushButton_clicked()
     }
     else
     {
-        QMessageBox::information(this,"Title","用户名或密码有误");
+        QMessageBox::information(this,"Warning","用户名或密码有误");
     }
 
     factory1->Release();
+    iUser->Release();
 }
 
 
+void login::on_pushButton_2_clicked()
+{
+    close();
+}

@@ -4,19 +4,21 @@
 #include <QDialog>
 
 namespace Ui {
-    class ChangePassword;
+class ChangePassword;
 }
 
 class ChangePassword : public QDialog
 {
     Q_OBJECT
-private slots:
-    void on_pushButton_clicked();
-    void on_pushButton_2_clicked();
 
 public:
     explicit ChangePassword(QWidget *parent = 0);
     ~ChangePassword();
+
+private slots:
+    void on_pushButton_2_clicked();
+
+    void on_pushButton_clicked();
 
 private:
     Ui::ChangePassword *ui;

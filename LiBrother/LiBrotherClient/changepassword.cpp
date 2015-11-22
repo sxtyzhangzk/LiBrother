@@ -1,9 +1,8 @@
 #include "changepassword.h"
 #include "ui_changepassword.h"
-#include "qstring.h"
-#include "login.h"
-#include "login.cpp"
 #include "client_interfaces.h"
+#include "QMessageBox"
+
 ChangePassword::ChangePassword(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::ChangePassword)
@@ -16,32 +15,35 @@ ChangePassword::~ChangePassword()
     delete ui;
 }
 
+void ChangePassword::on_pushButton_2_clicked()
+{
+    close();
+}
+
 void ChangePassword::on_pushButton_clicked()
 {
-    QString name1;
-    QString newpassword;
-    QString newpasswordagain;
-    name1 = ui->lineEdit->text();
-    newpassword = ui->lineEdit_2->text();
-    newpasswordagain = ui->lineEdit_3->text();
-    IClassFactoryClient *pFactory;
-    getClassFactory(&pFactory);
-    ILibrary *pLibrary;
-    pFactory->getLibrary(&pLibrary);
-    IUser *pUser;
-    TUserBasicInfo info;
-    pUser->getBasicInfo(info);
-    std::string name = info.name;
-    if(name1.toStdString() != name){
-       QMessageBox::information(this,"Title","用户名错误");
+    IClassFactoryClient *factory1;
+    getClassFactory(&factory1);
+
+    IAuthManager *iUser;
+    factory1->getAuthManager(&iUser);
+
+    QString passOld= ui->lineEdit->text();//依次读入新老密码
+    QString passNew = ui->lineEdit_2->text();
+    QString passNew2 = ui->lineEdit_3->text();
+    std::string passOld1 = passOld.toStdString();
+    std::string passNew1 = passNew.toStdString();
+    std::string passNew12 = passNew2.toStdString();//重复输入老密码
+    if(passNew1 == passNew12)//两次密码输入比对
+    {
+        if(iUser->changePassword(passOld1.c_str(),passNew1.c_str()))
+        {
+            close();//成功更改密码之后自动退出
+        }
+        else{QMessageBox::information(this,"Warning","修改密码失败");}
     }
-    if(newpassword != newpasswordagain){
-       QMessageBox::information(this,"Title","请确认新密码");
-    }
-    if(name1.toStdString() == name && newpassword == newpasswordagain){
-        pUser->setPassword(newpassword.toStdString().c_str());
-    }
-    pUser->Release();
-    pLibrary->Release();
-    pFactory->Release();
+    else{QMessageBox::information(this,"Warning","两次密码输入不一致");}
+
+    factory1->Release();
+    iUser->Release();
 }

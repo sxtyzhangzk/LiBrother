@@ -30,7 +30,6 @@ MODULE_LOG_NAME("NetServer");
 
 //服务端网络模块 - Windows平台
 
-const int Thread_per_CPU = 2;				//每个处理器的工作线程数
 const size_t BufferSize = 1024;				//接收缓存区的大小
 const int Accept_Post_Count = 8;			//同时投递的Accept请求数
 const ULONG_PTR Exit_Key = 0;				//指示工作线程退出的CompletionKey
@@ -111,6 +110,12 @@ struct TSocketEx
 		{
 			delete pTLSServer;
 		}
+		while (!qSend.empty())
+		{
+			char * buffer = qSend.front().first;
+			qSend.pop();
+			delete buffer;
+		}
 
 		if (socket != INVALID_SOCKET)
 			closesocket(socket);
@@ -122,6 +127,8 @@ struct TSocketEx
 		}
 		if (pIOContextSend)
 			delete pIOContextSend;
+		if (pIOContextRecv)
+			delete pIOContextRecv;
 		vPIOContexts.clear();
 	}
 
@@ -383,8 +390,8 @@ bool CNetServer::createTLSSession(TSocketEx * pSocket)
 	try
 	{
 		//TODO: Handle Alert
-		auto fnOutput = std::bind(&CNetServer::sendData, *this, pSocket, std::placeholders::_1, std::placeholders::_2);
-		auto fnData = std::bind(&CNetServer::receivedData, *this, pSocket, std::placeholders::_1, std::placeholders::_2);
+		auto fnOutput = std::bind(&CNetServer::sendData, this, pSocket, std::placeholders::_1, std::placeholders::_2);
+		auto fnData = std::bind(&CNetServer::receivedData, this, pSocket, std::placeholders::_1, std::placeholders::_2);
 		auto fnAlert = [](Botan::TLS::Alert alert, const Botan::byte * pData, size_t size) {};
 		auto fnHandshake = [](const Botan::TLS::Session& session)->bool { return true; };
 		pSocket->pTLSServer = new Botan::TLS::Server(
@@ -582,6 +589,8 @@ bool CNetServer::sendData(TSocketEx * pSocket, const char * pData, size_t nLen)
 			if (!postSendRq(pSocket, pIOContext))
 				return false;
 		}
+		pData += sizeNow;
+		nLen -= sizeNow;
 	}
 	return true;
 }

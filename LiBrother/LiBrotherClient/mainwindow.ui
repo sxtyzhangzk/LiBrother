@@ -14,7 +14,7 @@
    <string>LiBrother 1.0</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>0</x>
@@ -67,14 +67,6 @@ Log in</string>
              <property name="text">
               <string>新用户注册
 Sign up</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="pushButton_6">
-             <property name="text">
-              <string>管理员登录
-Manager log in</string>
              </property>
             </widget>
            </item>
