@@ -14,7 +14,6 @@ struct TBookBasicInfo
 	std::string author;	//图书作者
 	std::string isbn;	//ISBN号
 	std::string publisher;	//出版社
-	int remain_num;
 };
 
 //用户的基本信息
