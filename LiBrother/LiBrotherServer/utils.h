@@ -12,6 +12,6 @@ std::string type2str(T num)
 	return sstream.str();
 }
 
-std::string str2sql(const std::string& str);)
+std::string str2sql(const std::string& str);
 
 #endif
