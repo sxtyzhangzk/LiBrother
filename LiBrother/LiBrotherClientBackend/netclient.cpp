@@ -2,23 +2,19 @@
 #include "netclient.h"
 
 #include <liblog.h>
+#include <cassert>
 #include <cstring>
+#include <utility>
+#include <queue>
 #include <string>
 #include <sstream>
+#include <thread>
+#include <condition_variable>
 
-#ifdef _WIN32
-#include <winsock.h>
-#else
-#endif
+#include <boost/lexical_cast.hpp>
+#include <boost/asio.hpp>
 
-#if defined(_WIN64)
-typedef unsigned long long socket_t;
-#elif defined(_WIN32)
-typedef unsigned int socket_t;
-#else
-typedef int socket_t;
-const socket_t INVALID_SOCKET = 0;
-#endif
+using namespace boost::asio;
 
 /*******************************
  * 简单通讯协议
@@ -55,48 +51,69 @@ const socket_t INVALID_SOCKET = 0;
 
 MODULE_LOG_NAME("NetClient");
 
-static socket_t sockAlive = INVALID_SOCKET;
-static unsigned long long sessionID = 0;
+static const size_t BufferSize = 1024;
 
+io_service ioService;
+std::thread *pThreadWorker;
+ip::tcp::socket *pSocket;
+ip::tcp::endpoint epServer;
+
+char recvBuffer[BufferSize];
+std::string strRecv;
+std::condition_variable strRecvCV;
+std::mutex strRecvMutex;
+int recvError;
+
+unsigned long long sessionID = 0;
+
+void workerThread();
 //验证SessionID
 bool verifySession();
 //连接到服务器
-socket_t connectToServer();
+bool connectToServer();
 //发送数据
-bool sendData(socket_t sockNow, const std::string& strBuffer);
+bool sendData(const std::string& strBuffer);
 //接收数据
-bool recvData(socket_t sockNow, std::string& strBuffer);
+bool recvData(std::string& strBuffer);
 //发送数据并接收回复
-bool postData(const std::string& strSend, std::string& strRecv);
+bool postData(const std::string& strSend, std::string& strRecv, bool retry = false);
 //获取SessionID
 bool getSession();
 
+void doRecv(boost::system::error_code errcode, size_t nLen);
+
+bool sendDataRaw(const char *pBuffer, size_t nBuffer);
+
 bool initNetClient()
 {
-#ifdef _WIN32
-	//初始化Winsock
-	WORD wVersion = MAKEWORD(1, 1);
-	WSADATA wsaData;
-	int ret = WSAStartup(wVersion, &wsaData);
-	if (ret != 0)
+	pThreadWorker = new std::thread(workerThread);
+	pSocket = new ip::tcp::socket(ioService);
+	ip::tcp::resolver resolver(ioService);
+	ip::tcp::resolver::query query(g_configClient.strServer, boost::lexical_cast<std::string>(g_configClient.nPort));
+	boost::system::error_code error;
+	auto iter = resolver.resolve(query, error);
+	decltype(iter) end;
+	if (error || iter == end)
 	{
-		lprintf_e("WSAStartup Failed, Retcode %d", ret);
+		lprintf_e("Cannot resolve server ip");
 		return false;
 	}
-#endif
+	epServer = *iter;
 	return true;
+}
+
+void workerThread()
+{
+	ioService.run();
 }
 
 void cleanupNetClient()
 {
-	if (g_configClient.bKeepAlive && sockAlive != INVALID_SOCKET)
-	{
-		shutdown(sockAlive, 2);
-		closesocket(sockAlive);
-	}
-#ifdef _WIN32
-	WSACleanup();
-#endif
+	if (pSocket->is_open())
+		pSocket->close();
+	ioService.stop();
+	pThreadWorker->join();
+	delete pThreadWorker;
 }
 
 bool sendRequest(const std::string& strRequest, std::string& strRespond)
@@ -109,23 +126,23 @@ bool sendRequest(const std::string& strRequest, std::string& strRespond)
 	ssend << std::hex << sessionID;
 	ssend << "\n";
 	ssend << strRequest;
-	std::string strRecv, strRetcode;
+	std::string strRecvNow, strRetcode;
 	
 	bool retry = false;
 	while (true)
 	{
-		if (!postData(ssend.str(), strRecv))
+		if (!postData(ssend.str(), strRecvNow))
 			return false;
-		size_t posContent = strRecv.find_first_of('\n');
+		size_t posContent = strRecvNow.find_first_of('\n');
 		if (posContent == std::string::npos)
 		{
 			lprintf_e("Failed to Send Request : Invalid Respond from Server. (NO RETCODE)");
 			return false;
 		}
-		strRetcode.assign(strRecv, 0, posContent - 1);
+		strRetcode.assign(strRecvNow, 0, posContent - 1);
 		if (strRetcode == "OK")
 		{
-			strRespond.assign(strRecv, posContent + 1);
+			strRespond.assign(strRecvNow, posContent + 1);
 			return true;
 		}
 		else if (strRetcode == "INVALID_SESSION")
@@ -153,133 +170,100 @@ bool sendRequest(const std::string& strRequest, std::string& strRespond)
 	}
 }
 
-socket_t connectToServer()
+bool connectToServer()
 {
-	socket_t sock = socket(AF_INET, SOCK_STREAM, 0);
-	if (sock == INVALID_SOCKET)
+	if (pSocket->is_open())
+		return true;
+
+	boost::system::error_code error;
+	pSocket->connect(epServer, error);
+	if (error)
 	{
-		lprintf_e("Failed to Call socket()");
-		return INVALID_SOCKET;
+		lprintf_e("Failed to connect to server: %s", error.message().c_str());
+		return false;
 	}
 
-	hostent * host = gethostbyname(g_configClient.strServer.c_str());
-	if (!host)
-	{
-		lprintf_e("Failed to Get Host.");
-		closesocket(sock);
-		return INVALID_SOCKET;
-	}
-
-	sockaddr_in addr;
-	memset(&addr, 0, sizeof(addr));
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(g_configClient.nPort);
-	memcpy(&addr.sin_addr, host->h_addr_list[0], sizeof(in_addr));
-
-	if (connect(sock, (sockaddr *)&addr, sizeof(addr)) != 0)
-	{
-		lprintf_e("Failed to Connect to Server.");
-		closesocket(sock);
-		return INVALID_SOCKET;
-	}
+	pSocket->async_receive(buffer(recvBuffer), doRecv);
 
 	lprintf("Connected to Server Successfully.");
-
-	return sock;
-}
-
-bool sendData(socket_t sockNow, const std::string& strSend)
-{
-	std::string strBuffer = strSend + "\n\n";
-	size_t nBuffer = strBuffer.size();
-	const char * buffer = strBuffer.c_str();
-	for (size_t pos = 0; pos < nBuffer; pos += g_configClient.nBufferSize)
-	{
-		//本次send要发送的内容，不超过nBufferSize
-		size_t nNow = nBuffer - pos;
-		if (nNow > g_configClient.nBufferSize)
-			nNow = g_configClient.nBufferSize;
-		int ret = send(sockNow, buffer + pos, int(nNow), 0);
-		if (ret == -1)
-			return false;
-	}
 	return true;
 }
 
-bool recvData(socket_t sockNow, std::string& strBuffer)
+bool sendData(const std::string& strSend)
+{
+	return sendDataRaw(strSend.c_str(), strSend.length());
+}
+
+bool recvData(std::string& strBuffer)
 {
 	strBuffer.clear();
-	char * recvBuffer = new char[g_configClient.nBufferSize];
+	bool isEmpty = true;
 	while (true)
 	{
-		int ret = recv(sockNow, recvBuffer, g_configClient.nBufferSize - 1, 0);
-		if (ret == 0)
-			break;
-		if (ret == -1)
+		std::unique_lock<std::mutex> lock(strRecvMutex);
+		if (strRecv.empty())
+			strRecvCV.wait(lock);
+		if (recvError)
 		{
-			delete[] recvBuffer;
+			recvError--;
 			return false;
 		}
-		recvBuffer[ret] = '\0';
-		strBuffer += recvBuffer;
-
-		//以\n\n结尾表示传输完毕
-		if (strBuffer.size() >= 2 && strBuffer[strBuffer.size() - 1] == '\n' && strBuffer[strBuffer.size() - 2] == '\n')
+		size_t nLen = strRecv.length();
+		int cntLine = 0;
+		for (size_t i = 0; i < nLen; i++)
 		{
-			strBuffer.erase(strBuffer.size() - 2, 2);
-			break;
+			if (strRecv[i] == '\n')
+			{
+				cntLine++;
+				if (!isEmpty)	//去掉数据包包头的回车
+					strBuffer += strRecv[i];
+			}
+			else
+			{
+				cntLine = 0;
+				strBuffer += strRecv[i];
+				isEmpty = false;
+			}
+			if (cntLine == 2)
+			{
+				if (strBuffer.back() == '\n')
+					strBuffer.pop_back();
+				if (i == nLen - 1)
+					strRecv.clear();
+				else
+					strRecv = strRecv.substr(i + 1);
+				return true;
+			}
 		}
 	}
-	delete[] recvBuffer;
-	return true;
 }
 
-bool postData(const std::string& strSend, std::string& strRecv)
+bool postData(const std::string& strSend, std::string& strRecv, bool retry)
 {
-	socket_t sockNow;
-	bool bNewSocket;	//当前的Socket是否是新建的
-	if (g_configClient.bKeepAlive)
-	{
-		if (sockAlive == INVALID_SOCKET)
-			sockAlive = sockNow = connectToServer(), bNewSocket = true;
-		else
-			sockNow = sockAlive, bNewSocket = false;
-	}
-	else
-		sockNow = connectToServer(), bNewSocket = true;
-	if (sockNow == INVALID_SOCKET)
+	if (!pSocket->is_open() && !connectToServer())
 		return false;
 
-	if (!sendData(sockNow, g_configClient.bKeepAlive ? std::string("KEEP-ALIVE\n") + strSend : strSend))
+	bool ret;
+	if (g_configClient.bKeepAlive)
+		ret = sendData(std::string("KEEP-ALIVE") + strSend + "\n\n");
+	else
+		ret = sendData(strSend + "\n\n");
+	if (!ret)
 	{
-		if (bNewSocket)
-		{
-			lprintf_e("Failed to Send Data.");
-			closesocket(sockNow);
-			return false;
-		}
-		else
-		{
-			lprintf_w("Failed to Send Data using Keep-Alive Socket, Try to Reconnect.");
-			//可能连接已断开，重试一次
-			closesocket(sockNow);
-			sockAlive = INVALID_SOCKET;
-			return postData(strSend, strRecv);
-		}
+		pSocket->close();	//TLS?
+		if (!retry)
+			return postData(strSend, strRecv, true);
+		return false;
 	}
-	if (!recvData(sockNow, strRecv))
+	if (!recvData(strRecv))
 	{
-		lprintf_e("Failed to Recv Data.");
-		closesocket(sockNow);
-		if (!bNewSocket)
-			sockAlive = INVALID_SOCKET;
+		pSocket->close();
 		return false;
 	}
 
 	if (!g_configClient.bKeepAlive)
 	{
-		shutdown(sockNow, 2);
-		closesocket(sockNow);
+		pSocket->close();	//TLS?
 	}
 	return true;
 }
@@ -316,5 +300,49 @@ bool verifySession()
 	checkSum ^= 0xF;
 	if ((checkSum & 0xF) != (sessionID & 0xF))
 		return false;
+	return true;
+}
+
+void doRecv(boost::system::error_code errcode, size_t nLen)
+{	//TODO: TLS
+	strRecvMutex.lock();
+	if (errcode)
+	{
+		recvError++;
+		strRecvMutex.unlock();
+		pSocket->close();
+		return;
+	}
+	if (nLen == 0)
+	{
+		pSocket->close();
+		if (strRecv.length() >= 2 && strRecv.substr(strRecv.length() - 2) == "\n\n")
+			return;
+		if (strRecv.length() >= 1 && strRecv.back() == '\n')
+			strRecv += "\n";
+		else
+			strRecv += "\n\n";	//确保接收缓冲区以\n\n结尾
+		return;
+	}
+	char * pBuffer = new char[nLen];
+	memcpy(pBuffer, recvBuffer, nLen);
+	strRecv.append(recvBuffer, nLen);
+	strRecvCV.notify_all();
+	strRecvMutex.unlock();
+
+	pSocket->async_receive(buffer(recvBuffer), doRecv);
+}
+
+bool sendDataRaw(const char *pBuffer, size_t nBuffer)
+{
+	for (size_t pos = 0; pos < nBuffer; pos += g_configClient.nBufferSize)
+	{
+		//本次send要发送的内容，不超过nBufferSize
+		size_t nNow = nBuffer - pos;
+		if (nNow > g_configClient.nBufferSize)
+			nNow = g_configClient.nBufferSize;
+		if (!pSocket->send(buffer(pBuffer + pos, nNow)))
+			return false;
+	}
 	return true;
 }
