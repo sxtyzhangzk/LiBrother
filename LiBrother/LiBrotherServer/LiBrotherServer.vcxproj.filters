@@ -92,5 +92,8 @@
     <ClCompile Include="netserver_win.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="utils.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

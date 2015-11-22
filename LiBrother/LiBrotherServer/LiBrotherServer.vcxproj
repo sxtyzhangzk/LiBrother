@@ -31,6 +31,7 @@
     <ClCompile Include="session.cpp" />
     <ClCompile Include="session_manager.cpp" />
     <ClCompile Include="user.cpp" />
+    <ClCompile Include="utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="book.h" />

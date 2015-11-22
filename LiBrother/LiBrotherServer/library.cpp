@@ -2,6 +2,7 @@
 #include "library.h"
 #include "book.h"
 #include "connection_pool.h"
+#include "utils.h"
 
 #include <sstream>
 #include <memory>
@@ -46,7 +47,7 @@ int CLibrary::queryByName(const char * strName, IFvector& vBooks, int nCount, in
 	{
 		std::shared_ptr<sql::Statement> pStat(pConn->createStatement());
 		
-		strSQL << strSelectSQL << "Where name='" << strName << "'";
+		strSQL << strSelectSQL << "Where name='" << str2sql(strName) << "'";
 		std::shared_ptr<sql::ResultSet> pResult(pStat->executeQuery(strSQL.str()));
 		while (pResult->next())
 		{
@@ -61,7 +62,7 @@ int CLibrary::queryByName(const char * strName, IFvector& vBooks, int nCount, in
 		{
 			std::shared_ptr<sql::Statement> pStatSphinx(pConnSphinx->createStatement());
 			strSQL.clear();
-			strSQL << "Select * From book Where Match('" << strName << "')";
+			strSQL << "Select * From book Where Match('" << str2sql(strName) << "')";
 			std::shared_ptr<sql::ResultSet> pResultSphinx(pStatSphinx->executeQuery(strSQL.str()));
 			while (pResult->next())
 			{
@@ -158,7 +159,7 @@ bool CLibrary::queryByISBN(const char * strISBN, IBook ** ppBook)
 	{
 		std::shared_ptr<sql::Statement> stat(c->createStatement());
 		std::stringstream str;
-		str << strSelectSQL << "WHERE isbn='" << strISBN << "'";
+		str << strSelectSQL << "WHERE isbn='" << str2sql(strISBN) << "'";
 		std::shared_ptr<sql::ResultSet> result(stat->executeQuery(str.str()));
 		if (result->next())
 		{

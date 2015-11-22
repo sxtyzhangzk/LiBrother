@@ -6,6 +6,8 @@
 #include <map>
 #include <driver/mysql_public_iface.h>
 
+#define MYSQL_CONN_RELEASER std::bind(&CConnectionPool::releaseConnection, m_pDatabase, REGID_MYSQL_CONN, std::placeholders::_1)
+
 class CConnectionPool
 {
 public:
