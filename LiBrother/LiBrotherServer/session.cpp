@@ -81,7 +81,6 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		book_basic_info.publisher = value0["publisher"].asString();
 		book_basic_info.author = value0["author"].asString();
 		book_basic_info.isbn = value0["isbn"].asString();
-		book_basic_info.remain_num = value0["remain_num"].asInt();
 		ILibrary *library;
 		m_pClassFactory->getLibrary(&library);
 		IBook *book;
@@ -208,10 +207,9 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 			bookVal["author"] = info.author;
 			bookVal["isbn"] = info.isbn;
 			bookVal["publisher"] = info.publisher;
-			bookVal["remain_num"] = info.remain_num;
 			value[i+1] = bookVal;
 		}
-		((IBook *)book[i])
+		strResponse = writer.write(value);
 	}
 
 	if (request == "library_queryById") {
@@ -228,7 +226,6 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 			value["author"] = tem_book_basic_info.author;
 			value["isbn"] = tem_book_basic_info.isbn;
 			value["publisher"] = tem_book_basic_info.publisher;
-			value["remain_num"] = tem_book_basic_info.remain_num;
 			Json::FastWriter writer;
 			strResponse = writer.write(value);
 			value["result"] = '1';
@@ -251,10 +248,9 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 			value["author"] = tem_book_basic_info.author;
 			value["isbn"] = tem_book_basic_info.isbn;
 			value["publisher"] = tem_book_basic_info.publisher;
-			value["remain_num"] = tem_book_basic_info.remain_num;
+			value["result"] = '1';
 			Json::FastWriter writer;
 			strResponse = writer.write(value);
-			value["result"] = ''1'';
 		}
 		else value["result"] = "DatabaseError";
 		strResponse = writer.write(value);
@@ -268,7 +264,6 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		book_basic_info.publisher = value0["publisher"].asString();
 		book_basic_info.author = value0["author"].asString();
 		book_basic_info.isbn = value0["isbn"].asString();
-		book_basic_info.remain_num = value0["remain_num"].asInt();
 		ILibrary *library;
 		m_pClassFactory->getLibrary(&library);
 		IBook *book;
