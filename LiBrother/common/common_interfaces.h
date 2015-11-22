@@ -56,6 +56,10 @@ struct TErrInfo
 		{ \
 			m_errLast = TErrInfo(type, code, strDescription); \
 		} \
+		void transferError(IAbstract *pIface) \
+		{ \
+			m_errLast = pIface->GetError(); \
+		} \
 	public:\
 		virtual int AddRef() { return ++m_nRefCount; } \
 		virtual int Release() \

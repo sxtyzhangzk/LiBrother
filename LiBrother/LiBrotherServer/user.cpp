@@ -1,12 +1,12 @@
-#include"user.h"
-#include"sstream"
-#include"book.h"
-#include<time.h>
+#include "user.h"
+#include "sstream"
+#include "book.h"
+#include <time.h>
 #include "config.h"
-#include<botan\bcrypt.h>
-#include<botan\auto_rng.h>
-#include"utils.h"
-#include<liblog.h>
+#include <botan\bcrypt.h>
+#include <botan\auto_rng.h>
+#include "utils.h"
+#include <liblog.h>
 MODULE_LOG_NAME("CUser");
 CUser::CUser(CConnectionPool * DatabaseFile)
 {

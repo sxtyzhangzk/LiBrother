@@ -1,6 +1,9 @@
 #include "authmanager.h"
 #include "netclient.h"
 #include <json/json.h>
+#include <botan/botan.h>
+#include <botan/filters.h>
+
 CAuthManager::CAuthManager(TUserBasicInfo* current_user) : current_user(nullptr) {}
 CAuthManager::~CAuthManager() {
 	if (current_user) delete current_user;
@@ -19,10 +22,11 @@ bool CAuthManager::Login(const  char * strUser, const char * strPWD)
 		setError(InvalidParam, 4, "You have already logged in!");
 		return false;
 	}
+
 	Json::Value value0;
 	value0["command"] = "authmanager_Login";
 	value0["userid"] = strUser;
-	value0["usepassword"] = strPWD;
+	value0["usepassword"] = encryptPassword(strPWD);
 	Json::FastWriter writer;
 	std::string strRequest;
 	std::string strRespond;
@@ -177,3 +181,10 @@ int CAuthManager::getAuthLevel()
 	return -1;
 }
 
+std::string CAuthManager::encryptPassword(const char * strPWD)
+{
+	std::string strEPWD;
+	Botan::Pipe pipe(new Botan::Hash_Filter("SHA-256"), new Botan::Hex_Encoder);
+	pipe.process_msg(strPWD);
+	strEPWD = pipe.read_all_as_string();
+}

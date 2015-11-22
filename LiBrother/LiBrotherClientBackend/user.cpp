@@ -1,174 +1,467 @@
 #include "user.h"
 #include "netclient.h"
-#include <json/json.h>
+#include "authmanager.h"
 #include "book.h"
+#include "utils.h"
 
-CUser::CUser(TUserBasicInfo *basic_info0) :basic_info(basic_info0) {}
-CUser::~CUser()
+#include <json/json.h>
+
+CUser::CUser() : 
+	m_pBasicInfo(nullptr),
+	m_nID(0),
+	m_nAuthLevel(-1), m_nReadLevel(-1)
 {
-	if (basic_info) delete basic_info;
 }
 
-//获取用户的基本信息
+CUser::CUser(int nID) :
+	m_pBasicInfo(nullptr),
+	m_nID(nID),
+	m_nAuthLevel(-1), m_nReadLevel(-1)
+{
+}
+
+CUser::CUser(const TUserBasicInfo& info) :
+	m_nAuthLevel(-1), m_nReadLevel(-1)
+{
+	m_nID = info.id;
+	m_pBasicInfo = new TUserBasicInfo;
+	*m_pBasicInfo = info;
+}
+
+CUser::~CUser()
+{
+	if (m_pBasicInfo)
+		delete m_pBasicInfo;
+}
+
 bool CUser::getBasicInfo(TUserBasicInfo& info)
 {
-	if (basic_info) {
-		info = *basic_info;
+	if (m_pBasicInfo)
+	{
+		info = *m_pBasicInfo;
 		return true;
 	}
-	return false;
+	if (!m_nID)
+	{
+		setError(Other, -3, "Basic Info not set");
+		return false;
+	}
+
+	Json::Value valueReq, valueRes;
+	valueReq["command"] = "user_getBasicInfo";
+	valueReq["id"] = m_nID;
 	
+	Json::FastWriter writer;
+	std::string strRequest, strResponse;
+	strRequest = writer.write(valueReq);
+
+	TRY_SEND_REQUEST(strRequest, strResponse);
+
+	Json::Reader reader;
+	try
+	{
+		TUserBasicInfo info;
+		reader.parse(strResponse, valueRes);
+		if (valueRes["result"].asInt() == 1)
+		{
+			info.id = m_nID;
+			info.name = valueRes["name"].asString();
+			info.email = valueRes["email"].asString();
+			info.gender = valueRes["gender"].asInt();
+			info.num = valueRes["book_num"].asInt();
+			m_pBasicInfo = new TUserBasicInfo;
+			*m_pBasicInfo = info;
+			return true;
+		}
+	}
+	catch (std::exception& e)
+	{
+		setError(NetworkError, 2, "Failed to parse response");
+		return false;
+	}
+
+	setError(Other, -1, "Operation Failed");
+	return false;
 }
 
 bool CUser::setBasicInfo(const TUserBasicInfo& info)
 {
+	if (!m_pBasicInfo)
+		m_pBasicInfo = new TUserBasicInfo;
+	*m_pBasicInfo = info;
+	m_pBasicInfo->id = m_nID;
+	if (!m_nID)
+		return true;
+
 	Json::Value value0;
 	value0["command"] = "user_setBasicInfo";
-	value0["id"] = basic_info->id;
-	value0["gender"] = basic_info->gender;
-	value0["name"] = basic_info->name;
-	value0["email"] = basic_info->email;
+	value0["id"] = m_pBasicInfo->id;
+	value0["gender"] = m_pBasicInfo->gender;
+	value0["name"] = m_pBasicInfo->name;
+	value0["email"] = m_pBasicInfo->email;
+
 	Json::FastWriter writer;
-	std::string strRequest;
-	std::string strRespond;
+	std::string strRequest, strResponse;
 	strRequest = writer.write(value0);
-	sendRequest(strRequest, strRespond);
+
+	TRY_SEND_REQUEST(strRequest, strResponse);
+
 	Json::Reader reader;
 	Json::Value value;
-	reader.parse(strRespond, value);
-	if (value["result"].asInt() == 1) return true;
+
+	int result;
+
+	try
+	{
+		reader.parse(strResponse, value);
+		result = value["result"].asInt();
+	}
+	catch (std::exception& e)
+	{
+		setError(NetworkError, 2, "Failed to parse response");
+		return false;
+	}
+
+	if (result == 1)
+		return true;
+
+	setError(Other, 3, "Operation Failed");
 	return false;
 }
 
-/*
-验证用户的密码
-参数：	strPWD	[in]	用户的密码，服务端调用时传入散列后的密码，客户端前端调用时传入明文密码
-*/
 bool CUser::verifyPassword(const char * strPWD)
 {
-	Json::Value value0;
-	value0["command"] = "user_verifyPassword";
-	value0["id"] = basic_info->id;
-	value0["password"] = strPWD;
-	Json::FastWriter writer;
-	std::string strRequest;
-	std::string strRespond;
-	strRequest = writer.write(value0);
-	sendRequest(strRequest, strRespond);
-	Json::Reader reader;
-	Json::Value value;
-	reader.parse(strRespond, value);
-	if (value["result"].asInt() == 1) return true;
+	setError(UnsupportedMethod, -1, "Unsupported Method verifyPassword");
 	return false;
 }
 
-/*
-设定用户的密码
-仅供管理员和服务端使用，用户自行修改密码请使用IAuthManager
-参数：	strPWD	[in]	用户的密码，服务端调用时传入散列后的密码，客户端前端调用时传入明文密码
-*/
 bool CUser::setPassword(const char * strPWD)
 {
+	m_strEPassword = CAuthManager::encryptPassword(strPWD);
+	if (!m_nID)
+		return true;
+	
 	Json::Value value0;
 	value0["command"] = "user_setPassword";//may require revision
-	value0["id"] = basic_info->id;
-	//encryption
-	value0["password"] = strPWD;
+	value0["id"] = m_nID;
+	value0["password"] = m_strEPassword;
+
 	Json::FastWriter writer;
-	std::string strRequest;
-	std::string strRespond;
+	std::string strRequest, strResponse;
 	strRequest = writer.write(value0);
-	sendRequest(strRequest, strRespond);
+
+	TRY_SEND_REQUEST(strRequest, strResponse);
+
 	Json::Reader reader;
 	Json::Value value;
-	reader.parse(strRespond, value);
-	if (value["result"].asInt() == 1) return true;
+	int result;
+
+	try
+	{
+		reader.parse(strResponse, value);
+		result = value["result"].asInt();
+	}
+	catch (std::exception& e)
+	{
+		setError(NetworkError, 2, "Failed to parse response");
+		return false;
+	}
+
+	if (result == 1)
+		return true;
+
+	setError(Other, 3, "Operation Failed");
 	return false;
 }
 
 bool CUser::getBorrowedBooks(std::vector<TBorrowInfo> &binfo)//to be implemented
 {
+	if (!m_nID)
+	{
+		setError(InvalidParam, -2, "Cannot getBorrowedBook from a temp object");
+		return false;
+	}
+
 	Json::Value value0;
 	value0["command"] = "user_getBorrowedBooks";
-	value0["id"] = basic_info->id;
+	value0["id"] = m_nID;
+
 	Json::FastWriter writer;
 	std::string strRequest;
-	std::string strRespond;
+	std::string strResponse;
 	strRequest = writer.write(value0);
-	sendRequest(strRequest, strRespond);
+
+	TRY_SEND_REQUEST(strRequest, strResponse);
+
 	Json::Reader reader;
 	Json::Value value;
-	reader.parse(strRespond, value);
-	int num = value[0].asInt();
-	if (num>0) {
-		TBorrowInfo borrow_info;
-		for (int i = 1; i <= num; i++) {
-			Json::Value tem_value = value[i];
-			borrow_info.bookID = tem_value[1].asInt();
-			borrow_info.borrowTime = tem_value[2].asInt64();
-			borrow_info.flag = tem_value[3].asBool();
-			binfo.push_back(borrow_info);
+
+	try
+	{
+		reader.parse(strResponse, value);
+		int num = value[0].asInt();
+		if (num > 0)
+		{
+			TBorrowInfo borrow_info;
+			for (int i = 1; i <= num; i++)
+			{
+				Json::Value tem_value = value[i];
+				borrow_info.bookID = tem_value[1].asInt();
+				borrow_info.borrowTime = tem_value[2].asInt64();
+				borrow_info.flag = tem_value[3].asBool();
+				binfo.push_back(borrow_info);
+			}
 		}
-		return true;
+		else
+		{
+			setError(Other, -1, "Operation Failed");
+			return false;
+		}
 	}
-	return false;
+	catch (std::exception& e)
+	{
+		setError(NetworkError, 2, "Failed to parse response");
+		return false;
+	}
+
+	return true;
 }
 
 bool CUser::borrowBook(IBook * pBook)
 {
-	CBook *book=dynamic_cast <CBook*>(pBook);
+	CHECK_PTR(pBook);
+	CBook *book = dynamic_cast<CBook*>(pBook);
+	if (!m_nID || !book->id)
+	{
+		setError(InvalidParam, -2, "Cannot borrowBook from a temp object");
+		return false;
+	}
+
 	Json::Value value0;
 	value0["command"] = "user_borrowBook";//may require revision
-	value0["userid"] = basic_info->id;
-	TBookBasicInfo tem_basic_info;
-	book->getBasicInfo(tem_basic_info);
-	value0["bookid"] = tem_basic_info.id;
+	value0["userid"] = m_nID;
+	value0["bookid"] = book->id;
+
 	Json::FastWriter writer;
-	std::string strRequest;
-	std::string strRespond;
+	std::string strRequest, strResponse;
 	strRequest = writer.write(value0);
-	sendRequest(strRequest, strRespond);
+
+	TRY_SEND_REQUEST(strRequest, strResponse);
+
 	Json::Reader reader;
 	Json::Value value;
-	reader.parse(strRespond, value);
-	if (value["result"].asInt() == 1) return true;
+
+	try
+	{
+		reader.parse(strResponse, value);
+		if (value["result"].asInt() == 1)
+			return true;
+	}
+	catch (std::exception& e)
+	{
+		setError(NetworkError, 2, "Failed to parse response");
+		return false;
+	}
+
+	setError(Other, -1, "Operation Failed");
 	return false;
 }
 
 bool CUser::returnBook(IBook * pBook)
 {
-	CBook *book = dynamic_cast <CBook*>(pBook);
+	CHECK_PTR(pBook);
+	CBook *book = dynamic_cast<CBook*>(pBook);
+	if (!m_nID || !book->id)
+	{
+		setError(InvalidParam, -2, "Cannot returnBook from a temp object");
+		return false;
+	}
+
 	Json::Value value0;
 	value0["command"] = "user_returnBook";//may require revision
-	value0["userid"] = basic_info->id;
-	TBookBasicInfo tem_basic_info;
-	book->getBasicInfo(tem_basic_info);
-	value0["bookid"] = tem_basic_info.id;
+	value0["userid"] = m_nID;
+	value0["bookid"] = book->id;
+
 	Json::FastWriter writer;
-	std::string strRequest;
-	std::string strRespond;
+	std::string strRequest, strResponse;
 	strRequest = writer.write(value0);
-	sendRequest(strRequest, strRespond);
+
+	TRY_SEND_REQUEST(strRequest, strResponse);
+
 	Json::Reader reader;
 	Json::Value value;
-	reader.parse(strRespond, value);
-	if (value["result"].asInt() == 1) return true;
+
+	try
+	{
+		reader.parse(strResponse, value);
+		if (value["result"].asInt() == 1)
+			return true;
+	}
+	catch (std::exception& e)
+	{
+		setError(NetworkError, 2, "Failed to parse response");
+		return false;
+	}
+
+	setError(Other, -1, "Operation Failed");
 	return false;
 }
 
 bool CUser::deleteUser()
 {
+	if (!m_nID)
+	{
+		setError(InvalidParam, -2, "Cannot deleteUser from a temp object");
+		return false;
+	}
+
 	Json::Value value0;
 	value0["command"] = "user_deleteUser";
-	value0["id"] = id;
+	value0["id"] = m_nID;
+
 	Json::FastWriter writer;
-	std::string strRequest;
-	std::string strRespond;
+	std::string strRequest, strResponse;
 	strRequest = writer.write(value0);
-	sendRequest(strRequest, strRespond);
+
+	TRY_SEND_REQUEST(strRequest, strResponse);
+
 	Json::Reader reader;
 	Json::Value value;
-	reader.parse(strRespond, value);
-	if (value["result"].asInt() == 1)  return true;
+
+	try
+	{
+		reader.parse(strResponse, value);
+		if (value["result"].asInt() == 1) 
+			return true;
+	}
+	catch (std::exception& e)
+	{
+		setError(NetworkError, 2, "Failed to parse response");
+		return false;
+	}
+
+	setError(Other, -1, "Operation Failed");
+	return false;
+}
+
+int CUser::getAuthLevel()
+{
+	if (!m_nID)
+	{
+		setError(InvalidParam, -2, "Cannot getAuthLevel from a temp object");
+		return -1;
+	}
+	if (m_nAuthLevel >= 0)
+		return m_nAuthLevel;
+
+	Json::Value valueReq, valueRes;
+	valueReq["command"] = "user_getAuthLevel";
+	valueReq["id"] = m_nID;
+
+	BEGIN_PARSE_RESPONSE(valueReq, valueRes)
+	{
+		int authLevel = valueRes["AuthLevel"].asInt();
+		if (authLevel >= 0)
+		{
+			m_nAuthLevel = authLevel;
+			return authLevel;
+		}
+	}
+	END_PARSE_RESPONSE;
+
+	setError(Other, -1, "Operation Failed");
+	return -1;
+}
+
+int CUser::getReadLevel()
+{
+	if (!m_nID)
+	{
+		setError(InvalidParam, -2, "Cannot getReadLevel from a temp object");
+		return -1;
+	}
+	if (m_nReadLevel >= 0)
+		return m_nReadLevel;
+
+	Json::Value valueReq, valueRes;
+	valueReq["command"] = "user_getReadLevel";
+	valueReq["id"] = m_nID;
+
+	BEGIN_PARSE_RESPONSE(valueReq, valueRes)
+	{
+		int readLevel = valueRes["ReadLevel"].asInt();
+		if (readLevel >= 0)
+		{
+			m_nReadLevel = readLevel;
+			return readLevel;
+		}
+	}
+	END_PARSE_RESPONSE;
+
+	setError(Other, -1, "Operation Failed");
+	return -1;
+}
+
+bool CUser::setAuthLevel(int nAuthLevel)
+{
+	if (nAuthLevel < 0)
+	{
+		setError(InvalidParam, -2, "AuthLevel must be positive");
+		return false;
+	}
+	if (!m_nID)
+	{
+		setError(InvalidParam, -2, "Cannot setAuthLevel to a temp object");
+		return false;
+	}
+
+	Json::Value valueReq, valueRes;
+	valueReq["command"] = "user_setAuthLevel";
+	valueReq["id"] = m_nID;
+	valueReq["AuthLevel"] = nAuthLevel;
+
+	BEGIN_PARSE_RESPONSE(valueReq, valueRes)
+	{
+		if (valueRes["result"] == 1)
+		{
+			m_nAuthLevel = nAuthLevel;
+			return true;
+		}
+	}
+	END_PARSE_RESPONSE;
+
+	setError(Other, -1, "Operation Failed");
+	return false;
+}
+
+bool CUser::setReadLevel(int nReadLevel)
+{
+	if (nReadLevel < 0)
+	{
+		setError(InvalidParam, -2, "ReadLevel must be positive");
+		return false;
+	}
+	if (!m_nID)
+	{
+		setError(InvalidParam, -2, "Cannot setReadLevel to a temp object");
+		return false;
+	}
+
+	Json::Value valueReq, valueRes;
+	valueReq["command"] = "user_setReadLevel";
+	valueReq["id"] = m_nID;
+	valueReq["ReadLevel"] = nReadLevel;
+
+	BEGIN_PARSE_RESPONSE(valueReq, valueRes)
+	{
+		if (valueRes["result"] == 1)
+		{
+			m_nReadLevel = nReadLevel;
+			return true;
+		}
+	}
+	END_PARSE_RESPONSE;
+
+	setError(Other, -1, "Operation Failed");
 	return false;
 }

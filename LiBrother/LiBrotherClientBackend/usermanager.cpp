@@ -1,83 +1,103 @@
 #include "user.h"
 #include "usermanager.h"
 #include "netclient.h"
+#include "utils.h"
 #include <json/json.h>
 
 bool CUserManager::getUserByID(int nID, IUser ** ppUser)
 {
-	std::string strRequest;
-	std::string strRespond;
-	Json::Value value0;
-	value0["command"] = "usermanager_getUserById";
-	value0["id"] = nID;
-	Json::FastWriter writer;
-	std::string str = writer.write(value0);
-	sendRequest(strRequest, strRespond);
-	Json::Reader reader;
-	Json::Value value;
-	reader.parse(strRespond, value);
-	if (value["result"].asInt() == 1) {
-		TUserBasicInfo *Info = new TUserBasicInfo;
-		Info->id = value0["id"].asInt();
-		Info->gender = value0["gender"].asInt();
-		Info->name = value0["name"].asString();
-		Info->email = value0["email"].asString();
-		CUser *user = new CUser(Info);
-		user->AddRef();
-		*ppUser = user;
-		return true;
+	CHECK_PTR(ppUser);
+
+	TUserBasicInfo info;
+	CUser *pUser = new CUser(nID);
+	if (!pUser->getBasicInfo(info))
+	{
+		transferError(pUser);
+		delete pUser;
+		return false;
 	}
-	return false;
+
+	pUser->AddRef();
+	*ppUser = pUser;
+	return true;
 }
 
 //利用用户名、Email、或者字符串形式的ID获取用户
 bool CUserManager::getUserByName(const char * strName, IUser ** ppUser)
 {
-	std::string strRequest;
-	std::string strRespond;
+	CHECK_PTR(strName && ppUser);
+
+	std::string strRequest, strResponse;
 	Json::Value value0;
 	value0["command"] = "usermanager_getUserByName";
 	value0["name"] = strName;
+
 	Json::FastWriter writer;
 	std::string str = writer.write(value0);
-	sendRequest(strRequest, strRespond);
+
+	TRY_SEND_REQUEST(strRequest, strResponse);
+	
 	Json::Reader reader;
 	Json::Value value;
-	reader.parse(strRespond, value);
-	if (value["result"].asInt() == 1) {
-		TUserBasicInfo *Info = new TUserBasicInfo;
-		Info->id = value0["id"].asInt();
-		Info->gender = value0["gender"].asInt();
-		Info->name = value0["name"].asString();
-		Info->email = value0["email"].asString();
-		CUser *user = new CUser(Info);
-		user->AddRef();
-		*ppUser = user;
-		return true;
+
+	BEGIN_PARSE
+	{
+		reader.parse(strResponse, value);
+		if (value["result"].asInt() == 1)
+		{
+			TUserBasicInfo Info;
+			Info.id = value0["id"].asInt();
+			Info.gender = value0["gender"].asInt();
+			Info.name = value0["name"].asString();
+			Info.email = value0["email"].asString();
+			Info.num = value0["book_num"].asInt();
+
+			CUser *user = new CUser(Info.id);
+			user->AddRef();
+			*ppUser = user;
+			return true;
+		}
 	}
+	END_PARSE;
+
+	setError(Other, -1, "Operation Failed");
 	return false;
 }
 
 bool CUserManager::insertUser(IUser * pUser)
 {
+	CHECK_PTR(pUser);
 	CUser *user = dynamic_cast<CUser*>(pUser);
+	if (user->m_strEPassword.empty() || !user->m_pBasicInfo)
+	{
+		setError(InvalidParam, -2, "User Info not completed");
+		return false;
+	}
+
 	Json::Value value0;
 	value0["command"] = "usermanager_insertUser";
-	TUserBasicInfo tem_user_basic_info;
-	user->getBasicInfo(tem_user_basic_info);
-	value0["id"] = tem_user_basic_info.id;
-	value0["gender"] = tem_user_basic_info.gender;
-	value0["name"] = tem_user_basic_info.name;
-	value0["email"] = tem_user_basic_info.email;
+	value0["name"] = user->m_pBasicInfo->name;
+	value0["gender"] = user->m_pBasicInfo->gender;
+	value0["email"] = user->m_pBasicInfo->email;
+
 	Json::FastWriter writer;
-	std::string strRequest;
-	std::string strRespond;
+	std::string strRequest, strResponse;
 	strRequest = writer.write(value0);
-	sendRequest(strRequest, strRespond);
+	
+	TRY_SEND_REQUEST(strRequest, strResponse);
+
 	Json::Reader reader;
 	Json::Value value;
-	reader.parse(strRespond, value);
-	if (value["result"].asInt() == 1) return true;
+
+	BEGIN_PARSE
+	{
+		reader.parse(strResponse, value);
+		if (value["result"].asInt() == 1)
+			return true;
+	}
+	END_PARSE;
+
+	setError(Other, -1, "Operation Error");
 	return false;
 
 }

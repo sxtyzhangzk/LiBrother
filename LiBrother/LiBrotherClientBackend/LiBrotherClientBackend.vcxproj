@@ -158,6 +158,7 @@
     <ClInclude Include="netclient.h" />
     <ClInclude Include="user.h" />
     <ClInclude Include="usermanager.h" />
+    <ClInclude Include="utils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="backend_main.cpp" />

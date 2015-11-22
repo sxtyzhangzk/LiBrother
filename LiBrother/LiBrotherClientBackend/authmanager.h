@@ -37,8 +37,10 @@ public:
 	//获取当前的权限等级
 	//返回：权限等级，-1表示操作出现错误
 	virtual int getAuthLevel() = 0;
+
+	static std::string encryptPassword(const char * strPWD);
 private:
-	TUserBasicInfo* current_user
+	TUserBasicInfo* current_user;
 };
 
 #endif
