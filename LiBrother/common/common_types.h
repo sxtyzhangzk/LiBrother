@@ -14,7 +14,6 @@ struct TBookBasicInfo
 	std::string author;	//图书作者
 	std::string isbn;	//ISBN号
 	std::string publisher;	//出版社
-	int remain_num;
 };
 
 //用户的基本信息
@@ -23,6 +22,7 @@ struct TUserBasicInfo
 	bool LoginStatus;   //True=登入,False=未登入
 	int id;				//用户ID
 	int gender;			//性别 male:0
+	int num;			//还能借的书本数
 	std::string name;	//用户名
 	std::string email;	//用户邮箱
 };

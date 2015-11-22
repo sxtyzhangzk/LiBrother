@@ -128,7 +128,7 @@ bool CBook::setDescription(const char * description)
 	{
 		try
 		{
-			sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+			std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN),MYSQL_CONN_RELEASER);
 			std::shared_ptr<sql::Statement> stat(c->createStatement());
 			std::stringstream str;
 			str << "UPDATE BookInfoDatabase SET description=Compress('" << str2sql(description) << "') WHERE id=" << m_Id;
@@ -158,17 +158,19 @@ bool CBook::deleteBook(int number)
 	m_CBBI.count -= number;
 	try
 	{
-		sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+		std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN),MYSQL_CONN_RELEASER);
 		std::shared_ptr<sql::Statement> stat(c->createStatement());
 		std::stringstream str;
 		if (m_CBBI.count)
 		{
 			str << "UPDATE BookInfoDatabase SET count=" << m_CBBI.count << " WHERE id=" << m_Id;
 			stat->execute(str.str());
+			lprintf("%d book id = %d has been deleted",number, m_Id);
 			return true;
 		}
 		else
 		{
+			lprintf_e("%d book id = %d failed to be deleted", number, m_Id);
 			str << "DELETE FROM BookInfoDatabase where id=" << m_Id;
 			stat->execute(str.str());
 			return true;
@@ -189,7 +191,7 @@ bool CBook::getBorrowInfo(std::vector<TBorrowInfo> &binfo)
 		return false;	//不是来自数据库的书，不可借阅，返回false
 	}
 	binfo.clear();
-	sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+	std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN),MYSQL_CONN_RELEASER);
 	std::shared_ptr<sql::Statement> stat(c->createStatement());
 	std::stringstream str;
 	str << "SELECT * FROM BorrowDatabase WHERE bookID=" << m_Id;
@@ -230,7 +232,7 @@ int CBook::getBookReadLevel()
 	}
 	try
 	{
-		sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+		std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN),MYSQL_CONN_RELEASER);
 		std::shared_ptr<sql::Statement> stat(c->createStatement());
 		std::stringstream str;
 		str << "SELECT ReadLevel FROM BookInfoDatabase WHERE bookID=" << m_Id;
@@ -257,7 +259,7 @@ bool CBook::setBookReadLevel(int nReadLevel)
 	if (nReadLevel == -1) return false;
 	try 
 	{
-		sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+		std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN),MYSQL_CONN_RELEASER);
 		std::shared_ptr<sql::Statement> stat(c->createStatement());
 		std::stringstream str;
 		str << "UPDATE BookInfoDatabase SET ReadLevel = " << nReadLevel << " WHERE bookID=" << m_Id;
@@ -341,7 +343,7 @@ bool CBook::borrow(int number)
 	m_CBBI.bcount += number;
 	try
 	{
-		sql::Connection*  c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+		std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN),MYSQL_CONN_RELEASER);
 		std::shared_ptr<sql::Statement> stat(c->createStatement());
 		std::stringstream str;
 		str << "UPDATE BookInfoDatabase SET bcount = " << m_CBBI.bcount << " WHERE id=" << m_Id;
