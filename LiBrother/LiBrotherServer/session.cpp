@@ -380,6 +380,30 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		}
 	}
 
+	if (request=="user_getBorrowedBooks"){
+		int tem_id = value0["id"].asInt();
+		IUserManager *usermanager;
+		m_pClassFactory->getUserManager(&usermanager);
+		IUser *user;
+		if (usermanager->getUserByID(tem_id, &user)) {
+			ILibrary  *library;
+			m_pClassFactory->getLibrary(&library);
+			std::vector<TBorrowInfo> tem_binfo;
+			user->getBorrowedBooks(tem_binfo);
+			int num_of_records = tem_binfo.size();
+			value[0] = num_of_records;
+			Json::Value borinfoVal;
+			for (int i = 0; i < num_of_records; i++) {
+				borinfoVal[1] = tem_binfo[i].bookID;
+				borinfoVal[2] = tem_binfo[i].borrowTime;
+				borinfoVal[3] = tem_binfo[i].flag;
+				value[i + 1] = borinfoVal;
+		}
+		value[0] = 0;
+		strResponse = writer.write(value);
+		return;
+	}
+
 	if (request == "user_borrowBook") {
 		int tem_id = value0["userid"].asInt();
 		IUserManager *usermanager;
@@ -442,21 +466,29 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 
 
 	if (request == "authmanager_Login") {
-		std::string tem_name = value0["name"].asString();
+		std::string tem_name = value0["userid"].asString();
+		std::string tem_password = value0["usepassword"].asString();
 		IUserManager *usermanager;
 		m_pClassFactory->getUserManager(&usermanager);
 		IUser *user;
 		if (usermanager->getUserByName(tem_name.c_str(), &user)) {
 			TUserBasicInfo *tem_user_basic_info;
 			user->getBasicInfo(*tem_user_basic_info);
-			/*if (tem_user_basic_info->LoginStatus) {
-				value["result"] = "Multipled log in";				//验证重复登入
+			const char *pwd = tem_password.c_str();
+			if (user->verifyPassword(pwd)) {
+				/*if (tem_user_basic_info->LoginStatus) {
+					value["result"] = "Multipled log in";				//验证重复登入
+					strResponse = writer.write(value);
+					return;
+				}*/
+				value["result"] = 1;
+				value["name"]= tem_user_basic_info->name;
+				value["email"]= tem_user_basic_info->email;
+				value["id"] = tem_user_basic_info->id;
+				value["gender"] = tem_user_basic_info->gender;
 				strResponse = writer.write(value);
 				return;
-			}*/
-			value["result"] = 1;
-			strResponse = writer.write(value);
-			return;
+			}
 		}
 		value["result"] = "DatabaseError";
 		strResponse = writer.write(value);

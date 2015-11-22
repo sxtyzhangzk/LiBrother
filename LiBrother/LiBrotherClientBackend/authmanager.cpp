@@ -32,12 +32,11 @@ bool CAuthManager::Login(const  char * strUser, const char * strPWD)
 	Json::Value value;
 	reader.parse(strRespond, value);
 	if (value["result"].asInt() == 1) {
-		Json::Value tem_value = value["1"];
 		current_user->LoginStatus = true;
-		current_user->name = value0["name"].asString();
-		current_user->email = value0["email"].asString();
-		current_user->id = value0["id"].asInt();
-		current_user->gender = value0["gender"].asInt();
+		current_user->name = value["name"].asString();
+		current_user->email = value["email"].asString();
+		current_user->id = value["id"].asInt();
+		current_user->gender = value["gender"].asInt();
 		return true;
 	}
 	return false;
