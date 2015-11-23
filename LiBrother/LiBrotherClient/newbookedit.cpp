@@ -17,15 +17,15 @@ newbookedit::~newbookedit()
 
 void newbookedit::on_pushButton_3_clicked()
 {
-    IClassFactoryClient *factory2;
+    auto_iface<IClassFactoryClient> factory2;
     getClassFactory(&factory2);
-    ILibrary *library2;
+    auto_iface<ILibrary> library2;
     factory2->getLibrary(&library2);
 
 
     std::string bDescription;
     TBookBasicInfo basic2;
-    IBook *iBook2;
+    auto_iface<IBook> iBook2;
 
 
 
@@ -53,8 +53,5 @@ void newbookedit::on_pushButton_3_clicked()
         if(iBook2->setDescription(nbDescription01.c_str())){}else{QMessageBox::information(this,"Warning",u8"简介录入失败");}
         if(library2->insertBook(iBook2)){}else{QMessageBox::information(this,"Warning",u8"无法写入");}
 
-          factory2->Release();
-          iBook2->Release();
-          library2->Release();
 
 }

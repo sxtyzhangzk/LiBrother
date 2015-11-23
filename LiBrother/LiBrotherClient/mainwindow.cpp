@@ -35,9 +35,9 @@ void MainWindow::on_pushButton_2_clicked()
 void MainWindow::on_pushButton_4_clicked()
 {
         ui->listWidget->clear();
-        IClassFactoryClient *factory1;
+        auto_iface<IClassFactoryClient> factory1;
         getClassFactory(&factory1);
-        ILibrary *library1;
+        auto_iface<ILibrary> library1;
         factory1->getLibrary(&library1);
 
         QString bSearch = ui->lineEdit->text();
@@ -45,14 +45,14 @@ void MainWindow::on_pushButton_4_clicked()
         std::string bSearch1 = bSearch.toStdString();
         std::string bOption1 = bOption.toStdString();
         TBookBasicInfo basic1;
-        IBook *iBook1;
+        auto_iface<IBook> iBook1;
         QString bName1;
             if(bOption1 == "ISBN")//按照ISBN号找到唯一的一本
             {
                 bool bPd = library1->queryByISBN(bSearch1.c_str(), &iBook1);
                 if(bPd)
                 {
-                iBook1->getBasicInfo(basic1);
+                if(!iBook1->getBasicInfo(basic1)){close();QMessageBox::information(this,"Warning",u8"系统错误");return;}
                 bName1 = QString::fromStdString(basic1.name);
 
                 QListWidgetItem *item = new QListWidgetItem;
@@ -74,7 +74,7 @@ void MainWindow::on_pushButton_4_clicked()
                        {
 
 
-                         ((IBook*)vBooks[i])->getBasicInfo(basic1);
+                         if(!((IBook*)vBooks[i])->getBasicInfo(basic1)){close();QMessageBox::information(this,"Warning",u8"系统错误");return;}
                         bName1 = QString::fromStdString(basic1.name);
 
                         QListWidgetItem *item = new QListWidgetItem;
@@ -88,9 +88,6 @@ void MainWindow::on_pushButton_4_clicked()
                 else{QMessageBox::information(this,"Warning",u8"无法找到相关书本");}
             }
 
-            factory1->Release();
-            library1->Release();
-            iBook1->Release();
 }
 
 

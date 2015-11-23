@@ -18,9 +18,9 @@ usermain::usermain(QWidget *parent) ://开场直接显示所有用户已借的�
     ui->listWidget->clear();
     getClassFactory(&factory1);
 
-    IAuthManager *iUser;//构建iauth为了之后使用getcurrentuser
+    auto_iface<IAuthManager> iUser;//构建iauth为了之后使用getcurrentuser
     factory1->getAuthManager(&iUser);
-    IUser *iUser1;
+    auto_iface<IUser> iUser1;
     bool uPd = iUser->getCurrentUser(&iUser1);//获取当前登陆的用户
     if(uPd)
     {
@@ -35,12 +35,12 @@ usermain::usermain(QWidget *parent) ://开场直接显示所有用户已借的�
             {
                 int i;
 
-                ILibrary *library2;
+                auto_iface<ILibrary> library2;
                 factory1->getLibrary(&library2);
 
                 for(i=0;i<basic2.size();i++)//在widget依次显示已借的书本
                 {
-                    IBook *iBook1;
+                    auto_iface<IBook> iBook1;
                     int bID1 = basic2[i].bookID;
                     if(library2->queryById(bID1,&iBook1))
                     {
@@ -89,16 +89,16 @@ void usermain::on_pushButton_3_clicked()//还书操作
     QListWidgetItem *item = ui->listWidget->currentItem();
     int bId = item->data(Qt::UserRole).toInt();
 
-    ILibrary *library3;
+    auto_iface<ILibrary> library3;
     factory1->getLibrary(&library3);
-    IBook *iBook1;
+    auto_iface<IBook> iBook1;
     if(library3->queryById(bId,&iBook1)){}//通过预先保存的书本ID号确定所要归还的ibook
     else{QMessageBox::information(this,"Warning",u8"无法找寻到该书本");return;}
 
 
-    IAuthManager *iUser;
+    auto_iface<IAuthManager> iUser;
     factory1->getAuthManager(&iUser);
-    IUser *iUser1;
+    auto_iface<IUser> iUser1;
     if(iUser->getCurrentUser(&iUser1))//确定当前要还书的用户
     {
         if(iUser1->returnBook(iBook1)){}//正式还书
@@ -109,10 +109,6 @@ void usermain::on_pushButton_3_clicked()//还书操作
 
     ui->listWidget->takeItem(ui->listWidget->currentRow());//删除已还的书
 
-    library3->Release();
-    iBook1->Release();
-    iUser->Release();
-    iUser1->Release();
 }
 
 
@@ -125,9 +121,9 @@ void usermain::on_pushButton_5_clicked()
 
 void usermain::on_pushButton_4_clicked()//进入初等管理员（AuthLevel＝1）操作选择菜单
 {
-    IClassFactoryClient *factory3;
+    auto_iface<IClassFactoryClient> factory3;
     getClassFactory(&factory3);
-    IAuthManager *iUser;
+    auto_iface<IAuthManager> iUser;
     factory3->getAuthManager(&iUser);
     if(iUser->getAuthLevel() >= 1)
     {
@@ -136,15 +132,13 @@ void usermain::on_pushButton_4_clicked()//进入初等管理员（AuthLevel＝1�
     }
     else{QMessageBox::information(this,"Warning",u8"对不起，您没有权限");}
 
-    factory3->Release();
-    iUser->Release();
 }
 
 void usermain::on_pushButton_6_clicked()//只有authLevel＝2的高级管理员才能进入用户信息修改界面
 {
-    IClassFactoryClient *factory3;
+    auto_iface<IClassFactoryClient> factory3;
     getClassFactory(&factory3);
-    IAuthManager *iUser;
+    auto_iface<IAuthManager> iUser;
     factory3->getAuthManager(&iUser);
     if(iUser->getAuthLevel() >= 2)
     {
@@ -153,8 +147,6 @@ void usermain::on_pushButton_6_clicked()//只有authLevel＝2的高级管理员�
     }
     else{QMessageBox::information(this,"Warning",u8"对不起，您没有权限");}
 
-    factory3->Release();
-    iUser->Release();
 }
 
 void usermain::on_pushButton_7_clicked()//刷新操作，对当前用户的所借的书本做一个重新显示
@@ -162,9 +154,9 @@ void usermain::on_pushButton_7_clicked()//刷新操作，对当前用户的所�
     ui->listWidget->clear();
     getClassFactory(&factory1);
 
-    IAuthManager *iUser;//构建iauth为了之后使用getcurrentuser
+    auto_iface<IAuthManager> iUser;//构建iauth为了之后使用getcurrentuser
     factory1->getAuthManager(&iUser);
-    IUser *iUser1;
+    auto_iface<IUser> iUser1;
     bool uPd = iUser->getCurrentUser(&iUser1);//获取当前登陆的用户
     if(uPd)
     {
@@ -177,12 +169,12 @@ void usermain::on_pushButton_7_clicked()//刷新操作，对当前用户的所�
             std::vector<TBorrowInfo> basic2;//已经借了的书目
             if(iUser1->getBorrowedBooks(basic2))
             {
-                ILibrary *library2;
+                auto_iface<ILibrary> library2;
                 factory1->getLibrary(&library2);
                 int i;
                 for(i=0;i<basic2.size();i++)//在widget依次显示已借的书本
                 {
-                    IBook *iBook1;
+                    auto_iface<IBook> iBook1;
                     int bID1 = basic2[i].bookID;
                     if(library2->queryById(bID1,&iBook1))
                     {

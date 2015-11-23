@@ -22,13 +22,13 @@ void signupmain::on_pushButton_3_clicked()
 
 void signupmain::on_pushButton_2_clicked()
 {
-    IClassFactoryClient *factory1;
+    auto_iface<IClassFactoryClient> factory1;
     getClassFactory(&factory1);
 
-    IAuthManager *iAUser;
+    auto_iface<IAuthManager> iAUser;
     factory1->getAuthManager(&iAUser);
 
-    IUser *iUser;
+    auto_iface<IUser> iUser;
     factory1->createEmptyUser(&iUser);
 
     TUserBasicInfo basic1;
@@ -46,14 +46,11 @@ void signupmain::on_pushButton_2_clicked()
 
     if(uPass ==u2Pass)
     {
-        iUser->setBasicInfo(basic1);
-        iUser->setPassword(uPass.c_str());
+        if(!iUser->setBasicInfo(basic1)){close();QMessageBox::information(this,"Warning",u8"系统错误");return;}
+        if(!iUser->setPassword(uPass.c_str())){close();QMessageBox::information(this,"Warning",u8"系统错误");return;}
 
-        iAUser->Register(iUser);
+        if(!iAUser->Register(iUser)){close();QMessageBox::information(this,"Warning",u8"系统错误");return;}
     }
     else{QMessageBox::information(this,"Warning",u8"两次密码输入不一致");}
 
-    factory1->Release();
-    iAUser->Release();
-    iUser->Release();
 }

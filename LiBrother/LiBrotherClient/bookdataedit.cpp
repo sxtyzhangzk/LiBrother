@@ -9,21 +9,20 @@ bookdataedit::bookdataedit(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    IClassFactoryClient *factory1;
+    auto_iface<IClassFactoryClient> factory1;
     getClassFactory(&factory1);
-    ILibrary *library1;
+    auto_iface<ILibrary> library1;
     factory1->getLibrary(&library1);
-
 
     std::string bDescription;
     TBookBasicInfo basic1;
-    IBook *iBook1;
+    auto_iface<IBook> iBook1;
 
     bool fPd = library1->queryById(m_strBookID,&iBook1);
     if(fPd)
     {
-        iBook1->setBasicInfo(basic1);//找到书本的信息并显示在窗口中，便于用户进行更改操作
-        iBook1->getDescription(bDescription);
+        if(!iBook1->setBasicInfo(basic1)){close();QMessageBox::information(this,"Warning",u8"系统错误");return;}//找到书本的信息并显示在窗口中，便于用户进行更改操作
+        if(!iBook1->getDescription(bDescription)){close();QMessageBox::information(this,"Warning",u8"系统错误");return;}
 
 
         QString bName1 = QString::fromStdString(basic1.name);
@@ -48,9 +47,6 @@ bookdataedit::bookdataedit(QWidget *parent) :
     }
     else{QMessageBox::information(this,"Warning",u8"无法获取该书的基本信息");}
 
-    factory1->Release();
-    iBook1->Release();
-    library1->Release();
 }
 
 bookdataedit::~bookdataedit()
@@ -65,14 +61,14 @@ void bookdataedit::setBookID(const int& bID1)//传入书本信息的ID号
 
 void bookdataedit::on_pushButton_clicked()
 {
-    IClassFactoryClient *factory2;
+    auto_iface<IClassFactoryClient> factory2;
     getClassFactory(&factory2);
-    ILibrary *library2;
+    auto_iface<ILibrary> library2;
     factory2->getLibrary(&library2);
 
     std::string bDescription;
     TBookBasicInfo basic2;
-    IBook *iBook2;
+    auto_iface<IBook> iBook2;
 
     bool fPd = library2->queryById(m_strBookID,&iBook2);
 
@@ -105,9 +101,6 @@ void bookdataedit::on_pushButton_clicked()
     }
     else{QMessageBox::information(this,"Warning",u8"无法对当前书本信息进行修改");}
 
-    factory2->Release();
-    iBook2->Release();
-    library2->Release();
 
 }
 

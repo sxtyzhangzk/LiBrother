@@ -22,9 +22,9 @@ login::~login()
 
 void login::on_pushButton_clicked()
 {
-    IClassFactoryClient *factory1;
+    auto_iface<IClassFactoryClient> factory1;
     getClassFactory(&factory1);
-    IAuthManager *iUser;
+    auto_iface<IAuthManager> iUser;
     factory1->getAuthManager(&iUser);
 
     QString uName = ui->lineEdit->text();//得到界面上的的用户名和密码
@@ -44,8 +44,6 @@ void login::on_pushButton_clicked()
         QMessageBox::information(this,"Warning",u8"用户名或密码有误");
     }
 
-    factory1->Release();
-    iUser->Release();
 }
 
 
