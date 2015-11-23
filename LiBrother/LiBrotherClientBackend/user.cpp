@@ -358,7 +358,7 @@ int CUser::getAuthLevel()
 	valueReq["command"] = "user_getAuthLevel";
 	valueReq["id"] = m_nID;
 
-	BEGIN_PARSE_RESPONSE(valueReq, valueRes)
+	_BEGIN_PARSE_RESPONSE(valueReq, valueRes, -1)
 	{
 		int authLevel = valueRes["AuthLevel"].asInt();
 		if (authLevel >= 0)
@@ -367,7 +367,7 @@ int CUser::getAuthLevel()
 			return authLevel;
 		}
 	}
-	END_PARSE_RESPONSE;
+	_END_PARSE_RESPONSE(-1);
 
 	setError(Other, -1, "Operation Failed");
 	return -1;
@@ -387,7 +387,7 @@ int CUser::getReadLevel()
 	valueReq["command"] = "user_getReadLevel";
 	valueReq["id"] = m_nID;
 
-	BEGIN_PARSE_RESPONSE(valueReq, valueRes)
+	_BEGIN_PARSE_RESPONSE(valueReq, valueRes, -1)
 	{
 		int readLevel = valueRes["ReadLevel"].asInt();
 		if (readLevel >= 0)
@@ -396,7 +396,7 @@ int CUser::getReadLevel()
 			return readLevel;
 		}
 	}
-	END_PARSE_RESPONSE;
+	_END_PARSE_RESPONSE(-1);
 
 	setError(Other, -1, "Operation Failed");
 	return -1;

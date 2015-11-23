@@ -1,4 +1,4 @@
-#include "login.h"
+﻿#include "login.h"
 #include "ui_login.h"
 #include "usermain.h"
 #include "mainwindow.h"
@@ -41,7 +41,7 @@ void login::on_pushButton_clicked()
     }
     else
     {
-        QMessageBox::information(this,"Warning","用户名或密码有误");
+        QMessageBox::information(this,"Warning",u8"用户名或密码有误");
     }
 
     factory1->Release();

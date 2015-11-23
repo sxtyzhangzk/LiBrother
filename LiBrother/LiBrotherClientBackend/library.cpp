@@ -27,15 +27,16 @@ int CLibrary::queryByName(const char * strName, IFvector& vBooks, int nCount, in
 
 	int num = value[0].asInt();
 	for (int i = 0; i < num; i++) {
-		TBookBasicInfo *Info = new TBookBasicInfo;
+		TBookBasicInfo Info;
 		Json::Value bookinfo = value[i + 1];
-		Info->id = bookinfo[0].asInt();
-		Info->count = bookinfo[1].asInt();
-		Info->name = bookinfo[2].asString();
-		Info->author = bookinfo[3].asString();
-		Info->isbn = bookinfo[4].asString();
-		Info->publisher = bookinfo[5].asString();;
-		CBook *book = new CBook(Info);
+		Info.id = bookinfo[0].asInt();
+		Info.count = bookinfo[1].asInt();
+		Info.name = bookinfo[2].asString();
+		Info.author = bookinfo[3].asString();
+		Info.isbn = bookinfo[4].asString();
+		Info.publisher = bookinfo[5].asString();;
+		CBook *book = new CBook;
+		book->setBasicInfo(Info);
 		vBooks.push_back(book);
 	}
 	return 	num;

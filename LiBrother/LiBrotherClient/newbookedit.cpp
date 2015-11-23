@@ -1,4 +1,4 @@
-#include "newbookedit.h"
+﻿#include "newbookedit.h"
 #include "ui_newbookedit.h"
 #include "client_interfaces.h"
 #include "QMessageBox"

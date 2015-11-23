@@ -46,7 +46,10 @@ bool CBook::getDescription(std::string& description)
 
 bool CBook::setBasicInfo(const TBookBasicInfo& info)
 {
-	*m_CBBI = info;
+	if (!m_CBBI)
+		m_CBBI = new TBookBasicInfo(info);
+	else
+		*m_CBBI = info;
 	id = info.id;
 	Json::Value value0;
 	value0["command"] = "book_setBasicInfo";

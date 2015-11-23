@@ -1,4 +1,4 @@
-#include "bookdataedit.h"
+﻿#include "bookdataedit.h"
 #include "ui_bookdataedit.h"
 #include "client_interfaces.h"
 #include "QMessageBox"
