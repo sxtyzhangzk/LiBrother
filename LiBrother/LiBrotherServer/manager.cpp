@@ -161,14 +161,15 @@ bool CManager::verify(const char* strName,const char * strEmail)
 	{
 		std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN), MYSQL_CONN_RELEASER);
 		std::shared_ptr<sql::Statement> stat(c->createStatement());
-		std::stringstream str;
-		str << "SELECT * FROM UserInfoDatabase WHERE name = " << '\'' << str2sql(strName) << '\'';
-		stat->execute(str.str());
+		std::stringstream str1;
+		str1 << "SELECT * FROM UserInfoDatabase WHERE name = " << '\'' << str2sql(strName) << '\'';
+		stat->execute(str1.str());
 		std::shared_ptr<sql::ResultSet> result1(stat->getResultSet());
 		int flag = 1;
 		if (result1->next()) flag = 0;
-		str << "SELECT * FROM UserInfoDatabase WHERE email = " << '\'' << str2sql(strEmail) << '\'';
-		stat->execute(str.str());
+		std::stringstream str2;
+		str2 << "SELECT * FROM UserInfoDatabase WHERE email = " << '\'' << str2sql(strEmail) << '\'';
+		stat->execute(str2.str());
 		std::shared_ptr<sql::ResultSet> result2(stat->getResultSet());
 		if (result2->next()) flag = 0;
 		if (flag)
