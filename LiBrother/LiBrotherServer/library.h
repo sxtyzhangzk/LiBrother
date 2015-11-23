@@ -17,6 +17,7 @@ public:
 	virtual bool queryById(int nID, IBook ** ppBook) override;
 	virtual bool queryByISBN(const char * strISBN, IBook ** ppBook) override;
 	virtual bool insertBook(IBook * pBook) override;
+	bool verify(const char* strISBN);
 	~CLibrary();
 
 protected:

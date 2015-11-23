@@ -189,7 +189,11 @@ bool CLibrary::queryByISBN(const char * strISBN, IBook ** ppBook)
 
 bool CLibrary::insertBook(IBook * pBook)
 {
-	return ((CBook*)pBook)->insert();
+	TBookBasicInfo info;
+	pBook->getBasicInfo(info);
+	if(verify(info.isbn.c_str()))
+		return ((CBook*)pBook)->insert();
+	else return false;
 }
 
 void CLibrary::readBookInfo(std::shared_ptr<sql::ResultSet> pResultSet, CBook * pBook)
@@ -204,4 +208,27 @@ void CLibrary::readBookInfo(std::shared_ptr<sql::ResultSet> pResultSet, CBook * 
 	binfo.bcount = pResultSet->getInt("bcount");
 	pBook->setBasicInfo(binfo);
 	pBook->setBookReadLevel(pResultSet->getInt("ReadLevel"));
+}
+bool CLibrary::verify(const char* strISBN)
+{
+	if (!strISBN)
+	{
+		setError(InvalidParam, 4, "The pointer is NULL.");
+		return false;
+	}
+	try
+	{
+		sql::Connection *c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
+		std::shared_ptr<sql::Statement> stat(c->createStatement());
+		std::stringstream str;
+		str << strSelectSQL << "WHERE isbn='" << str2sql(strISBN) << "'";
+		std::shared_ptr<sql::ResultSet> result(stat->executeQuery(str.str()));
+		return(!(result->next()));
+	}
+	catch (sql::SQLException& e)
+	{
+		setError(InvalidParam, 99, "Repeated");
+		return false;
+	}
+	return true;
 }

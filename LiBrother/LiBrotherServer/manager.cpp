@@ -26,6 +26,7 @@ bool CManager::getUserByID(int nID, IUser ** ppUser)
 		str << "SELECT * FROM UserInfoDatabase WHERE id = " << nID;
 		stat->execute(str.str());
 		std::shared_ptr<sql::ResultSet> result(stat->getResultSet());
+		result->next();
 		TUserBasicInfo Basicinfo;
 		Basicinfo.email = result->getString("email");
 		Basicinfo.gender = result->getInt("gender");
@@ -46,7 +47,11 @@ bool CManager::getUserByID(int nID, IUser ** ppUser)
 }
 bool CManager::insertUser(IUser * pUser)
 {
-	return ((CUser*)pUser)->insert();
+	TUserBasicInfo info;
+	pUser->getBasicInfo(info);
+	if (verify(info.name.c_str(),info.email.c_str()))
+		return ((CUser*)pUser)->insert();
+	else return false;
 }
 bool CManager::getUserByName(const char * strName, IUser ** ppUser)
 {
@@ -84,12 +89,13 @@ bool CManager::getUserByName(const char * strName, IUser ** ppUser)
 		}
 		try
 		{
-			std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN),MYSQL_CONN_RELEASER);
+			std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN), MYSQL_CONN_RELEASER);
 			std::shared_ptr<sql::Statement> stat(c->createStatement());
 			std::stringstream str;
-			str << "SELECT * FROM UserInfoDatabase WHERE email = " << '\''<<str2sql(strName)<<'\'';
+			str << "SELECT * FROM UserInfoDatabase WHERE email = " << '\'' << str2sql(strName) << '\'';
 			stat->execute(str.str());
 			std::shared_ptr<sql::ResultSet> result(stat->getResultSet());
+			result->next();
 			TUserBasicInfo Basicinfo;
 			Basicinfo.email = result->getString("email");
 			Basicinfo.gender = result->getInt("gender");
@@ -123,6 +129,7 @@ bool CManager::getUserByName(const char * strName, IUser ** ppUser)
 			str << "SELECT * FROM UserInfoDatabase WHERE name = " << '\'' << str2sql(strName) << '\'';
 			stat->execute(str.str());
 			std::shared_ptr<sql::ResultSet> result(stat->getResultSet());
+			result->next();
 			TUserBasicInfo Basicinfo;
 			Basicinfo.email = result->getString("email");
 			Basicinfo.gender = result->getInt("gender");
@@ -139,6 +146,31 @@ bool CManager::getUserByName(const char * strName, IUser ** ppUser)
 			setError(DatabaseError, 9, (std::string("There is some wrong with our database.\n") + e.what()).c_str());
 			return false;
 		}
+	}
+	return false;
+}
+bool CManager::verify(const char* strName,const char * strEmail)
+{
+	if (!strName || !strEmail)
+		return false;
+	try
+	{
+		std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN), MYSQL_CONN_RELEASER);
+		std::shared_ptr<sql::Statement> stat(c->createStatement());
+		std::stringstream str;
+		str << "SELECT * FROM UserInfoDatabase WHERE name = " << '\'' << str2sql(strName) << '\'';
+		stat->execute(str.str());
+		std::shared_ptr<sql::ResultSet> result1(stat->getResultSet());
+		result1->next();
+		str << "SELECT * FROM UserInfoDatabase WHERE email = " << '\'' << str2sql(strEmail) << '\'';
+		stat->execute(str.str());
+		std::shared_ptr<sql::ResultSet> result2(stat->getResultSet());
+		return(!(result2->next()));
+	}
+	catch (sql::SQLException& e)
+	{
+		setError(InvalidParam, 99, "Repeated");
+		return false;
 	}
 	return false;
 }

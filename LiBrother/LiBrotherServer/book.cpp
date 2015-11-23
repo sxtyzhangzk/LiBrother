@@ -237,8 +237,9 @@ int CBook::getBookReadLevel()
 		std::stringstream str;
 		str << "SELECT ReadLevel FROM BookInfoDatabase WHERE bookID=" << m_Id;
 		stat->execute(str.str());
-	
+		
 		std::shared_ptr<sql::ResultSet> result(stat->getResultSet());
+		result->next();
 		r = result->getInt("Readlevel");
 		return r;
 	}

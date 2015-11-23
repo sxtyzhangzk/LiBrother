@@ -308,6 +308,12 @@ bool CUser::insert()
 		setReadLevel(g_configPolicy.nDefaultUserReadLevel);
 		str << "UPDATE UserInfoDatabase password = " << '\'' << str2sql(m_password) << '\'' << " WHERE id=" << m_Id;
 		stat->execute(str.str());
+		std::shared_ptr<sql::ResultSet> result(stat->executeQuery("Select LAST_INSERT_ID()"));
+		if(result->next())
+		{
+			m_CUBI.id= result->getInt("LAST_INSERT_ID()");
+			sign();
+		}
 		lprintf("A new user id = %d has been added", m_Id);
 		return true;
 	}

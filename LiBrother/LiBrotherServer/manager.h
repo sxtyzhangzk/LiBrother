@@ -14,6 +14,7 @@ public:
 	virtual bool getUserByID(int nID, IUser ** ppUser) override;
 	virtual bool getUserByName(const char * strName, IUser ** ppUser) override;
 	virtual bool insertUser(IUser * pUser) override;
+	bool verify(const char* strName,const char* strEmail);
 	~CManager();
 protected:
 	CConnectionPool * m_pDatabase;
