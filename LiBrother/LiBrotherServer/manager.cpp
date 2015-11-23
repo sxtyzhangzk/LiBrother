@@ -22,6 +22,7 @@ bool CManager::getUserByID(int nID, IUser ** ppUser)
 		setError(InvalidParam, 4, "The pointer is NULL.");
 		return false;
 	}
+	IUser* n = new CUser(m_pDatabase);
 	try
 	{
 		std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN),MYSQL_CONN_RELEASER);
@@ -36,10 +37,12 @@ bool CManager::getUserByID(int nID, IUser ** ppUser)
 		Basicinfo.gender = result->getInt("gender");
 		Basicinfo.id = result->getInt("id");
 		Basicinfo.name = result->getString("name");
-		(*ppUser)->setReadLevel(result->getInt("ReadLevel"));
-		(*ppUser)->setBasicInfo(Basicinfo);
-		((CUser*)(*ppUser))->straightsetpassword(result->getString("password").c_str());
-		((CUser*)(*ppUser))->sign();
+		n->setReadLevel(result->getInt("ReadLevel"));
+		n->setAuthLevel(result->getInt("AuthLevel"));
+		n->setBasicInfo(Basicinfo);
+		((CUser*)n)->straightsetpassword(result->getString("password").c_str());
+		((CUser*)n)->sign();
+		(*ppUser) = n;
 		return true;
 	}
 	catch (sql::SQLException& e)
@@ -97,6 +100,7 @@ bool CManager::getUserByName(const char * strName, IUser ** ppUser)
 			setError(InvalidParam, 4, "The pointer is NULL.");
 			return false;
 		}
+		
 		try
 		{
 			std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN), MYSQL_CONN_RELEASER);
