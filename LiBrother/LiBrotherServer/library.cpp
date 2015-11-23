@@ -15,7 +15,7 @@ MODULE_LOG_NAME("CLibrary");
 //TODO: Read Book Description (In CBook)
 
 static const char * strSelectSQL = 
-	"Select id, name, author, publisher, ISBN, count, bcount, ReadLevel From BookBasicInfo ";
+	"Select id, name, author, publisher, ISBN, count, bcount, ReadLevel From BookInfoDatabase ";
 
 CLibrary::CLibrary(CConnectionPool *  DatabaseFile)
 {

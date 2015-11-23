@@ -32,7 +32,8 @@ int CSession::getCurrentAuthLevel()
 	auto_iface<IUserManager> tem_user_manager;
 	m_pClassFactory->getUserManager(&tem_user_manager);
 	auto_iface<IUser> tem_user;
-	tem_user_manager->getUserByID(user_id, &tem_user);
+	if (!tem_user_manager->getUserByID(user_id, &tem_user))
+		return 0;
 	current_auth_level = tem_user->getAuthLevel();
 	return current_auth_level;
 }
@@ -42,7 +43,8 @@ int CSession::getCurrentReadLevel()
 	auto_iface<IUserManager>  tem_user_manager;
 	m_pClassFactory->getUserManager(&tem_user_manager);
 	auto_iface<IUser>tem_user;
-	tem_user_manager->getUserByID(user_id, &tem_user);
+	if (!tem_user_manager->getUserByID(user_id, &tem_user))
+		return 0;
 	current_read_level = tem_user->getReadLevel();
 	return current_read_level;
 }
@@ -70,8 +72,8 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 
 	if (user_id)
 	{
-	getCurrentAuthLevel();
-	getCurrentReadLevel();
+		getCurrentAuthLevel();
+		getCurrentReadLevel();
 	}
 	Json::Reader reader;
 	Json::Value value0;
@@ -101,7 +103,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 	}
 		
 	if (request == "book_setBasicInfo") {
-		if (!g_configPolicy.vAuthList[current_auth_level].auth_SetBookInfo) {
+		if (!user_id || !g_configPolicy.vAuthList[current_auth_level].auth_SetBookInfo) {
 			value["result"] = "PermissionDenied";
 			return;
 		}
@@ -123,7 +125,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 	}
 		
 	if (request == "book_setDescription") {
-		if (!g_configPolicy.vAuthList[current_auth_level].auth_SetBookInfo) {
+		if (!user_id || !g_configPolicy.vAuthList[current_auth_level].auth_SetBookInfo) {
 			value["result"] = "PermissionDenied";
 			return;
 		}
@@ -141,7 +143,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 	}
 
 	if (request == "book_deleteBook") {
-		if (!g_configPolicy.vAuthList[current_auth_level].auth_DeleteBook) {
+		if (!user_id || !g_configPolicy.vAuthList[current_auth_level].auth_DeleteBook) {
 			value["result"] = "PermissionDenied";
 			return;
 		}
@@ -207,7 +209,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 
 	if (request == "book_setBookReadLevel")
 	{
-		if (!g_configPolicy.vAuthList[current_auth_level].auth_SetReadLevel) {
+		if (!user_id || !g_configPolicy.vAuthList[current_auth_level].auth_SetReadLevel) {
 			value["result"] = "PermissionDenied";
 			return;
 		}
@@ -538,32 +540,9 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 	}
 
 
-	if (request == "authmanager_Login") {
-		std::string tem_name = value0["userid"].asString();
-		std::string tem_password = value0["usepassword"].asString();
-		auto_iface<IUserManager> usermanager;
-		m_pClassFactory->getUserManager(&usermanager);
-		auto_iface<IUser> user;
-		if (usermanager->getUserByName(tem_name.c_str(), &user)) {
-			TUserBasicInfo tem_user_basic_info;
-			user->getBasicInfo(tem_user_basic_info);
-			const char *pwd = tem_password.c_str();
-			if (user->verifyPassword(pwd)) {
-				/*if (tem_user_basic_info->LoginStatus) {
-					value["result"] = "Multipled log in";				//验证重复登入
-					strResponse = writer.write(value);
-					return;
-				}*/
-				value["result"] = 1;
-				value["name"] = tem_user_basic_info.name;
-				value["email"] = tem_user_basic_info.email;
-				value["id"] = tem_user_basic_info.id;
-				value["gender"] = tem_user_basic_info.gender;
-				strResponse = writer.write(value);
-				return;
-			}
-		}
-		value["result"] = "DatabaseError";
+	if (request == "authmanager_Login")
+	{
+		auto_iface<IUserManager> userManager;
 		strResponse = writer.write(value);
 		return;
 	}
@@ -576,33 +555,25 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 			return;
 		}
 
-	if (request == "authmanager_Register") {
-		auto_iface<IUserManager>usermanager;
+	if (request == "authmanager_Register")
+	{
+		auto_iface<IUserManager> usermanager;
 		m_pClassFactory->getUserManager(&usermanager);
 		auto_iface<IUser> user;
-		std::string tem_name = value0["name"].asString();
-		if (usermanager->getUserByName(tem_name.c_str(), &user)) {
-			value["result"] = 0;
-			strResponse = writer.write(value);
-			return;
-		}
-		std::string tem_email = value0["rmail"].asString();
-		if (usermanager->getUserByName(tem_email.c_str(), &user)) {
-			value["result"] = -1;
-			strResponse = writer.write(value);
-			return;
-		}
-		int newid = 1;
-		while (usermanager->getUserByID(newid, &user)) ++newid;
+
 		m_pClassFactory->createEmptyUser(&user);
 		TUserBasicInfo info;
-		info.id = newid;
-		info.email = tem_email;
-		info.name = tem_name;
-		info.gender = value["gender"].asInt();
+		info.name = value0["name"].asString();
+		info.email = value0["email"].asString();
+		info.gender = value0["gender"].asInt();
 		user->setBasicInfo(info);
-		value["result"] = 1;
-		value["id"] = newid;
+		user->setPassword(value0["password"].asString().c_str());
+
+		if (!usermanager->insertUser(user))
+			writeInterfaceError(value, usermanager);
+		else
+			value["result"] = 1;
+		
 		strResponse = writer.write(value);
 		return;
 	}

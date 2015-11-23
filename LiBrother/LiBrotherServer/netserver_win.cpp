@@ -766,9 +766,9 @@ void CNetServer::receivedData(TSocketEx * pSocket, const char * pData, size_t nL
 	int nLine = 0;
 	if (!pSocket->recvBuffer.empty() && pSocket->recvBuffer.back() == '\n')
 		nLine = 1;
-	size_t lasti = 0;
 	for (size_t i = 0; i < nLen; i++)
 	{
+		pSocket->recvBuffer += pData[i];
 		if (pData[i] == '\n')
 			nLine++;
 		else
@@ -776,8 +776,16 @@ void CNetServer::receivedData(TSocketEx * pSocket, const char * pData, size_t nL
 		if (nLine >= 2)
 		{
 			nLine = 0;
-			pSocket->recvBuffer.append(pData + lasti, i - lasti + 1);
 			pSocket->recvBuffer.erase(pSocket->recvBuffer.size() - 2, 2);
+			
+			size_t fi, len = pSocket->recvBuffer.length();
+			for (fi = 0; fi < len; fi++)
+			{
+				if (pSocket->recvBuffer[fi] != '\n')
+					break;
+			}
+			if (fi)
+				pSocket->recvBuffer = pSocket->recvBuffer.substr(fi);
 
 			char clientIP[IPLength];
 			inet_ntop(pSocket->client.sin_family, &pSocket->client.sin_addr, clientIP, sizeof(clientIP));
@@ -792,12 +800,8 @@ void CNetServer::receivedData(TSocketEx * pSocket, const char * pData, size_t nL
 			sendResponse(pSocket, strResponse);
 			if (!bKeepAlive)
 				setSocketClose(pSocket);
-
-			lasti = i + 1;
 		}
 	}
-	if (lasti != nLen)
-		pSocket->recvBuffer.append(pData + lasti, nLen - lasti + 1);
 }
 
 void CNetServer::sendResponse(TSocketEx * pSocket, const std::string& strResponse)

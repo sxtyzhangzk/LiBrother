@@ -236,7 +236,7 @@ bool recvData(std::string& strBuffer)
 			}
 			if (cntLine == 2)
 			{
-				if (strBuffer.back() == '\n')
+				if (!strBuffer.empty() && strBuffer.back() == '\n')
 					strBuffer.pop_back();
 				if (i == nLen - 1)
 					strRecv.clear();

@@ -113,7 +113,9 @@ bool CSessionManager::recvRequest(const std::string& strClientIP, const std::str
 		size_t now = ss.tellg();
 
 		//把具体的内容取出来
-		request.assign(strRequest, now);
+		if(!ss.eof())
+			request.assign(strRequest, now);
+
 		session = getSession(sessionID);
 		if (!session || session->strIP != strClientIP)
 		{
