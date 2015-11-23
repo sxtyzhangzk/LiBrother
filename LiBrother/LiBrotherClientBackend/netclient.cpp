@@ -149,7 +149,7 @@ bool sendRequest(const std::string& strRequest, std::string& strRespond)
 			lprintf_e("Failed to Send Request : Invalid Respond from Server. (NO RETCODE)");
 			return false;
 		}
-		strRetcode.assign(strRecvNow, 0, posContent - 1);
+		strRetcode.assign(strRecvNow, 0, posContent);
 		if (strRetcode == "OK")
 		{
 			strRespond.assign(strRecvNow, posContent + 1);
@@ -162,7 +162,7 @@ bool sendRequest(const std::string& strRequest, std::string& strRespond)
 			{
 				lprintf_w("Session Verified Failed, Try to Get a New Session ID.");
 				//重新获取一遍SessionID
-				getSession();
+				sessionID = getSession();
 				retry = true;
 				continue;
 			}
