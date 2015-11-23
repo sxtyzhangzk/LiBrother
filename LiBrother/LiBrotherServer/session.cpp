@@ -28,7 +28,7 @@ bool CSession::stopSession()
 
 int CSession::getCurrentAuthLevel()
 {
-	IUserManager * tem_user_manager;
+	auto_iface<IUserManager> tem_user_manager;
 	m_pClassFactory->getUserManager(&tem_user_manager);
 	IUser *tem_user;
 	tem_user_manager->getUserByID(user_id, &tem_user);
@@ -37,7 +37,7 @@ int CSession::getCurrentAuthLevel()
 
 int CSession::getCurrentReadLevel()
 {
-	IUserManager * tem_user_manager;
+	auto_iface<IUserManager>  tem_user_manager;
 	m_pClassFactory->getUserManager(&tem_user_manager);
 	IUser *tem_user;
 	tem_user_manager->getUserByID(user_id, &tem_user);
@@ -84,9 +84,9 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 			return;
 		}
 		int tem_id=value0["id"].asInt();
-		ILibrary * library;
+		auto_iface<ILibrary>  library;
 		m_pClassFactory->getLibrary(&library);
-		IBook * book;
+		auto_iface<IBook>  book;
 		library->queryById(tem_id,&book);
 		std::string tem_description;
 		if (book->getDescription(tem_description)) {
@@ -109,7 +109,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		book_basic_info.publisher = value0["publisher"].asString();
 		book_basic_info.author = value0["author"].asString();
 		book_basic_info.isbn = value0["isbn"].asString();
-		ILibrary *library;
+		auto_iface<ILibrary> library;
 		m_pClassFactory->getLibrary(&library);
 		IBook *book;
 		library->queryById(book_basic_info.id, &book);
@@ -126,7 +126,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		int tem_id = value0["id"].asInt();
 		 std::string tem_description = value0["description"].asString();
 		
-		ILibrary *library;
+		auto_iface<ILibrary> library;
 		m_pClassFactory->getLibrary(&library);
 		IBook *book;
 		library->queryById(tem_id, &book);
@@ -143,9 +143,9 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		int tem_id = value0["id"].asInt();
 		int tem_num = value0["number"].asInt();
 
-		ILibrary *library;
+		auto_iface<ILibrary> library;
 		m_pClassFactory->getLibrary(&library);
-		IBook *book;
+		auto_iface<IBook> book;
 		library->queryById(tem_id, &book);
 		if (book->deleteBook(tem_num)) value["result"] = '1';
 		else value["result"] = "DatabaseError";
@@ -157,9 +157,9 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 			return;
 		}
 		int tem_id = value0["id"].asInt();
-		ILibrary  *library;
+		auto_iface<ILibrary>  library;
 		m_pClassFactory->getLibrary(&library);
-		IBook *book;
+		auto_iface<IBook> book;
 		library->queryById(tem_id, &book);
 		std::vector<TBorrowInfo> tem_binfo;
 		book->getBorrowInfo(tem_binfo);
@@ -185,9 +185,9 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		int tem_id = value0["id"].asInt();
 		int tem_num = value0["number"].asInt();
 
-		ILibrary *library;
+		auto_iface<ILibrary> library;
 		m_pClassFactory->getLibrary(&library);
-		IBook *book;
+		auto_iface<IBook> book;
 		library->queryById(tem_id, &book);
 		if (book->getBookReadLevel() != -1) {
 			value["read_level"] = book->getBookReadLevel();
@@ -206,9 +206,9 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		int tem_id = value0["id"].asInt();
 		int read_level0 = value0["read_level"].asInt();
 
-		ILibrary *library;
+		auto_iface<ILibrary> library;
 		m_pClassFactory->getLibrary(&library);
-		IBook *book;
+		auto_iface<IBook> book;
 		library->queryById(tem_id, &book);
 		if (book->setBookReadLevel(read_level0)) value["result"] = '1';
 		else value["result"] = "DatabaseError";
@@ -218,7 +218,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		std::string tem_name = value0["name"].asString();
 		int nCount = value0["nCount"].asInt();
 		int nTop = value0["nTop"].asInt();
-		ILibrary  *library;
+		auto_iface<ILibrary>  library;
 		m_pClassFactory->getLibrary(&library);
 		IFvector book;
 		int num=library->queryByName(tem_name.c_str(), book, nCount, nTop);
@@ -242,9 +242,9 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 
 	if (request == "library_queryById") {
 		int tem_id = value0["id"].asInt();
-		ILibrary  *library;
+		auto_iface<ILibrary> library;
 		m_pClassFactory->getLibrary(&library);
-		IBook *book;
+		auto_iface<IBook> book;
 		if (library->queryById(tem_id, &book)) {
 			TBookBasicInfo tem_book_basic_info;
 			book->getBasicInfo(tem_book_basic_info);
@@ -264,9 +264,9 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 	
 	if (request == "library_queryByISBN") {
 		std::string tem_ISBN = value0["isbn"].asString();
-		ILibrary  *library;
+		auto_iface<ILibrary>  library;
 		m_pClassFactory->getLibrary(&library);
-		IBook *book;
+		auto_iface<IBook> book;
 		if (library->queryByISBN(tem_ISBN.c_str(), &book)) {
 			TBookBasicInfo tem_book_basic_info;
 			book->getBasicInfo(tem_book_basic_info);
@@ -292,9 +292,9 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		book_basic_info.publisher = value0["publisher"].asString();
 		book_basic_info.author = value0["author"].asString();
 		book_basic_info.isbn = value0["isbn"].asString();
-		ILibrary *library;
+		auto_iface<ILibrary> library;
 		m_pClassFactory->getLibrary(&library);
-		IBook *book;
+		auto_iface<IBook> book;
 		m_pClassFactory->createEmptyBook(&book);
 		book->setBasicInfo(book_basic_info);
 		if (library->insertBook(book))  value["result"] = '1';
@@ -349,7 +349,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 
 			IUserManager *usermanager;
 			m_pClassFactory->getUserManager(&usermanager);
-			IUser *user;
+			auto_iface<IUser> user;
 			m_pClassFactory->createEmptyUser(&user);
 			user->setBasicInfo(tem_user_basic_info);
 			if (usermanager->insertUser(user))
@@ -363,9 +363,9 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 	if (request == "user_getBasicInfo")
 	{
 		int tem_id = value0["id"].asInt();
-		IUserManager *usermanager;
+		auto_iface<IUserManager> usermanager;
 		m_pClassFactory->getUserManager(&usermanager);
-		IUser *user;
+		auto_iface<IUser> user;
 		if (usermanager->getUserByID(tem_id, &user)) {
 			TUserBasicInfo tem_user_basic_info;
 			user->getBasicInfo(tem_user_basic_info);
@@ -389,9 +389,9 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		tem_user_basic_info.name = value0["name"].asString();
 		tem_user_basic_info.email = value0["email"].asString();
 
-		IUserManager *usermanager;
+		auto_iface<IUserManager> usermanager;
 		m_pClassFactory->getUserManager(&usermanager);
-		IUser *user;
+		auto_iface<IUser> user;
 		usermanager->getUserByID(tem_user_basic_info.id, &user);
 		if(user->setBasicInfo(tem_user_basic_info)) value["result"]='1';
 		else value["result"] = "DatabaseError";
@@ -407,9 +407,9 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 
 	if (request == "user_setPassword") {
 		int tem_id = value0["id"].asInt();
-		IUserManager *usermanager;
+		auto_iface<IUserManager> usermanager;
 		m_pClassFactory->getUserManager(&usermanager);
-		IUser *user;
+		auto_iface<IUser> user;
 		if (usermanager->getUserByID(tem_id, &user)) {
 			std::string newPWD = value0["password"].asString();
 			const char *pnewPWD = newPWD.c_str();
@@ -426,11 +426,11 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 
 	if (request=="user_getBorrowedBooks"){
 		int tem_id = value0["id"].asInt();
-		IUserManager *usermanager;
+		auto_iface<IUserManager> usermanager;
 		m_pClassFactory->getUserManager(&usermanager);
-		IUser *user;
+		auto_iface<IUser> user;
 		if (usermanager->getUserByID(tem_id, &user)) {
-			ILibrary  *library;
+			auto_iface<ILibrary>  library;
 			m_pClassFactory->getLibrary(&library);
 			std::vector<TBorrowInfo> tem_binfo;
 			user->getBorrowedBooks(tem_binfo);
@@ -450,13 +450,13 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 
 	if (request == "user_borrowBook") {
 		int tem_id = value0["userid"].asInt();
-		IUserManager *usermanager;
+		auto_iface<IUserManager> usermanager;
 		m_pClassFactory->getUserManager(&usermanager);
-		IUser *user;
+		auto_iface<IUser> user;
 		if (usermanager->getUserByID(tem_id, &user)) {
-			ILibrary  *library;
+			auto_iface<ILibrary> library;
 			m_pClassFactory->getLibrary(&library);
-			IBook *book;
+			auto_iface<IBook> book;
 			if (library->queryById(value["bookid"].asInt, &book)) {
 				if (user->borrowBook(book)) {
 					value["result"] = 1;
@@ -472,13 +472,13 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 
 	if (request == "user_returnBook") {
 		int tem_id = value0["userid"].asInt();
-		IUserManager *usermanager;
+		auto_iface<IUserManager> usermanager;
 		m_pClassFactory->getUserManager(&usermanager);
-		IUser *user;
+		auto_iface<IUser> user;
 		if (usermanager->getUserByID(tem_id, &user)) {
-			ILibrary  *library;
+			auto_iface<ILibrary>  library;
 			m_pClassFactory->getLibrary(&library);
-			IBook *book;
+			auto_iface<IBook> book;
 			if (library->queryById(value["bookid"].asInt, &book)) {
 				if (user->returnBook(book)) {
 					value["result"] = 1;
@@ -494,9 +494,9 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 
 	if (request == "user_deleteUser") {
 		int tem_id = value0["id"].asInt();
-		IUserManager *usermanager;
+		auto_iface<IUserManager> usermanager;
 		m_pClassFactory->getUserManager(&usermanager);
-		IUser *user;
+		auto_iface<IUser> user;
 		if (usermanager->getUserByID(tem_id, &user)) {
 			value["result"] = 1;
 			user->deleteUser();
@@ -512,9 +512,9 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 	if (request == "authmanager_Login") {
 		std::string tem_name = value0["userid"].asString();
 		std::string tem_password = value0["usepassword"].asString();
-		IUserManager *usermanager;
+		auto_iface<IUserManager> usermanager;
 		m_pClassFactory->getUserManager(&usermanager);
-		IUser *user;
+		auto_iface<IUser> user;
 		if (usermanager->getUserByName(tem_name.c_str(), &user)) {
 			TUserBasicInfo *tem_user_basic_info;
 			user->getBasicInfo(*tem_user_basic_info);
