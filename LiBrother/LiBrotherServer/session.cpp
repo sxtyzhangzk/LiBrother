@@ -9,7 +9,6 @@
 
 #include "function_interfaces.h"
 
-using std::shared_ptr;
 
 CSession::CSession() :m_pClassFactory(nullptr) {}
 bool CSession::startSession(ILibClassFactory * pClassFactory, const std::string& strClientIP)
@@ -33,6 +32,7 @@ int CSession::getCurrentAuthLevel()
 	IUser *tem_user;
 	tem_user_manager->getUserByID(user_id, &tem_user);
 	current_auth_level = tem_user->getAuthLevel();
+	return current_auth_level;
 }
 
 int CSession::getCurrentReadLevel()
@@ -42,6 +42,7 @@ int CSession::getCurrentReadLevel()
 	IUser *tem_user;
 	tem_user_manager->getUserByID(user_id, &tem_user);
 	current_read_level = tem_user->getReadLevel();
+	return current_read_level;
 }
 
 
@@ -59,12 +60,6 @@ void CSession::writeInterfaceError(Json::Value& value, IAbstract *pIface)
 	value["result"] = 0;
 	value["err-code"] = err.code;
 	value["err-description"] = err.description;
-}
-
-void releaseInterface(IAbstract *pIface)
-{
-	assert(pIface);
-	pIface->Release();
 }
 
 void CSession::recvRequest(const std::string& strRequest, std::string& strResponse)
@@ -95,6 +90,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 			strResponse = writer.write(value);
 		}
 		else value["result"] = "DatabaseError";
+		return;
 	}
 		
 	if (request == "book_setBasicInfo") {
@@ -116,6 +112,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		if (book->setBasicInfo(book_basic_info))  value["result"] = '1';
 		else value["result"] = "DatabaseError";
 		strResponse = writer.write(value);
+		return;
 	}
 		
 	if (request == "book_setDescription") {
@@ -133,6 +130,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		if (book->setDescription(tem_description.c_str())) value["result"] = '1';
 		else value["result"] = "DatabaseError";
 		strResponse = writer.write(value);
+		return;
 	}
 
 	if (request == "book_deleteBook") {
@@ -150,6 +148,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		if (book->deleteBook(tem_num)) value["result"] = '1';
 		else value["result"] = "DatabaseError";
 		strResponse = writer.write(value);
+		return;
 	}
 	if (request == "book_getBorrowInfo") {
 		if (!g_configPolicy.vAuthList[current_auth_level].auth_GetBookInfo) {
@@ -174,6 +173,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 			borinfoVal["borrowTime"] = tem_binfo[i].borrowTime;
 			value[i + 1] = borinfoVal;
 		}
+		return;
 	}
 
 	if (request == "book_getBookReadLevel")
@@ -195,6 +195,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		}
 		else value["result"] = "DatabaseError";
 		strResponse = writer.write(value);
+		return;
 	}
 
 	if (request == "book_setBookReadLevel")
@@ -213,6 +214,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		if (book->setBookReadLevel(read_level0)) value["result"] = '1';
 		else value["result"] = "DatabaseError";
 		strResponse = writer.write(value);
+		return;
 	}
 	if (request == "library_queryByName") {
 		std::string tem_name = value0["name"].asString();
@@ -238,6 +240,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 			value[i+1] = bookVal;
 		}
 		strResponse = writer.write(value);
+		return;
 	}
 
 	if (request == "library_queryById") {
@@ -260,6 +263,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		}
 		else value["result"] = "DatabaseError";
 		strResponse = writer.write(value);
+		return;
 	}
 	
 	if (request == "library_queryByISBN") {
@@ -282,6 +286,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		}
 		else value["result"] = "DatabaseError";
 		strResponse = writer.write(value);
+		return;
 	}
 
 	if (request == "library_insertBook") {
@@ -300,6 +305,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		if (library->insertBook(book))  value["result"] = '1';
 		else value["result"] = "DatabaseError";
 		strResponse = writer.write(value);
+		return;
 	}
 
 	TAuthorization auth = { 0 };
@@ -331,9 +337,10 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 				value["result"] = 1;
 			}
 			else
-				writeInterfaceError(value, usermanager);
+				writeInterfaceError(value, usermanager.abs_iface());
 		}
 		strResponse = writer.write(value);
+		return;
 	}
 
 	if (request == "usermanager_insertUser")
@@ -347,7 +354,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 			tem_user_basic_info.name = value0["name"].asString();
 			tem_user_basic_info.email = value0["email"].asString();
 
-			IUserManager *usermanager;
+			auto_iface<IUserManager> usermanager;
 			m_pClassFactory->getUserManager(&usermanager);
 			auto_iface<IUser> user;
 			m_pClassFactory->createEmptyUser(&user);
@@ -355,47 +362,61 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 			if (usermanager->insertUser(user))
 				value["result"] = 1;
 			else
-				writeInterfaceError(value, usermanager);
+				writeInterfaceError(value, usermanager.abs_iface());
 		}
 		strResponse = writer.write(value);
+		return;
 	}
 
 	if (request == "user_getBasicInfo")
 	{
 		int tem_id = value0["id"].asInt();
-		auto_iface<IUserManager> usermanager;
+		if (tem_id != user_id && !auth.auth_GetUserInfo)
+			writePermissionDenied(value);
+		else
+		{
+			auto_iface<IUserManager> usermanager;
 		m_pClassFactory->getUserManager(&usermanager);
-		auto_iface<IUser> user;
-		if (usermanager->getUserByID(tem_id, &user)) {
+			auto_iface<IUser> user;
+
+			if (usermanager->getUserByID(tem_id, &user))
+			{
 			TUserBasicInfo tem_user_basic_info;
 			user->getBasicInfo(tem_user_basic_info);
 			value["id"] = tem_user_basic_info.id;
 			value["gender"] = tem_user_basic_info.gender;
 			value["name"] = tem_user_basic_info.name;
 			value["email"] = tem_user_basic_info.email;
-			Json::FastWriter writer;
-			strResponse = writer.write(value);
-			value["result"] = '1';
+				value["result"] = 1;
 		}
-		else value["result"] = "DatabaseError";
+			else
+				writeInterfaceError(value, usermanager.abs_iface());
+		}
 		strResponse = writer.write(value);
+		return;
 	}
 	
 	if (request == "user_setBasicInfo")
 	{
+		int req_id = value0["id"].asInt();
+		if (req_id != user_id && !auth.auth_SetUserInfo)
+			writePermissionDenied(value);
+		else
+		{
 		TUserBasicInfo tem_user_basic_info;
-		tem_user_basic_info.id = value0["id"].asInt();
 		tem_user_basic_info.gender = value0["gender"].asInt();
 		tem_user_basic_info.name = value0["name"].asString();
 		tem_user_basic_info.email = value0["email"].asString();
 
-		auto_iface<IUserManager> usermanager;
+			auto_iface<IUserManager> usermanager;
 		m_pClassFactory->getUserManager(&usermanager);
 		auto_iface<IUser> user;
 		usermanager->getUserByID(tem_user_basic_info.id, &user);
-		if(user->setBasicInfo(tem_user_basic_info)) value["result"]='1';
+			if (user->setBasicInfo(tem_user_basic_info)) value["result"] = '1';
 		else value["result"] = "DatabaseError";
+		}
 		strResponse = writer.write(value);
+		return;
 	}
 
 	
@@ -419,12 +440,12 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 				return;
 			}
 			value["result"] = 0;
+		}
 			strResponse = writer.write(value);
 			return;
 		}
-	}
 
-	if (request=="user_getBorrowedBooks"){
+	if (request == "user_getBorrowedBooks") {
 		int tem_id = value0["id"].asInt();
 		auto_iface<IUserManager> usermanager;
 		m_pClassFactory->getUserManager(&usermanager);
@@ -444,6 +465,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 				value[i + 1] = borinfoVal;
 		}
 		value[0] = 0;
+		}
 		strResponse = writer.write(value);
 		return;
 	}
@@ -516,8 +538,8 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		m_pClassFactory->getUserManager(&usermanager);
 		auto_iface<IUser> user;
 		if (usermanager->getUserByName(tem_name.c_str(), &user)) {
-			TUserBasicInfo *tem_user_basic_info;
-			user->getBasicInfo(*tem_user_basic_info);
+			TUserBasicInfo tem_user_basic_info;
+			user->getBasicInfo(tem_user_basic_info);
 			const char *pwd = tem_password.c_str();
 			if (user->verifyPassword(pwd)) {
 				/*if (tem_user_basic_info->LoginStatus) {
@@ -526,10 +548,10 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 					return;
 				}*/
 				value["result"] = 1;
-				value["name"]= tem_user_basic_info->name;
-				value["email"]= tem_user_basic_info->email;
-				value["id"] = tem_user_basic_info->id;
-				value["gender"] = tem_user_basic_info->gender;
+				value["name"] = tem_user_basic_info.name;
+				value["email"] = tem_user_basic_info.email;
+				value["id"] = tem_user_basic_info.id;
+				value["gender"] = tem_user_basic_info.gender;
 				strResponse = writer.write(value);
 				return;
 			}
@@ -539,54 +561,39 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		return;
 	}
 
-	if (request == "authmanager_Logout") {
-		int tem_id = value0["id"].asInt();
-		IUserManager *usermanager;
-		m_pClassFactory->getUserManager(&usermanager);
-		IUser *user;
-		if (usermanager->getUserByID(tem_id, &user)) {
-			TUserBasicInfo *tem_user_basic_info;
-			user->getBasicInfo(*tem_user_basic_info);
-			if (!tem_user_basic_info->LoginStatus) {
-				value["result"] = "DatabaseError";				//ÑéÖ¤µÇÈë
-				strResponse = writer.write(value);
-				return;
-			}
+	if (request == "authmanager_Logout")
+	{
+		user_id = 0;
 			value["result"] = 1;
 			strResponse = writer.write(value);
 			return;
 		}
-		value["result"] = "DatabaseError";				
-		strResponse = writer.write(value);
-		return;
-	}
 
 	if (request == "authmanager_Register") {
 		IUserManager *usermanager;
 		m_pClassFactory->getUserManager(&usermanager);
 		IUser *user;
 		std::string tem_name = value0["name"].asString();
-		if (usermanager->getUserByName(tem_name.c_str(), &user)){
+		if (usermanager->getUserByName(tem_name.c_str(), &user)) {
 			value["result"] = 0;
 			strResponse = writer.write(value);
 			return;
 		}
 		std::string tem_email = value0["rmail"].asString();
-		if (usermanager->getUserByName(tem_email.c_str(), &user)){
+		if (usermanager->getUserByName(tem_email.c_str(), &user)) {
 			value["result"] = -1;
 			strResponse = writer.write(value);
 			return;
 		}
-		int newid=1;
+		int newid = 1;
 		while (usermanager->getUserByID(newid, &user)) ++newid;
 		m_pClassFactory->createEmptyUser(&user);
-		TUserBasicInfo *info;
-		info->id = newid;
-		info->email = tem_email;
-		info->name = tem_name;
-		info->gender = value["gender"].asInt();
-		info->LoginStatus = true;
-		user->setBasicInfo(*info);
+		TUserBasicInfo info;
+		info.id = newid;
+		info.email = tem_email;
+		info.name = tem_name;
+		info.gender = value["gender"].asInt();
+		user->setBasicInfo(info);
 		value["result"] = 1;
 		value["id"] = newid;
 		strResponse = writer.write(value);
@@ -625,13 +632,13 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		m_pClassFactory->getUserManager(&usermanager);
 		IUser *user;
 		if (usermanager->getUserByID(tem_id, &user)) {
-			TUserBasicInfo *Info;
-			user->getBasicInfo(*Info);
+			TUserBasicInfo Info;
+			user->getBasicInfo(Info);
 			value["result"] = 1;
-			value["email"] = Info->email;
-			value["gender"] = Info->gender;
-			value["id"] = Info->id;
-			value["name"] = Info->name;
+			value["email"] = Info.email;
+			value["gender"] = Info.gender;
+			value["id"] = Info.id;
+			value["name"] = Info.name;
 			strResponse = writer.write(value);
 			return;
 		}
@@ -646,7 +653,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		m_pClassFactory->getUserManager(&usermanager);
 		IUser *user;
 		if (usermanager->getUserByID(tem_id, &user)) {
-			int AuthLevel = user->getAuthLevel;
+			int AuthLevel = user->getAuthLevel();
 			if (AuthLevel == -1) {
 				value["result"] = -1;
 				strResponse = writer.write(value);

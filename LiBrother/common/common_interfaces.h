@@ -135,9 +135,8 @@ protected:
 };
 
 template<typename iface>
-class auto_iface
+struct auto_iface
 {
-public:
 	auto_iface()
 	{
 		pIface = nullptr;
@@ -159,7 +158,10 @@ public:
 	{
 		return pIface;
 	}
-protected:
+	IAbstract * abs_iface()
+	{
+		return (IAbstract*)pIface;
+	}
 	iface *pIface;
 };
 

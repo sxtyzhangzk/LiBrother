@@ -106,6 +106,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(ProjectDir)\..\MagicDB;$(ProjectDir)\..\libs\liblog;$(ProjectDir)\..\exlib\include;$(ProjectDir)\..\common;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\Project\LiBrother\LiBrother\x64\Debug;D:\Project\LiBrother\LiBrother\exlib\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -141,6 +142,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>botan.lib;jsoncpp.lib;liblog.lib;libyaml-cppmdd.lib;mysqlcppconn.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

@@ -62,6 +62,7 @@ struct TPerIOContext
 
 	TPerIOContext(TIOType ioType) : ioType(ioType)
 	{
+		memset(&overlapped, 0, sizeof(overlapped));
 		wsaBuffer.buf = buffer;
 		wsaBuffer.len = BufferSize;
 	}
@@ -97,9 +98,9 @@ struct TSocketEx
 		InitializeCriticalSection(&csIOContext);
 		if (bIsClientSock)
 		{
-			EnterCriticalSection((LPCRITICAL_SECTION)&pNetServer->m_pcsClientSocks);
+			EnterCriticalSection((LPCRITICAL_SECTION)pNetServer->m_pcsClientSocks);
 			pNetServer->m_vpClientSocks.insert(this);
-			LeaveCriticalSection((LPCRITICAL_SECTION)&pNetServer->m_pcsClientSocks);
+			LeaveCriticalSection((LPCRITICAL_SECTION)pNetServer->m_pcsClientSocks);
 		}
 	}
 
@@ -735,7 +736,7 @@ void CNetServer::receivedData(TSocketEx * pSocket, const char * pData, size_t nL
 	assert(pSocket);
 	
 	int nLine = 0;
-	if (pSocket->recvBuffer.back() == '\n')
+	if (!pSocket->recvBuffer.empty() && pSocket->recvBuffer.back() == '\n')
 		nLine = 1;
 	size_t lasti = 0;
 	for (size_t i = 0; i < nLen; i++)
