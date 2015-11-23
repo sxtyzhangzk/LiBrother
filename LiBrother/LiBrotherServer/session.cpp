@@ -31,9 +31,8 @@ int CSession::getCurrentAuthLevel()
 {
 	auto_iface<IUserManager> tem_user_manager;
 	m_pClassFactory->getUserManager(&tem_user_manager);
-	IUser *tem_user;
-	if (!tem_user_manager->getUserByID(user_id, &tem_user))
-		return false;
+	auto_iface<IUser> tem_user;
+	tem_user_manager->getUserByID(user_id, &tem_user);
 	current_auth_level = tem_user->getAuthLevel();
 	return current_auth_level;
 }
@@ -42,7 +41,7 @@ int CSession::getCurrentReadLevel()
 {
 	auto_iface<IUserManager>  tem_user_manager;
 	m_pClassFactory->getUserManager(&tem_user_manager);
-	IUser *tem_user;
+	auto_iface<IUser>tem_user;
 	tem_user_manager->getUserByID(user_id, &tem_user);
 	current_read_level = tem_user->getReadLevel();
 	return current_read_level;
@@ -71,8 +70,8 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 
 	if (user_id)
 	{
-		getCurrentAuthLevel();
-		getCurrentReadLevel();
+	getCurrentAuthLevel();
+	getCurrentReadLevel();
 	}
 	Json::Reader reader;
 	Json::Value value0;
@@ -115,7 +114,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		book_basic_info.isbn = value0["isbn"].asString();
 		auto_iface<ILibrary> library;
 		m_pClassFactory->getLibrary(&library);
-		IBook *book;
+		auto_iface<IBook> book;
 		library->queryById(book_basic_info.id, &book);
 		if (book->setBasicInfo(book_basic_info))  value["result"] = '1';
 		else value["result"] = "DatabaseError";
@@ -133,7 +132,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		
 		auto_iface<ILibrary> library;
 		m_pClassFactory->getLibrary(&library);
-		IBook *book;
+		auto_iface<IBook>book;
 		library->queryById(tem_id, &book);
 		if (book->setDescription(tem_description.c_str())) value["result"] = '1';
 		else value["result"] = "DatabaseError";
