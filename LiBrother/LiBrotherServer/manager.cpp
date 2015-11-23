@@ -63,6 +63,7 @@ bool CManager::insertUser(IUser * pUser)
 			transferError(pUser);
 			return false;
 		}
+		return true;
 	}
 	else return false;
 }
