@@ -1,6 +1,7 @@
 #include "config.h"
 #include "session.h"
 
+#include <liblog.h>
 #include <cassert>
 #include <json/json.h>
 #include <string>
@@ -9,6 +10,7 @@
 
 #include "function_interfaces.h"
 
+MODULE_LOG_NAME("Session");
 
 CSession::CSession() :m_pClassFactory(nullptr) {}
 bool CSession::startSession(ILibClassFactory * pClassFactory, const std::string& strClientIP)
@@ -30,7 +32,8 @@ int CSession::getCurrentAuthLevel()
 	auto_iface<IUserManager> tem_user_manager;
 	m_pClassFactory->getUserManager(&tem_user_manager);
 	IUser *tem_user;
-	tem_user_manager->getUserByID(user_id, &tem_user);
+	if (!tem_user_manager->getUserByID(user_id, &tem_user))
+		return false;
 	current_auth_level = tem_user->getAuthLevel();
 	return current_auth_level;
 }
@@ -64,8 +67,13 @@ void CSession::writeInterfaceError(Json::Value& value, IAbstract *pIface)
 
 void CSession::recvRequest(const std::string& strRequest, std::string& strResponse)
 {
-	getCurrentAuthLevel();
-	getCurrentReadLevel();
+	lprintf("RECV REQUEST %s", strRequest.c_str());
+
+	if (user_id)
+	{
+		getCurrentAuthLevel();
+		getCurrentReadLevel();
+	}
 	Json::Reader reader;
 	Json::Value value0;
 	reader.parse(strRequest,value0);
