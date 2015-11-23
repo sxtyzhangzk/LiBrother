@@ -6,6 +6,7 @@
 #include <json/json.h>
 
 struct ILibClassFactory;
+struct IAbstract;
 class CSession
 {
 public:
@@ -19,7 +20,6 @@ public:
 protected:
 	static void writePermissionDenied(Json::Value& value);
 	static void writeInterfaceError(Json::Value& value, IAbstract *pIface);
-	static void releaseInterface(IAbstract *pIface);
 
 protected:
 	ILibClassFactory * m_pClassFactory;

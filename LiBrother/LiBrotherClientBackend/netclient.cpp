@@ -248,7 +248,7 @@ bool postData(const std::string& strSend, std::string& strRecv, bool retry)
 
 	bool ret;
 	if (g_configClient.bKeepAlive)
-		ret = sendData(std::string("KEEP-ALIVE") + strSend + "\n\n");
+		ret = sendData(std::string("KEEP-ALIVE\n") + strSend + "\n\n");
 	else
 		ret = sendData(strSend + "\n\n");
 	if (!ret)
