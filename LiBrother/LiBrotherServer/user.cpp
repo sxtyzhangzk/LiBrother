@@ -45,9 +45,9 @@ bool CUser::setBasicInfo(const TUserBasicInfo& info)
 		return false;	
 	}
 	m_CUBI = info;	
-	m_CUBI.id = m_Id;
 	if (is_from_Database)
 	{
+		m_CUBI.id = m_Id;
 		try
 		{
 			std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN),MYSQL_CONN_RELEASER);
@@ -183,7 +183,8 @@ bool CUser::borrowBook(IBook * pBook)
 			TBookBasicInfo info;
 			((CBook*)pBook)->getBasicInfo(info);
 			b_id = info.id;
-			str << "INSERT INTO BorrowDatabase VALUES ("<<info.id << " ," << m_Id << " ," << time(0) << " ," << 0<<")";
+			str.str("");
+			str << "INSERT INTO BorrowDatabase VALUES ("<< m_Id << " ," << info.id << " , null," << 0<<")";
 			stat->execute(str.str());
 			lprintf("User id = %d has borrowed a book id = %d.", m_Id,b_id);
 			return true;
@@ -196,7 +197,11 @@ bool CUser::borrowBook(IBook * pBook)
 			return false;
 		}
 	}
-	return true;
+	else
+	{
+		transferError(pBook);
+		return false;
+	}
 }
 bool CUser::returnBook(IBook * pBook)
 {
@@ -224,7 +229,8 @@ bool CUser::returnBook(IBook * pBook)
 			TBookBasicInfo info;
 			((CBook*)pBook)->getBasicInfo(info);
 			b_id = info.id;
-			str << "INSERT INTO BorrowDatabase VALUES (" << info.id << " ," << m_Id << " ," << time(0) << " ," << 1 << ")";
+			str.str("");
+			str << "INSERT INTO BorrowDatabase VALUES (" << m_Id << " ," << info.id << " ,null ,"  << 1 << ")";
 			stat->execute(str.str());
 			lprintf("User id = %d has returned a book id = %d.", m_Id, b_id);
 			return true;

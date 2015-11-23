@@ -74,7 +74,7 @@ void MainWindow::on_pushButton_4_clicked()
                        {
 
 
-                         if(!((IBook*)vBooks[i])->getBasicInfo(basic1)){close();QMessageBox::information(this,"Warning",u8"系统错误");return;}
+                         if(!((IBook*)vBooks[i-1])->getBasicInfo(basic1)){close();QMessageBox::information(this,"Warning",u8"系统错误");return;}
                         bName1 = QString::fromStdString(basic1.name);
 
                         QListWidgetItem *item = new QListWidgetItem;
@@ -100,8 +100,7 @@ void MainWindow::on_pushButton_5_clicked()//主界面中搜索出来的书目，
     if(item)
     {
         int bID = item->data(Qt::UserRole).toInt();
-        bookdata bookdata1;
-        bookdata1.setBookID(bID);
+        bookdata bookdata1(bID);
         bookdata1.exec();
     }
 

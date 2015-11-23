@@ -37,6 +37,7 @@ bool CManager::getUserByID(int nID, IUser ** ppUser)
 		Basicinfo.gender = result->getInt("gender");
 		Basicinfo.id = result->getInt("id");
 		Basicinfo.name = result->getString("name");
+		Basicinfo.num = result->getInt("num");
 		n->setReadLevel(result->getInt("ReadLevel"));
 		n->setAuthLevel(result->getInt("AuthLevel"));
 		n->setBasicInfo(Basicinfo);
@@ -116,6 +117,7 @@ bool CManager::getUserByName(const char * strName, IUser ** ppUser)
 			Basicinfo.gender = result->getInt("gender");
 			Basicinfo.id = result->getInt("id");
 			Basicinfo.name = result->getString("name");
+			Basicinfo.num = result->getInt("num");
 			n->setReadLevel(result->getInt("ReadLevel"));
 			n->setAuthLevel(result->getInt("AuthLevel"));
 			n->setBasicInfo(Basicinfo);

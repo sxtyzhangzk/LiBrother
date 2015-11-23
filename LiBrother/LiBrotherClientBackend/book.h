@@ -6,11 +6,13 @@
 #include <string>
 
 class CUser;
+class CLibrary;
 class CBook : public IBook
 {
 	IMPLEMENT_INTERFACE
 public:
 	friend CUser;
+	friend CLibrary;
 
 	CBook();
 	~CBook();

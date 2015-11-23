@@ -12,13 +12,12 @@ class bookdata : public QDialog
     Q_OBJECT
 
 public:
-    explicit bookdata(QWidget *parent = 0);
+    explicit bookdata(int nID, QWidget *parent = 0);
     ~bookdata();
-    void setBookID(const int & bID1);
 
 protected:
-    int m_strBookID;
     //QString m_strCombo;
+    int m_nBookID;
 
 private slots:
     void on_pushButton_clicked();

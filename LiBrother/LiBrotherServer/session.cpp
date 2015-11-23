@@ -95,7 +95,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		std::string tem_description;
 		if (book->getDescription(tem_description)) {
 			value["description"] = tem_description;
-			value["result"] = '1';
+			value["result"] = "1";
 			strResponse = writer.write(value);
 		}
 		else value["result"] = "DatabaseError";
@@ -268,7 +268,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 			value["publisher"] = tem_book_basic_info.publisher;
 			Json::FastWriter writer;
 			strResponse = writer.write(value);
-			value["result"] = '1';
+			value["result"] = "1";
 		}
 		else value["result"] = "DatabaseError";
 		strResponse = writer.write(value);
@@ -380,24 +380,24 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 	if (request == "user_getBasicInfo")
 	{
 		int tem_id = value0["id"].asInt();
-		if (tem_id != user_id && !auth.auth_GetUserInfo)
+		if (!user_id || (tem_id != user_id && !auth.auth_GetUserInfo))
 			writePermissionDenied(value);
 		else
 		{
 			auto_iface<IUserManager> usermanager;
-		m_pClassFactory->getUserManager(&usermanager);
+			m_pClassFactory->getUserManager(&usermanager);
 			auto_iface<IUser> user;
 
 			if (usermanager->getUserByID(tem_id, &user))
 			{
-			TUserBasicInfo tem_user_basic_info;
-			user->getBasicInfo(tem_user_basic_info);
-			value["id"] = tem_user_basic_info.id;
-			value["gender"] = tem_user_basic_info.gender;
-			value["name"] = tem_user_basic_info.name;
-			value["email"] = tem_user_basic_info.email;
+				TUserBasicInfo tem_user_basic_info;
+				user->getBasicInfo(tem_user_basic_info);
+				value["id"] = tem_user_basic_info.id;
+				value["gender"] = tem_user_basic_info.gender;
+				value["name"] = tem_user_basic_info.name;
+				value["email"] = tem_user_basic_info.email;
 				value["result"] = 1;
-		}
+			}
 			else
 				writeInterfaceError(value, usermanager.abs_iface());
 		}
@@ -408,7 +408,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 	if (request == "user_setBasicInfo")
 	{
 		int req_id = value0["id"].asInt();
-		if (req_id != user_id && !auth.auth_SetUserInfo)
+		if (!user_id || (req_id != user_id && !auth.auth_SetUserInfo))
 			writePermissionDenied(value);
 		else
 		{
@@ -454,71 +454,111 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 			return;
 		}
 
-	if (request == "user_getBorrowedBooks") {
+	if (request == "user_getBorrowedBooks")
+	{
 		int tem_id = value0["id"].asInt();
-		auto_iface<IUserManager> usermanager;
-		m_pClassFactory->getUserManager(&usermanager);
-		auto_iface<IUser> user;
-		if (usermanager->getUserByID(tem_id, &user)) {
-			auto_iface<ILibrary>  library;
-			m_pClassFactory->getLibrary(&library);
-			std::vector<TBorrowInfo> tem_binfo;
-			user->getBorrowedBooks(tem_binfo);
-			int num_of_records = tem_binfo.size();
-			value[0] = num_of_records;
-			Json::Value borinfoVal;
-			for (int i = 0; i < num_of_records; i++) {
-				borinfoVal[1] = tem_binfo[i].bookID;
-				borinfoVal[2] = tem_binfo[i].borrowTime;
-				borinfoVal[3] = tem_binfo[i].flag;
-				value[i + 1] = borinfoVal;
-		}
-		value[0] = 0;
+		if (!user_id || (tem_id != user_id && !auth.auth_GetUserInfo))
+			writePermissionDenied(value);
+		else
+		{
+			auto_iface<IUserManager> usermanager;
+			m_pClassFactory->getUserManager(&usermanager);
+			auto_iface<IUser> user;
+			if (usermanager->getUserByID(tem_id, &user))
+			{
+				auto_iface<ILibrary>  library;
+				m_pClassFactory->getLibrary(&library);
+
+				std::vector<TBorrowInfo> tem_binfo;
+				if (user->getBorrowedBooks(tem_binfo))
+				{
+					value["result"] = 1;
+					Json::Value valueData;
+					int num_of_records = tem_binfo.size();
+					valueData[0] = num_of_records;
+					Json::Value borinfoVal;
+					for (int i = 0; i < num_of_records; i++) {
+						borinfoVal[1] = tem_binfo[i].bookID;
+						borinfoVal[2] = tem_binfo[i].borrowTime;
+						borinfoVal[3] = tem_binfo[i].flag;
+						valueData[i + 1] = borinfoVal;
+					}
+					value["data"] = valueData;
+				}
+				else
+					writeInterfaceError(value, user.abs_iface());
+			}
+			else
+				writeInterfaceError(value, usermanager.abs_iface());
 		}
 		strResponse = writer.write(value);
 		return;
 	}
 
-	if (request == "user_borrowBook") {
+	if (request == "user_borrowBook")
+	{
 		int tem_id = value0["userid"].asInt();
-		auto_iface<IUserManager> usermanager;
-		m_pClassFactory->getUserManager(&usermanager);
-		auto_iface<IUser> user;
-		if (usermanager->getUserByID(tem_id, &user)) {
-			auto_iface<ILibrary> library;
-			m_pClassFactory->getLibrary(&library);
-			auto_iface<IBook> book;
-			if (library->queryById(value["bookid"].asInt(), &book)) {
-				if (user->borrowBook(book)) {
-					value["result"] = 1;
-					strResponse = writer.write(value);
-					return;
+		if (!user_id || tem_id != user_id || !auth.auth_BorrowBook)
+			writePermissionDenied(value);
+		else
+		{
+			auto_iface<IUserManager> usermanager;
+			m_pClassFactory->getUserManager(&usermanager);
+			auto_iface<IUser> user;
+			if (usermanager->getUserByID(tem_id, &user))
+			{
+				auto_iface<ILibrary> library;
+				m_pClassFactory->getLibrary(&library);
+				auto_iface<IBook> book;
+				if (library->queryById(value0["bookid"].asInt(), &book))
+				{
+					if (user->borrowBook(book))
+					{
+						value["result"] = 1;
+					}
+					else
+						writeInterfaceError(value, user);
 				}
+				else
+					writeInterfaceError(value, library);
 			}
+			else
+				writeInterfaceError(value, usermanager);
 		}
-		value["result"] = 0;
 		strResponse = writer.write(value);
 		return;
 	}
 
-	if (request == "user_returnBook") {
+	if (request == "user_returnBook")
+	{
 		int tem_id = value0["userid"].asInt();
-		auto_iface<IUserManager> usermanager;
-		m_pClassFactory->getUserManager(&usermanager);
-		auto_iface<IUser> user;
-		if (usermanager->getUserByID(tem_id, &user)) {
-			auto_iface<ILibrary>  library;
-			m_pClassFactory->getLibrary(&library);
-			auto_iface<IBook> book;
-			if (library->queryById(value["bookid"].asInt(), &book)) {
-				if (user->returnBook(book)) {
-					value["result"] = 1;
-					strResponse = writer.write(value);
-					return;
+		if (!user_id || tem_id != user_id || !auth.auth_BorrowBook)
+			writePermissionDenied(value);
+		else
+		{
+			auto_iface<IUserManager> usermanager;
+			m_pClassFactory->getUserManager(&usermanager);
+			auto_iface<IUser> user;
+			if (usermanager->getUserByID(tem_id, &user))
+			{
+				auto_iface<ILibrary>  library;
+				m_pClassFactory->getLibrary(&library);
+				auto_iface<IBook> book;
+				if (library->queryById(value0["bookid"].asInt(), &book))
+				{
+					if (user->returnBook(book))
+					{
+						value["result"] = 1;
+					}
+					else
+						writeInterfaceError(value, user);
 				}
+				else
+					writeInterfaceError(value, library);
 			}
+			else
+				writeInterfaceError(value, usermanager);
 		}
-		value["result"] = 0;
 		strResponse = writer.write(value);
 		return;
 	}
@@ -535,6 +575,34 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 			return;
 		}
 		value["result"] = 0;
+		strResponse = writer.write(value);
+		return;
+	}
+
+	if (request == "user_getAuthLevel")
+	{
+		int uID = value0["id"].asInt();
+		if (!user_id || (uID != user_id && !auth.auth_GetUserInfo))
+			writePermissionDenied(value);
+		else
+		{
+			auto_iface<IUserManager> userManager;
+			m_pClassFactory->getUserManager(&userManager);
+			auto_iface<IUser> user;
+			if (userManager->getUserByID(uID, &user))
+			{
+				int nAuthLevel = user->getAuthLevel();
+				if (nAuthLevel >= 0)
+				{
+					value["result"] = 1;
+					value["AuthLevel"] = nAuthLevel;
+				}
+				else
+					writeInterfaceError(value, user);
+			}
+			else
+				writeInterfaceError(value, userManager);
+		}
 		strResponse = writer.write(value);
 		return;
 	}

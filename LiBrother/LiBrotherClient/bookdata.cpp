@@ -6,9 +6,10 @@
 #include "QMessageBox"
 
 
-bookdata::bookdata(QWidget *parent) :
+bookdata::bookdata(int nID, QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::bookdata)
+    ui(new Ui::bookdata),
+    m_nBookID(nID)
 {
     ui->setupUi(this);
 
@@ -22,11 +23,11 @@ bookdata::bookdata(QWidget *parent) :
     auto_iface<IBook>iBook1;
 
 
-    bool fPd = library1->queryById(m_strBookID,&iBook1);
+    bool fPd = library1->queryById(nID,&iBook1);
 
     if(fPd)
     {
-        if(!iBook1->setBasicInfo(basic1)){close();QMessageBox::information(this,"Warning",u8"系统错误");return;}
+        if(!iBook1->getBasicInfo(basic1)){close();QMessageBox::information(this,"Warning",u8"系统错误");return;}
 
         if(!iBook1->getDescription(bDescription)){close();QMessageBox::information(this,"Warning",u8"系统错误");return;}
 
@@ -62,11 +63,6 @@ bookdata::~bookdata()
     delete ui;
 }
 
-void bookdata::setBookID(const int& bID1)//传入书本信息的ID号
-{
-    m_strBookID = bID1;
-}
-
 void bookdata::on_pushButton_clicked()
 {
     auto_iface<IClassFactoryClient> factory1;
@@ -79,7 +75,7 @@ void bookdata::on_pushButton_clicked()
     auto_iface<IBook> iBook1;
     if(IAManager->getCurrentUser(&iUser1))//如果当前没有用户登录，会自动得到false的输出值，会提示需要先登录
     {
-        if(library1->queryById(m_strBookID,&iBook1))
+        if(library1->queryById(m_nBookID,&iBook1))
         {
             if(iUser1->borrowBook(iBook1)){}//正式借书操作
             else{QMessageBox::information(this,"Warning","借书失败");}

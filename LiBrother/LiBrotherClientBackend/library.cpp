@@ -29,14 +29,17 @@ int CLibrary::queryByName(const char * strName, IFvector& vBooks, int nCount, in
 	for (int i = 0; i < num; i++) {
 		TBookBasicInfo Info;
 		Json::Value bookinfo = value[i + 1];
-		Info.id = bookinfo[0].asInt();
-		Info.count = bookinfo[1].asInt();
-		Info.name = bookinfo[2].asString();
-		Info.author = bookinfo[3].asString();
-		Info.isbn = bookinfo[4].asString();
-		Info.publisher = bookinfo[5].asString();;
+		Info.id = bookinfo["id"].asInt();
+		Info.count = bookinfo["count"].asInt();
+		Info.name = bookinfo["name"].asString();
+		Info.author = bookinfo["author"].asString();
+		Info.isbn = bookinfo["isbn"].asString();
+		Info.publisher = bookinfo["publisher"].asString();;
 		CBook *book = new CBook;
-		book->setBasicInfo(Info);
+		TBookBasicInfo *pInfo = new TBookBasicInfo(Info);
+		book->m_CBBI = pInfo;
+		book->id = Info.id;
+		//book->setBasicInfo(Info);
 		vBooks.push_back(book);
 	}
 	return 	num;
@@ -48,9 +51,9 @@ bool CLibrary::queryById(int nID, IBook ** ppBook)
 	std::string strRespond;
 	Json::Value value0;
 	value0["command"] = "library_queryById";
-	value0["nID"] = nID;
+	value0["id"] = nID;
 	Json::FastWriter writer;
-	std::string str=writer.write(value0);
+	strRequest = writer.write(value0);
 	if (sendRequest(strRequest, strRespond)) {
 		Json::Reader reader;
 		Json::Value value;
@@ -64,8 +67,10 @@ bool CLibrary::queryById(int nID, IBook ** ppBook)
 			Info->isbn = value["isbn"].asString();
 			Info->publisher = value["publisher"].asString();
 			CBook *book = new CBook();
+			//book->setBasicInfo(*Info);
+			book->m_CBBI = Info;
+			book->id = Info->id;
 			book->AddRef();
-			book->setBasicInfo(*Info);
 			*ppBook = book;
 			return true;
 		}
@@ -103,7 +108,8 @@ bool CLibrary::queryByISBN(const char * strISBN, IBook ** ppBook)
 			Info->isbn = value["isbn"].asString();
 			Info->publisher = value["publisher"].asString();
 			CBook *book = new CBook();
-			book->setBasicInfo(* Info);
+			book->m_CBBI = Info;
+			book->id = Info->id;
 			book->AddRef();
 			*ppBook = book;
 			return true;

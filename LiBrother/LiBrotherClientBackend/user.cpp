@@ -60,7 +60,6 @@ bool CUser::getBasicInfo(TUserBasicInfo& info)
 	Json::Reader reader;
 	try
 	{
-		TUserBasicInfo info;
 		reader.parse(strResponse, valueRes);
 		if (valueRes["result"].asInt() == 1)
 		{
@@ -199,17 +198,21 @@ bool CUser::getBorrowedBooks(std::vector<TBorrowInfo> &binfo)//to be implemented
 	try
 	{
 		reader.parse(strResponse, value);
-		int num = value[0].asInt();
-		if (num > 0)
+		if (value["result"] == 1)
 		{
-			TBorrowInfo borrow_info;
-			for (int i = 1; i <= num; i++)
+			Json::Value valueData = value["data"];
+			int num = valueData[0].asInt();
+			if (num >= 0)
 			{
-				Json::Value tem_value = value[i];
-				borrow_info.bookID = tem_value[1].asInt();
-				borrow_info.borrowTime = tem_value[2].asInt64();
-				borrow_info.flag = tem_value[3].asBool();
-				binfo.push_back(borrow_info);
+				TBorrowInfo borrow_info;
+				for (int i = 1; i <= num; i++)
+				{
+					Json::Value tem_value = valueData[i];
+					borrow_info.bookID = tem_value[1].asInt();
+					borrow_info.borrowTime = tem_value[2].asInt64();
+					borrow_info.flag = tem_value[3].asBool();
+					binfo.push_back(borrow_info);
+				}
 			}
 		}
 		else
@@ -361,11 +364,14 @@ int CUser::getAuthLevel()
 
 	_BEGIN_PARSE_RESPONSE(valueReq, valueRes, -1)
 	{
-		int authLevel = valueRes["AuthLevel"].asInt();
-		if (authLevel >= 0)
+		if (valueRes["result"] == 1)
 		{
-			m_nAuthLevel = authLevel;
-			return authLevel;
+			int authLevel = valueRes["AuthLevel"].asInt();
+			if (authLevel >= 0)
+			{
+				m_nAuthLevel = authLevel;
+				return authLevel;
+			}
 		}
 	}
 	_END_PARSE_RESPONSE(-1);

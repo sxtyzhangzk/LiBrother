@@ -31,8 +31,7 @@ void userborrow::on_pushButton_clicked()//选择一本书本，进入书本具�
 {
     QListWidgetItem *item = ui->listWidget->currentItem();
     int bID = item->data(Qt::UserRole).toInt();
-    bookdata bookdata1;
-    bookdata1.setBookID(bID);
+    bookdata bookdata1(bID);
 
     bookdata1.exec();
 }
