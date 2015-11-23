@@ -24,7 +24,7 @@ struct TSessionEx
 	time_t timeLastAccess;		//最后访问会话的时间
 	std::mutex mutexSession;	//保护session的互斥器
 	TSessionEx *prev, *next;	//清理队列中的前后元素
-	TSessionEx() : prev(nullptr), next(nullptr) {}
+	TSessionEx() : prev(nullptr), next(nullptr), session(nullptr) {}
 	TSessionEx(session_t sessionID) : idSession(sessionID), prev(nullptr), next(nullptr)
 	{
 		session = new CSession;
