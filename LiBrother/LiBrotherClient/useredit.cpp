@@ -36,9 +36,9 @@ void useredit::on_pushButton_3_clicked()//用户查询模块
             ui->lineEdit_3->setText(uMail);
             ui->lineEdit_4->setText(QString::number(uLevel));
         }
-        else{QMessageBox::information(this,"Warning","用户获取信息错误");}
+        else{QMessageBox::information(this,"Warning",u8"用户获取信息错误");}
     }
-    else{QMessageBox::information(this,"Warning","查找用户错误");}
+    else{QMessageBox::information(this,"Warning",u8"查找用户错误");}
     factory1->Release();
     IUManager->Release();
     iUser->Release();
@@ -76,10 +76,10 @@ void useredit::on_pushButton_clicked()//正式修改信息模块
             {
                 iUser->setPassword(nPassword1.c_str());
             }
-            else{QMessageBox::information(this,"Warning","两次密码输入不同");}
+            else{QMessageBox::information(this,"Warning",u8"两次密码输入不同");}
         }
     }
-    else{QMessageBox::information(this,"Warning","查找用户错误");}
+    else{QMessageBox::information(this,"Warning",u8"查找用户错误");}
 
 
     factory1->Release();

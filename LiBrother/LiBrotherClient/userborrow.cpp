@@ -69,7 +69,7 @@ void userborrow::on_pushButton_4_clicked()
                     item->setData(Qt::UserRole,basic1.id);//data中存了之后要用到的书本ID号
                     ui->listWidget->addItem(item);
                 }
-                else{QMessageBox::information(this,"Warning","无法通过ISBN号查询到此书");}
+                else{QMessageBox::information(this,"Warning",u8"无法通过ISBN号查询到此书");}
             }
 
             else//按照书名就行搜索
@@ -94,7 +94,7 @@ void userborrow::on_pushButton_4_clicked()
 
                     }
                 }
-                else{QMessageBox::information(this,"Warning","无法找到相关书本");}
+                else{QMessageBox::information(this,"Warning",u8"无法找到相关书本");}
             }
             factory1->Release();
             library1->Release();
@@ -118,7 +118,7 @@ void userborrow::on_pushButton_2_clicked()
         bookdataedit1.setBookID(bID);
         bookdataedit1.exec();
     }
-    else{QMessageBox::information(this,"Warning","对不起，您没有权限");}
+    else{QMessageBox::information(this,"Warning",u8"对不起，您没有权限");}
 
     factory3->Release();
     iUser->Release();
