@@ -1,4 +1,4 @@
-#ifndef BOOKDATA_H
+﻿#ifndef BOOKDATA_H
 #define BOOKDATA_H
 #include <QString>
 #include <QDialog>

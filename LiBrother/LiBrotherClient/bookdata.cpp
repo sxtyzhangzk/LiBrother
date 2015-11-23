@@ -1,4 +1,4 @@
-#include "bookdata.h"
+﻿#include "bookdata.h"
 #include "ui_bookdata.h"
 #include "QString"
 #include "client_interfaces.h"
