@@ -34,11 +34,6 @@ bool CUser::bcheck(TBorrowInfo info_to_check)
 }
 bool CUser::getBasicInfo(TUserBasicInfo& info)
 {
-	if (!check(m_CUBI) || !is_from_Database)	
-	{
-		setError(InvalidParam, 1, "This user is not valid.");
-		return false;	
-	}
 	info = m_CUBI;	
 	return true;
 }
