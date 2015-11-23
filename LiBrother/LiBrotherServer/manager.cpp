@@ -53,8 +53,14 @@ bool CManager::insertUser(IUser * pUser)
 {
 	TUserBasicInfo info;
 	pUser->getBasicInfo(info);
-	if (verify(info.name.c_str(),info.email.c_str()))
-		return ((CUser*)pUser)->insert();
+	if (verify(info.name.c_str(), info.email.c_str()))
+	{
+		if (!((CUser*)pUser)->insert())
+		{
+			transferError(pUser);
+			return false;
+		}
+	}
 	else return false;
 }
 bool CManager::getUserByName(const char * strName, IUser ** ppUser)

@@ -23,8 +23,8 @@ CUser::~CUser()
 }
 bool CUser::check(TUserBasicInfo info_to_check)
 {
-	if (info_to_check.num<0) return false;
-	if (info_to_check.email.empty() || info_to_check.name.empty()) return false;
+	//if (info_to_check.num<0) return false;
+	//if (info_to_check.email.empty() || info_to_check.name.empty()) return false;
 	return true;
 }
 bool CUser::bcheck(TBorrowInfo info_to_check)
@@ -294,10 +294,11 @@ bool CUser::insert()
 		str << "INSERT INTO UserInfoDatabase (id, name, email, gender, num, AuthLevel, ReadLevel, password) VALUES(null, ";
 		str << '\'' << str2sql(m_CUBI.name) << '\'' << ", ";
 		str << '\'' << str2sql(m_CUBI.email) << '\'' << ", ";
+		str << m_CUBI.gender << ", ";
 		str << g_configPolicy.nDefaultBorrowLimit << ", ";
 		str << g_configPolicy.nDefaultUserAuthLevel << ", ";
 		str << g_configPolicy.nDefaultUserReadLevel << ", ";
-		str << '\'' << str2sql(m_password) << '\'' << ", ";
+		str << '\'' << str2sql(m_password) << '\'' << ")";
 		stat->execute(str.str());
 		std::shared_ptr<sql::ResultSet> result(stat->executeQuery("Select LAST_INSERT_ID()"));
 		if(result->next())
