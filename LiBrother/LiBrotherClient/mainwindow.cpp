@@ -95,11 +95,14 @@ void MainWindow::on_pushButton_4_clicked()
 
 void MainWindow::on_pushButton_5_clicked()//主界面中搜索出来的书目，跳转到该书的信息窗口
 {
-    QListWidgetItem *item = ui->listWidget->currentItem();
-    int bID = item->data(Qt::UserRole).toInt();
-    bookdata bookdata1;
-    bookdata1.setBookID(bID);
-    bookdata1.exec();
 
+    QListWidgetItem *item = ui->listWidget->currentItem();
+    if(item)
+    {
+        int bID = item->data(Qt::UserRole).toInt();
+        bookdata bookdata1;
+        bookdata1.setBookID(bID);
+        bookdata1.exec();
+    }
 
 }
