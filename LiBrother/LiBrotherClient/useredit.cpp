@@ -17,11 +17,11 @@ useredit::~useredit()
 
 void useredit::on_pushButton_3_clicked()//用户查询模块
 {
-    IClassFactoryClient *factory1;
+    auto_iface<IClassFactoryClient> factory1;
     getClassFactory(&factory1);
-    IUserManager *IUManager;
+    auto_iface<IUserManager> IUManager;
     factory1->getUserManager(&IUManager);
-    IUser *iUser;
+    auto_iface<IUser> iUser;
 
     uName = ui->label_5->text();
     std::string uName1 = uName.toStdString();
@@ -39,19 +39,17 @@ void useredit::on_pushButton_3_clicked()//用户查询模块
         else{QMessageBox::information(this,"Warning",u8"用户获取信息错误");}
     }
     else{QMessageBox::information(this,"Warning",u8"查找用户错误");}
-    factory1->Release();
-    IUManager->Release();
-    iUser->Release();
+
 
 }
 
 void useredit::on_pushButton_clicked()//正式修改信息模块
 {
-    IClassFactoryClient *factory1;
+    auto_iface<IClassFactoryClient> factory1;
     getClassFactory(&factory1);
-    IUserManager *IUManager;
+    auto_iface<IUserManager> IUManager;
     factory1->getUserManager(&IUManager);
-    IUser *iUser;
+    auto_iface<IUser> iUser;
 
     std::string uName1 = uName.toStdString();
     if(IUManager->getUserByName(uName1.c_str(),&iUser))
@@ -63,8 +61,8 @@ void useredit::on_pushButton_clicked()//正式修改信息模块
 
         basic1.email = uMail1.toStdString();//首先对基础信息包括authLevel的修改信息进行修改
         basic1.name = uName.toStdString();
-        iUser->setAuthLevel(uNLevel);
-        iUser->setBasicInfo(basic1);
+        if(!iUser->setAuthLevel(uNLevel)){close();QMessageBox::information(this,"Warning",u8"系统错误");return;}
+        if(!iUser->setBasicInfo(basic1)){close();QMessageBox::information(this,"Warning",u8"系统错误");return;}
 
         QString nPassword = ui->lineEdit->text();//密码修改先判断是否为空，不为空在进行比对和修改密码操作
         QString n2Password = ui->lineEdit_2->text();
@@ -74,17 +72,13 @@ void useredit::on_pushButton_clicked()//正式修改信息模块
         {
             if(nPassword1 == n2Password1)//输入密码是否一致
             {
-                iUser->setPassword(nPassword1.c_str());
+                if(!iUser->setPassword(nPassword1.c_str())){close();QMessageBox::information(this,"Warning",u8"系统错误");return;}
             }
             else{QMessageBox::information(this,"Warning",u8"两次密码输入不同");}
         }
     }
     else{QMessageBox::information(this,"Warning",u8"查找用户错误");}
 
-
-    factory1->Release();
-    IUManager->Release();
-    iUser->Release();
 }
 
 void useredit::on_pushButton_2_clicked()

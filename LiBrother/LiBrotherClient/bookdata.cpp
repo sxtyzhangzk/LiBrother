@@ -12,22 +12,23 @@ bookdata::bookdata(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    IClassFactoryClient *factory1;
+    auto_iface<IClassFactoryClient> factory1;
     getClassFactory(&factory1);
-    ILibrary *library1;
+    auto_iface<ILibrary> library1;
     factory1->getLibrary(&library1);
 
     std::string bDescription;
     TBookBasicInfo basic1;
-    IBook *iBook1;
+    auto_iface<IBook>iBook1;
+
 
     bool fPd = library1->queryById(m_strBookID,&iBook1);
 
     if(fPd)
     {
-        iBook1->setBasicInfo(basic1);
-        iBook1->getDescription(bDescription);
+        if(!iBook1->setBasicInfo(basic1)){close();QMessageBox::information(this,"Warning",u8"系统错误");return;}
 
+        if(!iBook1->getDescription(bDescription)){close();QMessageBox::information(this,"Warning",u8"系统错误");return;}
 
         QString bName1 = QString::fromStdString(basic1.name);
         int bCount = basic1.count;
@@ -53,9 +54,7 @@ bookdata::bookdata(QWidget *parent) :
 
     }
     else{QMessageBox::information(this,"Warning",u8"ID号有误，无法通过ID查询到相关书目");}
-    factory1->Release();
-    library1->Release();
-    iBook1->Release();
+
 }
 
 bookdata::~bookdata()
@@ -70,14 +69,14 @@ void bookdata::setBookID(const int& bID1)//传入书本信息的ID号
 
 void bookdata::on_pushButton_clicked()
 {
-    IClassFactoryClient *factory1;
+    auto_iface<IClassFactoryClient> factory1;
     getClassFactory(&factory1);
-    ILibrary *library1;
+    auto_iface<ILibrary> library1;
     factory1->getLibrary(&library1);
-    IAuthManager *IAManager;
+    auto_iface<IAuthManager> IAManager;
     factory1->getAuthManager(&IAManager);
-    IUser *iUser1;
-    IBook *iBook1;
+    auto_iface<IUser> iUser1;
+    auto_iface<IBook> iBook1;
     if(IAManager->getCurrentUser(&iUser1))//如果当前没有用户登录，会自动得到false的输出值，会提示需要先登录
     {
         if(library1->queryById(m_strBookID,&iBook1))
@@ -89,11 +88,6 @@ void bookdata::on_pushButton_clicked()
     }
     else{QMessageBox::information(this,"Warning",u8"请先登录");}
 
-    factory1->Release();
-    library1->Release();
-    IAManager->Release();
-    iUser1->Release();
-    iBook1->Release();
 }
 
 void bookdata::on_pushButton_2_clicked()

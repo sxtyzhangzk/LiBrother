@@ -22,10 +22,10 @@ void ChangePassword::on_pushButton_2_clicked()
 
 void ChangePassword::on_pushButton_clicked()
 {
-    IClassFactoryClient *factory1;
+    auto_iface<IClassFactoryClient> factory1;
     getClassFactory(&factory1);
 
-    IAuthManager *iUser;
+    auto_iface<IAuthManager> iUser;
     factory1->getAuthManager(&iUser);
 
     QString passOld= ui->lineEdit->text();//依次读入新老密码
@@ -44,6 +44,4 @@ void ChangePassword::on_pushButton_clicked()
     }
     else{QMessageBox::information(this,"Warning",u8"两次密码输入不一致");}
 
-    factory1->Release();
-    iUser->Release();
 }

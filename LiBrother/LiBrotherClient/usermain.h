@@ -35,7 +35,7 @@ private slots:
 
 private:
     Ui::usermain *ui;
-    IClassFactoryClient *factory1;
+    auto_iface<IClassFactoryClient> factory1;
 };
 
 #endif // USERMAIN_H
