@@ -7,6 +7,7 @@
 #include <utility>
 #include <queue>
 #include <string>
+#include <algorithm>
 #include <sstream>
 #include <thread>
 #include <condition_variable>
@@ -54,6 +55,7 @@ MODULE_LOG_NAME("NetClient");
 static const size_t BufferSize = 1024;
 
 io_service ioService;
+io_service::work *work;
 std::thread *pThreadWorker;
 ip::tcp::socket *pSocket;
 ip::tcp::endpoint epServer;
@@ -86,6 +88,7 @@ bool sendDataRaw(const char *pBuffer, size_t nBuffer);
 
 bool initNetClient()
 {
+	work = new io_service::work(ioService);
 	pThreadWorker = new std::thread(workerThread);
 	lprintf("Thread Created.");
 	pSocket = new ip::tcp::socket(ioService);
@@ -107,11 +110,15 @@ bool initNetClient()
 
 void workerThread()
 {
+	lprintf("Worker started");
 	ioService.run();
+	lprintf("Worker stopped");
 }
 
 void cleanupNetClient()
 {
+	if (work)
+		delete work;
 	if (pSocket->is_open())
 		pSocket->close();
 	ioService.stop();
@@ -229,7 +236,7 @@ bool recvData(std::string& strBuffer)
 			}
 			if (cntLine == 2)
 			{
-				if (strBuffer.back() == '\n')
+				if (!strBuffer.empty() && strBuffer.back() == '\n')
 					strBuffer.pop_back();
 				if (i == nLen - 1)
 					strRecv.clear();
@@ -311,6 +318,7 @@ void doRecv(boost::system::error_code errcode, size_t nLen)
 	strRecvMutex.lock();
 	if (errcode)
 	{
+		lprintf_e("ERROR: %s", errcode.message());
 		recvError++;
 		strRecvMutex.unlock();
 		pSocket->close();
@@ -338,14 +346,16 @@ void doRecv(boost::system::error_code errcode, size_t nLen)
 
 bool sendDataRaw(const char *pBuffer, size_t nBuffer)
 {
-	for (size_t pos = 0; pos < nBuffer; pos += g_configClient.nBufferSize)
+	size_t pos = 0;
+	while(pos < nBuffer)
 	{
 		//本次send要发送的内容，不超过nBufferSize
-		size_t nNow = nBuffer - pos;
+		size_t nNow = std::min(BufferSize, nBuffer - pos);
 		if (nNow > g_configClient.nBufferSize)
 			nNow = g_configClient.nBufferSize;
 		if (!pSocket->send(buffer(pBuffer + pos, nNow)))
 			return false;
+		pos += nNow;
 	}
 	return true;
 }

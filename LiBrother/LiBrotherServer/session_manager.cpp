@@ -87,6 +87,8 @@ bool CSessionManager::recvRequest(const std::string& strClientIP, const std::str
 {
 	strResponse.clear();
 
+	lprintf("recvRequest (IP=%s) [\n%s\n]", strClientIP.c_str(), strRequest.c_str());
+
 	bool bKeepAlive = true;
 	session_t sessionID;
 	TSessionEx * session;
@@ -106,12 +108,14 @@ bool CSessionManager::recvRequest(const std::string& strClientIP, const std::str
 		bKeepAlive = false;
 	if (cmd == "DATA")
 	{
-		ss >> sessionID;
+		ss >> std::hex >> sessionID;
 		std::string request, response;
 		size_t now = ss.tellg();
 
 		//把具体的内容取出来
-		request.assign(strRequest, now);
+		if(!ss.eof())
+			request.assign(strRequest, now);
+
 		session = getSession(sessionID);
 		if (!session || session->strIP != strClientIP)
 		{
@@ -129,7 +133,9 @@ bool CSessionManager::recvRequest(const std::string& strClientIP, const std::str
 	{
 		//创建新的会话
 		sessionID = createSession(strClientIP, nullptr);
-		strResponse = type2str(sessionID);
+		std::stringstream sstream;
+		sstream << std::hex << sessionID;
+		strResponse = sstream.str();
 	}
 	return bKeepAlive;
 }
@@ -159,7 +165,7 @@ session_t CSessionManager::createSession(const std::string& strClientIP, TSessio
 
 session_t CSessionManager::generateSessionID()
 {
-	session_t sessionID;
+	session_t sessionID = 0;
 	unsigned int randomCode, checkSum = 0;
 	m_rng->randomize((Botan::byte *)&randomCode, sizeof(randomCode));
 	sessionID |= (1ULL << 36);

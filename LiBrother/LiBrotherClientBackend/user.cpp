@@ -357,6 +357,7 @@ int CUser::getAuthLevel()
 	Json::Value valueReq, valueRes;
 	valueReq["command"] = "user_getAuthLevel";
 	valueReq["id"] = m_nID;
+	
 
 	_BEGIN_PARSE_RESPONSE(valueReq, valueRes, -1)
 	{

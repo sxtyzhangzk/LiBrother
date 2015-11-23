@@ -303,7 +303,7 @@ bool CUser::insert()
 		str << "INSERT INTO UserInfoDatabase (id, name, email, gender, num, AuthLevel, ReadLevel, password) VALUES(null, ";
 		str << '\'' << str2sql(m_CUBI.name) << '\'' << ", ";
 		str << '\'' << str2sql(m_CUBI.email) << '\'' << ", ";
-		str << m_CUBI.num << ", ";
+		str << g_configPolicy.nDefaultBorrowLimit << ", ";
 		str << g_configPolicy.nDefaultUserAuthLevel << ", ";
 		str << g_configPolicy.nDefaultUserReadLevel << ", ";
 		str << '\'' << str2sql(m_password) << '\'' << ", ";

@@ -56,6 +56,7 @@ struct TPolicy
 	int nDefaultUserAuthLevel;				//默认的用户权限等级
 	int nDefaultUserReadLevel;				//默认的用户阅读权限
 	int nDefaultBookReadLevel;				//默认的图书阅读权限
+	int nDefaultBorrowLimit;
 };
 
 extern TConfig g_configSvr;

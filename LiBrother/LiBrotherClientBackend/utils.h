@@ -24,6 +24,7 @@
 		Json::FastWriter writer; \
 		Json::Reader reader; \
 		std::string strRequest, strResponse; \
+		strRequest = writer.write(valueReq); \
 		_TRY_SEND_REQUEST(strRequest, strResponse, falseret); \
 		try { \
 		reader.parse(strResponse, valueRes);

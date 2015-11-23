@@ -10,6 +10,8 @@
 #include <cstring>
 #include <ctime>
 
+#include <mutex>
+
 MODULE_LOG_NAME("LibLog");
 
 //单条日志的长度上限
@@ -20,6 +22,8 @@ const int nLogHeaderSize = 64;
 static bool g_bCopytoScreen = false;
 static FILE * g_pFile = nullptr;
 static bool g_bInited = false;
+
+static std::mutex mtxLog;
 
 //获取当前时间
 tm GetTime();
@@ -62,6 +66,7 @@ void lprintf_(const char * strStatus, const char * strModuleName, const char * s
 	va_end(pArgs);
 	nLength = strnlen(strBuffer, sizeof(strBuffer));
 
+	mtxLog.lock();
 	//每换一行输出日志头
 	for (int i = 0, j = 0; i < nLength; i++)
 		if (strBuffer[i] == '\n' || i == nLength - 1)
@@ -72,6 +77,7 @@ void lprintf_(const char * strStatus, const char * strModuleName, const char * s
 		}
 	if (strBuffer[nLength - 1] != '\n')
 		printLog("\n");
+	mtxLog.unlock();
 }
 
 void CloseLog()

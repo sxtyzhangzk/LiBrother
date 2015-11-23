@@ -161,15 +161,22 @@ bool CManager::verify(const char* strName,const char * strEmail)
 		str << "SELECT * FROM UserInfoDatabase WHERE name = " << '\'' << str2sql(strName) << '\'';
 		stat->execute(str.str());
 		std::shared_ptr<sql::ResultSet> result1(stat->getResultSet());
-		result1->next();
+		int flag = 1;
+		if (result1->next()) flag = 0;
 		str << "SELECT * FROM UserInfoDatabase WHERE email = " << '\'' << str2sql(strEmail) << '\'';
 		stat->execute(str.str());
 		std::shared_ptr<sql::ResultSet> result2(stat->getResultSet());
-		return(!(result2->next()));
+		if (result2->next()) flag = 0;
+		if (flag)
+			return true;
+		else
+		{
+			setError(InvalidParam, 99, "Repeated");
+			return false;
+		}
 	}
 	catch (sql::SQLException& e)
 	{
-		setError(InvalidParam, 99, "Repeated");
 		return false;
 	}
 	return false;
