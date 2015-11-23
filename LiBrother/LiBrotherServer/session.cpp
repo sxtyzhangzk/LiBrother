@@ -543,6 +543,30 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 	if (request == "authmanager_Login")
 	{
 		auto_iface<IUserManager> userManager;
+		auto_iface<IUser> user;
+
+		m_pClassFactory->getUserManager(&userManager);
+
+		if (userManager->getUserByName(value0["username"].asCString(), &user))
+		{
+			if (!user->verifyPassword(value0["password"].asCString()))
+				value["result"] = 2;
+			else
+			{
+				TUserBasicInfo info;
+				if (!user->getBasicInfo(info))
+					value["result"] = 2;
+				else
+				{
+					value["result"] = 1;
+					value["id"] = info.id;
+					user_id = info.id;
+				}
+			}
+		}
+		else
+			writeInterfaceError(value, userManager);
+
 		strResponse = writer.write(value);
 		return;
 	}

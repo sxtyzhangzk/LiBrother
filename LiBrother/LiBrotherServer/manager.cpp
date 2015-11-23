@@ -3,6 +3,10 @@
 #include<sstream>
 #include"config.h"
 #include"utils.h"
+#include <liblog.h>
+
+MODULE_LOG_NAME("CManager");
+
 CManager::CManager(CConnectionPool * DatabaseFile)
 {
 	m_pDatabase=DatabaseFile;
@@ -177,6 +181,7 @@ bool CManager::verify(const char* strName,const char * strEmail)
 	}
 	catch (sql::SQLException& e)
 	{
+		lprintf("An error occurred while verifying: %s", e.what());
 		return false;
 	}
 	return false;

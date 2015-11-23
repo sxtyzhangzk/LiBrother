@@ -23,7 +23,7 @@ CUser::~CUser()
 }
 bool CUser::check(TUserBasicInfo info_to_check)
 {
-	if (info_to_check.id == -1 || info_to_check.gender==-1 || info_to_check.num<0) return false;
+	if (info_to_check.num<0) return false;
 	if (info_to_check.email.empty() || info_to_check.name.empty()) return false;
 	return true;
 }
@@ -49,12 +49,8 @@ bool CUser::setBasicInfo(const TUserBasicInfo& info)
 		setError(InvalidParam, 2, "The information is not valid.");
 		return false;	
 	}
-	if (is_from_Database && info.id != m_CUBI.id)	
-	{
-		setError(PermissionDenied, 3, "You have no access to the database.");
-		return false;	
-	}
 	m_CUBI = info;	
+	m_CUBI.id = m_Id;
 	if (is_from_Database)
 	{
 		try
