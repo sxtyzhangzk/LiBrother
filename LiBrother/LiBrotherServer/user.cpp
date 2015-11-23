@@ -300,13 +300,13 @@ bool CUser::insert()
 		std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN),MYSQL_CONN_RELEASER);
 		std::shared_ptr<sql::Statement> stat(c->createStatement());
 		std::stringstream str;
-		str << "INSERT INTO UserInfoDatabase(id) VALUES (null)";
-		stat->execute(str.str());
-		sign();
-		setBasicInfo(m_CUBI);
-		setAuthLevel(g_configPolicy.nDefaultUserAuthLevel);
-		setReadLevel(g_configPolicy.nDefaultUserReadLevel);
-		str << "UPDATE UserInfoDatabase password = " << '\'' << str2sql(m_password) << '\'' << " WHERE id=" << m_Id;
+		str << "INSERT INTO UserInfoDatabase (id, name, email, gender, num, AuthLevel, ReadLevel, password) VALUES(null, ";
+		str << '\'' << str2sql(m_CUBI.name) << '\'' << ", ";
+		str << '\'' << str2sql(m_CUBI.email) << '\'' << ", ";
+		str << m_CUBI.num << ", ";
+		str << g_configPolicy.nDefaultUserAuthLevel << ", ";
+		str << g_configPolicy.nDefaultUserReadLevel << ", ";
+		str << '\'' << str2sql(m_password) << '\'' << ", ";
 		stat->execute(str.str());
 		std::shared_ptr<sql::ResultSet> result(stat->executeQuery("Select LAST_INSERT_ID()"));
 		if(result->next())
