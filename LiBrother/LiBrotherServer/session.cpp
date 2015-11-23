@@ -479,7 +479,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 			auto_iface<ILibrary> library;
 			m_pClassFactory->getLibrary(&library);
 			auto_iface<IBook> book;
-			if (library->queryById(value["bookid"].asInt, &book)) {
+			if (library->queryById(value["bookid"].asInt(), &book)) {
 				if (user->borrowBook(book)) {
 					value["result"] = 1;
 					strResponse = writer.write(value);
@@ -501,7 +501,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 			auto_iface<ILibrary>  library;
 			m_pClassFactory->getLibrary(&library);
 			auto_iface<IBook> book;
-			if (library->queryById(value["bookid"].asInt, &book)) {
+			if (library->queryById(value["bookid"].asInt(), &book)) {
 				if (user->returnBook(book)) {
 					value["result"] = 1;
 					strResponse = writer.write(value);

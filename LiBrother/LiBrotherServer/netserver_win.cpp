@@ -582,7 +582,7 @@ bool CNetServer::sendData(TSocketEx * pSocket, const char * pData, size_t nLen)
 {
 	while (nLen > 0)
 	{
-		size_t sizeNow = std::max(nLen, BufferSize);
+		size_t sizeNow = std::min(nLen, BufferSize);
 		TPerIOContext * pIOContext;
 		if (!pSocket->postToSendQueue(pData, sizeNow, pIOContext))
 		{
