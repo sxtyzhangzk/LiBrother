@@ -570,9 +570,9 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		}
 
 	if (request == "authmanager_Register") {
-		IUserManager *usermanager;
+		auto_iface<IUserManager>usermanager;
 		m_pClassFactory->getUserManager(&usermanager);
-		IUser *user;
+		auto_iface<IUser> user;
 		std::string tem_name = value0["name"].asString();
 		if (usermanager->getUserByName(tem_name.c_str(), &user)) {
 			value["result"] = 0;
@@ -602,9 +602,9 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 
 	if (request == "authmanager_changePassword") {
 		int tem_id = value0["id"].asInt();
-		IUserManager *usermanager;
+		auto_iface<IUserManager> usermanager;
 		m_pClassFactory->getUserManager(&usermanager);
-		IUser *user;
+		auto_iface<IUser> user;
 		if (usermanager->getUserByID(tem_id, &user)) {
 			std::string oldPWD = value0["oldPWD"].asString();
 			const char *poldPWD = oldPWD.c_str();
@@ -628,9 +628,9 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 
 	if (request == "authmanager_getCurrentUser") {
 		int tem_id = value0["id"].asInt();
-		IUserManager *usermanager;
+		auto_iface<IUserManager> usermanager;
 		m_pClassFactory->getUserManager(&usermanager);
-		IUser *user;
+		auto_iface<IUser> user;
 		if (usermanager->getUserByID(tem_id, &user)) {
 			TUserBasicInfo Info;
 			user->getBasicInfo(Info);
@@ -649,9 +649,9 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 
 	if (request == "authmanager_getAuthLevel") {
 		int tem_id = value0["id"].asInt();
-		IUserManager *usermanager;
+		auto_iface<IUserManager> usermanager;
 		m_pClassFactory->getUserManager(&usermanager);
-		IUser *user;
+		auto_iface<IUser> user;
 		if (usermanager->getUserByID(tem_id, &user)) {
 			int AuthLevel = user->getAuthLevel();
 			if (AuthLevel == -1) {
