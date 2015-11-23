@@ -308,7 +308,6 @@ bool CUser::insert()
 		str << g_configPolicy.nDefaultUserReadLevel << ", ";
 		str << '\'' << str2sql(m_password) << '\'' << ", ";
 		stat->execute(str.str());
-		sign();
 		std::shared_ptr<sql::ResultSet> result(stat->executeQuery("Select LAST_INSERT_ID()"));
 		if(result->next())
 		{
