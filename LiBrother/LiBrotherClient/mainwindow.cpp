@@ -1,4 +1,4 @@
-#include "mainwindow.h"
+﻿#include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "login.h"
 #include "signup.h"
@@ -60,7 +60,7 @@ void MainWindow::on_pushButton_4_clicked()
                 item->setData(Qt::UserRole,basic1.id);//data中存了之后要用到的书本ID号
                 ui->listWidget->addItem(item);
                 }
-                else{QMessageBox::information(this,"Warning","无法通过ISBN号查询到此书");}
+                else{QMessageBox::information(this,"Warning",u8"无法通过ISBN号查询到此书");}
             }
 
             else//按照书名就行搜索
@@ -85,7 +85,7 @@ void MainWindow::on_pushButton_4_clicked()
 
                         }
                 }
-                else{QMessageBox::information(this,"Warning","无法找到相关书本");}
+                else{QMessageBox::information(this,"Warning",u8"无法找到相关书本");}
             }
 
             factory1->Release();

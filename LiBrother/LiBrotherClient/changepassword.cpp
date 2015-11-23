@@ -1,4 +1,4 @@
-#include "changepassword.h"
+﻿#include "changepassword.h"
 #include "ui_changepassword.h"
 #include "client_interfaces.h"
 #include "QMessageBox"
@@ -40,9 +40,9 @@ void ChangePassword::on_pushButton_clicked()
         {
             close();//成功更改密码之后自动退出
         }
-        else{QMessageBox::information(this,"Warning","修改密码失败");}
+        else{QMessageBox::information(this,"Warning",u8"修改密码失败");}
     }
-    else{QMessageBox::information(this,"Warning","两次密码输入不一致");}
+    else{QMessageBox::information(this,"Warning",u8"两次密码输入不一致");}
 
     factory1->Release();
     iUser->Release();

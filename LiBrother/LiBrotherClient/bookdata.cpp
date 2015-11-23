@@ -1,4 +1,4 @@
-#include "bookdata.h"
+﻿#include "bookdata.h"
 #include "ui_bookdata.h"
 #include "QString"
 #include "client_interfaces.h"
@@ -33,13 +33,13 @@ bookdata::bookdata(QWidget *parent) :
         int bCount = basic1.count;
 
         QString bAuthor1 = QString::fromStdString(basic1.author);
-        bAuthor1 = QString("作者：") + bAuthor1;
+        bAuthor1 = QString(u8"作者：") + bAuthor1;
 
         QString bIsbn1 = QString::fromStdString(basic1.isbn);
-        bIsbn1 = QString("ISBN号：") + bIsbn1;
+        bIsbn1 = QString(u8"ISBN号：") + bIsbn1;
 
         QString bPublisher1 = QString::fromStdString(basic1.publisher);
-        bPublisher1 = QString("出版社：") + bPublisher1;
+        bPublisher1 = QString(u8"出版社：") + bPublisher1;
 
         QString bDescription1 = QString::fromStdString(bDescription);
 
@@ -52,7 +52,7 @@ bookdata::bookdata(QWidget *parent) :
         ui->textEdit->setText(bDescription1);
 
     }
-    else{QMessageBox::information(this,"警告","ID号有误，无法通过ID查询到相关书目");}
+    else{QMessageBox::information(this,"Warning",u8"ID号有误，无法通过ID查询到相关书目");}
     factory1->Release();
     library1->Release();
     iBook1->Release();
@@ -83,11 +83,11 @@ void bookdata::on_pushButton_clicked()
         if(library1->queryById(m_strBookID,&iBook1))
         {
             if(iUser1->borrowBook(iBook1)){}//正式借书操作
-            else{QMessageBox::information(this,"警告","借书失败");}
+            else{QMessageBox::information(this,"Warning","借书失败");}
         }
-        else{QMessageBox::information(this,"警告","请先选择所要借阅的书籍");}
+        else{QMessageBox::information(this,"Warning",u8"请先选择所要借阅的书籍");}
     }
-    else{QMessageBox::information(this,"警告","请先登录");}
+    else{QMessageBox::information(this,"Warning",u8"请先登录");}
 
     factory1->Release();
     library1->Release();

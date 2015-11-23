@@ -27,6 +27,11 @@ struct TErrInfo
 	char description[ErrorDescriptionSize];	//错误的描述[不使用时置为nullptr]
 	TErrInfo(ErrType type = None, int code = 0, const char * description = nullptr) : type(type), code(code)
 	{
+		if (!description)
+		{
+			this->description[0] = '\0';
+			return;
+		}
 #if _MSC_VER >= 1500
 		strncpy_s(this->description, description, ErrorDescriptionSize - 1);
 #else
@@ -55,6 +60,10 @@ struct TErrInfo
 		void setError(ErrType type = None, int code = 0, const char * strDescription = nullptr) \
 		{ \
 			m_errLast = TErrInfo(type, code, strDescription); \
+		} \
+		void transferError(IAbstract *pIface) \
+		{ \
+			m_errLast = pIface->GetError(); \
 		} \
 	public:\
 		virtual int AddRef() { return ++m_nRefCount; } \
@@ -123,6 +132,35 @@ public:
 	}
 protected:
 	std::vector<IAbstract *> m_container;
+};
+
+template<typename iface>
+class auto_iface
+{
+public:
+	auto_iface()
+	{
+		pIface = nullptr;
+	}
+	~auto_iface()
+	{
+		if (pIface)
+			((IAbstract*)pIface)->Release();
+	}
+	iface ** operator &()
+	{
+		return &pIface;
+	}
+	iface * operator->()
+	{
+		return pIface;
+	}
+	operator iface*()
+	{
+		return pIface;
+	}
+protected:
+	iface *pIface;
 };
 
 #endif

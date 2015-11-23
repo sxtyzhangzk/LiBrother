@@ -1,4 +1,4 @@
-#include "signupmain.h"
+﻿#include "signupmain.h"
 #include "ui_signupmain.h"
 #include "client_interfaces.h"
 #include "QMessageBox"
@@ -51,7 +51,7 @@ void signupmain::on_pushButton_2_clicked()
 
         iAUser->Register(iUser);
     }
-    else{QMessageBox::information(this,"Warning","两次密码输入不一致");}
+    else{QMessageBox::information(this,"Warning",u8"两次密码输入不一致");}
 
     factory1->Release();
     iAUser->Release();

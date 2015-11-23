@@ -1,8 +1,10 @@
 #ifndef __SESSION_H__
 #define __SESSION_H__
 
-#include <string>
 #include "common_types.h"
+#include <string>
+#include <json/json.h>
+
 struct ILibClassFactory;
 class CSession
 {
@@ -13,6 +15,11 @@ public:
 	void recvRequest(const std::string& strRequest, std::string& strResponse);
 	int getCurrentAuthLevel();
 	int getCurrentReadLevel();
+
+protected:
+	static void writePermissionDenied(Json::Value& value);
+	static void writeInterfaceError(Json::Value& value, IAbstract *pIface);
+	static void releaseInterface(IAbstract *pIface);
 
 protected:
 	ILibClassFactory * m_pClassFactory;

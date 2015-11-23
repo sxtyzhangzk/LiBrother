@@ -3,11 +3,15 @@
 
 #include "function_interfaces.h"
 #include "common_types.h"
-#include<string>
+#include <string>
+
+class CUser;
 class CBook : public IBook
 {
 	IMPLEMENT_INTERFACE
 public:
+	friend CUser;
+
 	CBook();
 	~CBook();
 	virtual bool getBasicInfo(TBookBasicInfo& info) override;
@@ -18,6 +22,7 @@ public:
 	virtual bool getBorrowInfo(std::vector<TBorrowInfo> &binfo) override;
 	virtual int getBookReadLevel() override;
 	virtual bool setBookReadLevel(int nReadLevel) override;
+
 protected:
 	TBookBasicInfo * m_CBBI;
 	std::string m_Description;

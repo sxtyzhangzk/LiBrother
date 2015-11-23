@@ -3,46 +3,50 @@
 
 #include "function_interfaces.h"
 #include "common_types.h"
-#include<string>
+#include <string>
 
+class CAuthManager;
+class CUserManager;
 class CUser :public IUser
 {
 	IMPLEMENT_INTERFACE
 public:	
-	CUser(TUserBasicInfo *basic_info0 = nullptr);
+	friend CAuthManager;
+	friend CUserManager;
+	CUser();
+	CUser(int nID);
+	CUser(const TUserBasicInfo& info);
 	~CUser();
-	//获取用户的基本信息
+
 	virtual bool getBasicInfo(TUserBasicInfo& info) override;
 
-	//设定用户的基本信息
 	virtual bool setBasicInfo(const TUserBasicInfo& info) override;
 
-	/*
-	验证用户的密码
-	参数：	strPWD	[in]	用户的密码，服务端调用时传入散列后的密码，客户端前端调用时传入明文密码
-	*/
 	virtual bool verifyPassword(const char * strPWD) override;
 
-	/*
-	设定用户的密码
-	仅供管理员和服务端使用，用户自行修改密码请使用IAuthManager
-	参数：	strPWD	[in]	用户的密码，服务端调用时传入散列后的密码，客户端前端调用时传入明文密码
-	*/
 	virtual bool setPassword(const char * strPWD) override;
 
-	//获取已经借阅的图书
 	virtual bool getBorrowedBooks(std::vector<TBorrowInfo> &binfo) override;
 
-	//借阅一本图书
 	virtual bool borrowBook(IBook * pBook) override;
 
-	//归还一本图书
 	virtual bool returnBook(IBook * pBook) override;
 
-	//删除此用户
 	virtual bool deleteUser() override;
+
+	virtual int getAuthLevel() override;
+
+	virtual int getReadLevel() override;
+
+	virtual bool setAuthLevel(int nAuthLevel) override;
+
+	virtual bool setReadLevel(int nReadLevel) override;
+
 protected:
-	TUserBasicInfo *basic_info;
+	TUserBasicInfo *m_pBasicInfo;
+	std::string m_strEPassword;
+	int m_nID;
+	int m_nAuthLevel, m_nReadLevel;
 };
 
 #endif

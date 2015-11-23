@@ -87,18 +87,21 @@ bool sendDataRaw(const char *pBuffer, size_t nBuffer);
 bool initNetClient()
 {
 	pThreadWorker = new std::thread(workerThread);
+	lprintf("Thread Created.");
 	pSocket = new ip::tcp::socket(ioService);
 	ip::tcp::resolver resolver(ioService);
 	ip::tcp::resolver::query query(g_configClient.strServer, boost::lexical_cast<std::string>(g_configClient.nPort));
 	boost::system::error_code error;
 	auto iter = resolver.resolve(query, error);
 	decltype(iter) end;
+	lprintf("ITER");
 	if (error || iter == end)
 	{
 		lprintf_e("Cannot resolve server ip");
 		return false;
 	}
 	epServer = *iter;
+	lprintf("POST-ITEr");
 	return true;
 }
 

@@ -1,4 +1,4 @@
-#include "usermain.h"
+﻿#include "usermain.h"
 #include "ui_usermain.h"
 #include "mainwindow.h"
 #include "userborrow.h"
@@ -54,17 +54,17 @@ usermain::usermain(QWidget *parent) ://开场直接显示所有用户已借的�
                             item->setData(Qt::UserRole,basic3.id);//随带保存书本ID便于之后归还
                             ui->listWidget->addItem(item);
                         }
-                        else{QMessageBox::information(this,"Warning","获取已借书本信息失败");}
+                        else{QMessageBox::information(this,"Warning",u8"获取已借书本信息失败");}
                     }
-                    else{QMessageBox::information(this,"Warning","无法查询到用户所借的该本书");}
+                    else{QMessageBox::information(this,"Warning",u8"无法查询到用户所借的该本书");}
                 }
             }
-            else{QMessageBox::information(this,"Warning","无法获取用户已借的书目信息");}
+            else{QMessageBox::information(this,"Warning",u8"无法获取用户已借的书目信息");}
 
         }
-        else{QMessageBox::information(this,"Warning","当前用户信息错误");}
+        else{QMessageBox::information(this,"Warning",u8"当前用户信息错误");}
     }
-    else{QMessageBox::information(this,"Warning","请先登录");}
+    else{QMessageBox::information(this,"Warning",u8"请先登录");}
 
 
 }
@@ -93,7 +93,7 @@ void usermain::on_pushButton_3_clicked()//还书操作
     factory1->getLibrary(&library3);
     IBook *iBook1;
     if(library3->queryById(bId,&iBook1)){}//通过预先保存的书本ID号确定所要归还的ibook
-    else{QMessageBox::information(this,"Warning","无法找寻到该书本");return;}
+    else{QMessageBox::information(this,"Warning",u8"无法找寻到该书本");return;}
 
 
     IAuthManager *iUser;
@@ -102,9 +102,9 @@ void usermain::on_pushButton_3_clicked()//还书操作
     if(iUser->getCurrentUser(&iUser1))//确定当前要还书的用户
     {
         if(iUser1->returnBook(iBook1)){}//正式还书
-        else{QMessageBox::information(this,"Warning","归还失败");}
+        else{QMessageBox::information(this,"Warning",u8"归还失败");}
     }
-    else{QMessageBox::information(this,"Warning","用户信息错误");}
+    else{QMessageBox::information(this,"Warning",u8"用户信息错误");}
 
 
     ui->listWidget->takeItem(ui->listWidget->currentRow());//删除已还的书
@@ -134,7 +134,7 @@ void usermain::on_pushButton_4_clicked()//进入初等管理员（AuthLevel＝1�
         managermain managermain1;
         managermain1.exec();
     }
-    else{QMessageBox::information(this,"Warning","对不起，您没有权限");}
+    else{QMessageBox::information(this,"Warning",u8"对不起，您没有权限");}
 
     factory3->Release();
     iUser->Release();
@@ -151,7 +151,7 @@ void usermain::on_pushButton_6_clicked()//只有authLevel＝2的高级管理员�
         useredit useredit1;
         useredit1.exec();
     }
-    else{QMessageBox::information(this,"Warning","对不起，您没有权限");}
+    else{QMessageBox::information(this,"Warning",u8"对不起，您没有权限");}
 
     factory3->Release();
     iUser->Release();
@@ -196,16 +196,16 @@ void usermain::on_pushButton_7_clicked()//刷新操作，对当前用户的所�
                             item->setData(Qt::UserRole,basic3.id);//随带保存书本ID便于之后归还
                             ui->listWidget->addItem(item);
                         }
-                        else{QMessageBox::information(this,"Warning","获取已借书本信息失败");}
+                        else{QMessageBox::information(this,"Warning",u8"获取已借书本信息失败");}
                     }
-                    else{QMessageBox::information(this,"Warning","无法查询到用户所借的该本书");}
+                    else{QMessageBox::information(this,"Warning",u8"无法查询到用户所借的该本书");}
                 }
             }
-            else{QMessageBox::information(this,"Warning","无法获取用户已借的书目信息");}
+            else{QMessageBox::information(this,"Warning",u8"无法获取用户已借的书目信息");}
 
         }
-        else{QMessageBox::information(this,"Warning","当前用户信息错误");}
+        else{QMessageBox::information(this,"Warning",u8"当前用户信息错误");}
     }
-    else{QMessageBox::information(this,"Warning","请先登录");}
+    else{QMessageBox::information(this,"Warning",u8"请先登录");}
 
 }
