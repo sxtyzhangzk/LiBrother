@@ -97,9 +97,9 @@ void bookdataedit::on_pushButton_clicked()
         basic2.publisher = nbPublisher1.toStdString();
         std::string nbDescription01 = nbDescription1.toStdString();
 
-        if(iBook2->setBasicInfo(basic2)){}else{QMessageBox::information(this,"Warning",u8"基础信息录入失败，请检查输入格式");}
-        if(iBook2->setDescription(nbDescription01.c_str())){}else{QMessageBox::information(this,"Warning",u8"简洁录入失败");}
-
+        if(iBook2->setBasicInfo(basic2)){}else{QMessageBox::information(this,"Warning",u8"基础信息录入失败，请检查输入格式");return;}
+        if(iBook2->setDescription(nbDescription01.c_str())){}else{QMessageBox::information(this,"Warning",u8"简洁录入失败");return;}
+        QMessageBox::information(this,"Welcome",u8"修改成功");close();
     }
     else{QMessageBox::information(this,"Warning",u8"无法对当前书本信息进行修改");}
 

@@ -29,11 +29,16 @@ userborrow::~userborrow()
 
 void userborrow::on_pushButton_clicked()//选择一本书本，进入书本具体信息界面
 {
+
     QListWidgetItem *item = ui->listWidget->currentItem();
+
+    if(item)
+    {
     int bID = item->data(Qt::UserRole).toInt();
     bookdata bookdata1(bID);
 
     bookdata1.exec();
+    }
 }
 
 
