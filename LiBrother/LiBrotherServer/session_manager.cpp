@@ -235,10 +235,12 @@ void CSessionManager::removeFromCleanerQueue(TSessionEx * session)
 
 void CSessionManager::cleanerThread()
 {
+	lprintf("Session Clearner Thread Started.");
 	int nWaitTime = g_configSvr.nSessionTimeout * 500;	//清理等待时间
 	int nMaxClean = 50;		//一次最多清理的会话数
 	while (!m_mutexExitSignal.try_lock_for(std::chrono::milliseconds(nWaitTime)))
 	{
+		lprintf("Cleaning Sessions");
 		int nCleanedSession = 0;
 		time_t timeNow = time(nullptr);
 		std::vector<TSessionEx *> vExpiredSession;
@@ -247,6 +249,8 @@ void CSessionManager::cleanerThread()
 		m_mutexMap.lock();
 		while (nCleanedSession < nMaxClean && (sessHead = m_qCleanerHead->next) != m_qCleanerTail)
 		{
+			if (difftime(timeNow, sessHead->timeLastAccess) < g_configSvr.nSessionTimeout)
+				break;
 			//先把待清理的会话存起来
 			vExpiredSession.push_back(sessHead);
 			removeFromCleanerQueue(sessHead);
@@ -268,6 +272,7 @@ void CSessionManager::cleanerThread()
 			//可能有更多的会话要清理，下次多清一点
 			nWaitTime = Cleaner_Short_Wait_Time;
 			nMaxClean = nMaxClean * 3 / 2;
+			lprintf("Cleaned %d Sessions", vExpiredSession.size());
 		}
 		else
 		{
@@ -275,4 +280,5 @@ void CSessionManager::cleanerThread()
 			nMaxClean = 50;
 		}
 	}
+	lprintf("Cleaner Thread Stopped");
 }

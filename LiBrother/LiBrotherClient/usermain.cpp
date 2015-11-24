@@ -8,7 +8,7 @@
 #include "changepassword.h"
 #include "managermain.h"
 #include "useredit.h"
-#include "set";
+#include <set>
 
 usermain::usermain(QWidget *parent) ://开场直接显示所有用户已借的书本
     QDialog(parent),
@@ -40,13 +40,13 @@ usermain::usermain(QWidget *parent) ://开场直接显示所有用户已借的�
                 std::set<int> TBorrow;
                 for(i=0;i<basic2.size();i++)//在widget依次显示已借的书本
                 {
-                            bool pd = true;
-                            if(basic2[i].flag = 1)
+                            //bool pd = true;
+                            if(basic2[i].flag == 1)
                             {
                                 TBorrow.erase(basic2[i].bookID);
-                                pd = false;break;
+                                //pd = false;break;
                             }
-                            if(pd){TBorrow.insert(basic2[i].bookID);}
+                            else{TBorrow.insert(basic2[i].bookID);}
                 }
                 for(int bookID : TBorrow)
                 {
@@ -182,13 +182,13 @@ void usermain::on_pushButton_7_clicked()//刷新操作，对当前用户的所�
                 std::set<int> TBorrow;
                 for(i=0;i<basic2.size();i++)//在widget依次显示已借的书本
                 {
-                            bool pd = true;
-                            if(basic2[i].flag = 1)
+                            //bool pd = true;
+                            if(basic2[i].flag == 1)
                             {
                                 TBorrow.erase(basic2[i].bookID);
-                                pd = false;break;
+                                //pd = false;break;
                             }
-                            if(pd){TBorrow.insert(basic2[i].bookID);}
+							else{TBorrow.insert(basic2[i].bookID);}
                 }
                 for(int bookID : TBorrow)
                 {

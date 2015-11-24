@@ -216,30 +216,17 @@ bool CAuthManager::getLicense(std::string& strLicense)
 {
 	Json::Value valueReq, valueRes;
 	valueReq["command"] = "authmanager_getLicense";
-	std::string licBase64;
 
 	BEGIN_PARSE_RESPONSE(valueReq, valueRes)
 	{
-		if (valueReq["result"] != 1)
+		if (valueRes["result"] != 1)
 		{
 			setError(Other, -1, "Operation Failed");
 			return false;
 		}
-		licBase64 = valueRes["license_base64"].asString();
+		strLicense = valueRes["license"].asString();
 	}
 	END_PARSE_RESPONSE;
-
-	try
-	{
-		Botan::Pipe pipe(new Botan::Base64_Decoder);
-		pipe.process_msg(licBase64);
-		strLicense = pipe.read_all_as_string();
-	}
-	catch (Botan::Exception& e)
-	{
-		setError(Other, -4, "Decode Base64 Failed");
-		return false;
-	}
 
 	return true;
 }

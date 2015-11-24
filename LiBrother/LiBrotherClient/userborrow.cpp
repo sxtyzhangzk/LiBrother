@@ -111,8 +111,8 @@ void userborrow::on_pushButton_2_clicked()
     {
         QListWidgetItem *item = ui->listWidget->currentItem();//获取选中的书本信息，并通过setBookID函数输入书本的ID号
         int bID = item->data(Qt::UserRole).toInt();
-        bookdataedit bookdataedit1;
-        bookdataedit1.setBookID(bID);
+        bookdataedit bookdataedit1(bID);
+        //bookdataedit1.setBookID(bID);
         bookdataedit1.exec();
     }
     else{QMessageBox::information(this,"Warning",u8"对不起，您没有权限");}

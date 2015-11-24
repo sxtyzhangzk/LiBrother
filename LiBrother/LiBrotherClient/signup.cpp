@@ -17,7 +17,7 @@ signup::signup(QWidget *parent) :
     if(IAManager->getLicense(LicenseStr))
     {
         QString LicenseStr1 = QString::fromStdString(LicenseStr);
-        ui->textEdit->setText(LicenseStr1);
+        ui->textEdit->setHtml(LicenseStr1);
     }
     else{QMessageBox::information(this,"Warning",u8"获取申明失败");}
 

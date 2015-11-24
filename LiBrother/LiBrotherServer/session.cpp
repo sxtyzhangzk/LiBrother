@@ -293,7 +293,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 			value["author"] = tem_book_basic_info.author;
 			value["isbn"] = tem_book_basic_info.isbn;
 			value["publisher"] = tem_book_basic_info.publisher;
-			value["result"] = '1';
+			value["result"] = "1";
 			Json::FastWriter writer;
 			strResponse = writer.write(value);
 		}
@@ -309,6 +309,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		else
 		{
 			TBookBasicInfo book_basic_info;
+			book_basic_info.bcount = 0;
 			book_basic_info.count = value0["count"].asInt();
 			book_basic_info.name = value0["name"].asString();
 			book_basic_info.publisher = value0["publisher"].asString();
@@ -668,6 +669,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		info.name = value0["name"].asString();
 		info.email = value0["email"].asString();
 		info.gender = value0["gender"].asInt();
+		info.num = g_configPolicy.nDefaultBorrowLimit;
 		user->setBasicInfo(info);
 		user->setPassword(value0["password"].asString().c_str());
 
@@ -745,6 +747,14 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 			return;
 		}
 		value["result"] = -1;
+		strResponse = writer.write(value);
+		return;
+	}
+
+	if (request == "authmanager_getLicense")
+	{
+		value["result"] = 1;
+		value["license"] = g_configPolicy.strLicense;
 		strResponse = writer.write(value);
 		return;
 	}

@@ -12,9 +12,9 @@ class bookdataedit : public QDialog
     Q_OBJECT
 
 public:
-    explicit bookdataedit(QWidget *parent = 0);
+    explicit bookdataedit(int nID, QWidget *parent = 0);
     ~bookdataedit();
-    void setBookID(const int & bID1);
+    //void setBookID(const int & bID1);
 protected:
     int m_strBookID;
 

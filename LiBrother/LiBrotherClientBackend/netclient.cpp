@@ -130,17 +130,17 @@ bool sendRequest(const std::string& strRequest, std::string& strRespond)
 {
 	if (sessionID == 0 && !getSession())
 		return false;
-
-	std::stringstream ssend;
-	ssend << "DATA\n";
-	ssend << std::hex << sessionID;
-	ssend << "\n";
-	ssend << strRequest;
-	std::string strRecvNow, strRetcode;
 	
 	bool retry = false;
 	while (true)
 	{
+		std::stringstream ssend;
+		ssend << "DATA\n";
+		ssend << std::hex << sessionID;
+		ssend << "\n";
+		ssend << strRequest;
+		std::string strRecvNow, strRetcode;
+
 		if (!postData(ssend.str(), strRecvNow))
 			return false;
 		size_t posContent = strRecvNow.find_first_of('\n');
@@ -162,7 +162,7 @@ bool sendRequest(const std::string& strRequest, std::string& strRespond)
 			{
 				lprintf_w("Session Verified Failed, Try to Get a New Session ID.");
 				//重新获取一遍SessionID
-				sessionID = getSession();
+				getSession();
 				retry = true;
 				continue;
 			}
@@ -245,6 +245,7 @@ bool recvData(std::string& strBuffer)
 				return true;
 			}
 		}
+		strRecv.clear();
 	}
 }
 
@@ -335,8 +336,6 @@ void doRecv(boost::system::error_code errcode, size_t nLen)
 			strRecv += "\n\n";	//确保接收缓冲区以\n\n结尾
 		return;
 	}
-	char * pBuffer = new char[nLen];
-	memcpy(pBuffer, recvBuffer, nLen);
 	strRecv.append(recvBuffer, nLen);
 	strRecvCV.notify_all();
 	strRecvMutex.unlock();

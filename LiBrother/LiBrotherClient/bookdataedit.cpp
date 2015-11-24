@@ -3,7 +3,7 @@
 #include "client_interfaces.h"
 #include "QMessageBox"
 
-bookdataedit::bookdataedit(QWidget *parent) :
+bookdataedit::bookdataedit(int nID, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::bookdataedit)
 {
@@ -18,10 +18,12 @@ bookdataedit::bookdataedit(QWidget *parent) :
     TBookBasicInfo basic1;
     auto_iface<IBook> iBook1;
 
-    bool fPd = library1->queryById(m_strBookID,&iBook1);
+    m_strBookID = nID;
+
+    bool fPd = library1->queryById(nID,&iBook1);
     if(fPd)
     {
-        if(!iBook1->setBasicInfo(basic1)){close();QMessageBox::information(this,"Warning",u8"系统错误");return;}//找到书本的信息并显示在窗口中，便于用户进行更改操作
+        if(!iBook1->getBasicInfo(basic1)){close();QMessageBox::information(this,"Warning",u8"系统错误");return;}//找到书本的信息并显示在窗口中，便于用户进行更改操作
         if(!iBook1->getDescription(bDescription)){close();QMessageBox::information(this,"Warning",u8"系统错误");return;}
 
 
@@ -54,10 +56,10 @@ bookdataedit::~bookdataedit()
     delete ui;
 }
 
-void bookdataedit::setBookID(const int& bID1)//传入书本信息的ID号
+/*void bookdataedit::setBookID(const int& bID1)//传入书本信息的ID号
 {
     m_strBookID = bID1;
-}
+}*/
 
 void bookdataedit::on_pushButton_clicked()
 {

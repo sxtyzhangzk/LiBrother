@@ -28,7 +28,7 @@ bool CUser::check(TUserBasicInfo info_to_check)
 	for (int i = 0; i < info_to_check.email.length(); i++)
 		if (info_to_check.email[i] == '@')
 			return true;
-	setError(InvalidParam, 1000000, "email");
+	lprintf_w("Email");
 	return false;
 }
 bool CUser::bcheck(TBorrowInfo info_to_check)
@@ -103,7 +103,7 @@ bool CUser::setPassword(const char * strPWD)
 			std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN),MYSQL_CONN_RELEASER);
 			std::shared_ptr<sql::Statement> stat(c->createStatement());
 			std::stringstream str;
-			str << "UPDATE UserInfoDatabase SET password = " << '\'' << str2sql(m_password) << '\'' << " WHERE userID=" << m_Id;
+			str << "UPDATE UserInfoDatabase SET password = " << '\'' << str2sql(m_password) << '\'' << " WHERE id=" << m_Id;
 			stat->execute(str.str());
 			lprintf("Password of user id = %d has changed.", m_Id);
 			return true;

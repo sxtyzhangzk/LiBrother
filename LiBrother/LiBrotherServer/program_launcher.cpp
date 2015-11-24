@@ -47,6 +47,7 @@ int CProgramLauncher::runProgram(
 			delete pTask;
 			return -2;
 		}
+		break;
 
 	case RunAsTask:
 		pTask->nWaitTime = nMilliseconds;
@@ -54,7 +55,7 @@ int CProgramLauncher::runProgram(
 		m_vTasks[id] = pTask;
 		pTask->pmutexLauncher = new std::timed_mutex;
 		pTask->pmutexLauncher->lock();
-		std::thread(&CProgramLauncher::LauncherThread, this, m_vTasks[id]);
+		pTask->pThread = new std::thread(&CProgramLauncher::LauncherThread, this, m_vTasks[id]);
 		return id;
 
 	default:
@@ -80,7 +81,10 @@ bool CProgramLauncher::stopProgram(int nID, int nTimeoutMillisecond, bool bTermi
 	}
 	else if (pTask->type == RunAsTask)
 	{
+		std::thread *pth = pTask->pThread;
 		pTask->pmutexLauncher->unlock();
+		pth->join();
+		delete pth;
 		pTask = nullptr;
 		return true;
 	}
@@ -91,9 +95,10 @@ int CProgramLauncher::getAvaliableTaskID()
 {
 	for (int i = 0; i < m_vTasks.size(); i++)
 	{
-		if (m_vTasks[i])
+		if (!m_vTasks[i])
 			return i;
 	}
+	m_vTasks.push_back(nullptr);
 	return m_vTasks.size() - 1;
 }
 
@@ -108,7 +113,8 @@ bool CProgramLauncher::StartProcess(TTask& task)
 #else
 	strncpy(cCmd, strCmd.c_str(), MAX_PATH - 1);
 #endif
-	STARTUPINFOA startupInfo;
+	STARTUPINFOA startupInfo = { 0 };
+	startupInfo.cb = sizeof(startupInfo);
 	PROCESS_INFORMATION processInfo;
 	if (!CreateProcessA(task.strPath.c_str(), cCmd, NULL, NULL, FALSE, 0, NULL, task.strWorkDir.c_str(), &startupInfo, &processInfo))
 		return false;

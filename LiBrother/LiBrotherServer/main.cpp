@@ -60,6 +60,7 @@ void loadDefaultConfig()
 	g_configPolicy.vAuthList.push_back({ 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0 });
 	g_configPolicy.vAuthList.push_back({ 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1 });
 	g_configPolicy.vAuthList.push_back({ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 });
+	g_configPolicy.nDefaultBorrowLimit = 6;
 }
 
 //加载配置文件
@@ -128,6 +129,8 @@ bool loadConfig(const std::string& strFile)
 					flicense.close();
 				}
 			}
+			if (policy["borrow-limit"].IsDefined())
+				g_configPolicy.nDefaultBorrowLimit = policy["borrow-limit"].as<int>();
 			//TODO: Other Policy Config
 		}
 
@@ -213,7 +216,7 @@ bool initSphinx(CConnectionPool& connPool)
 	connURL += ":";
 	connURL += g_configSvr.nSphinxPort;
 	return connPool.registerConnection(
-		REGID_SPHINX_CONN, connURL, "", "", "");
+		REGID_SPHINX_CONN, connURL, "librother", "", "");
 }
 
 //停止Sphinx服务器

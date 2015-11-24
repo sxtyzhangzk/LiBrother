@@ -55,7 +55,7 @@ bool CBook::setBasicInfo(const TBookBasicInfo& info)
 		//id = info.id;
 		Json::Value value0;
 		value0["command"] = "book_setBasicInfo";
-		value0["id"] = m_CBBI->id;
+		value0["id"] = id;
 		value0["count"] = m_CBBI->count;
 		value0["name"] = m_CBBI->name;
 		value0["publisher"] = m_CBBI->publisher;

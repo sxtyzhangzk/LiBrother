@@ -38,6 +38,7 @@ protected:
 		std::vector<std::string> strArgs;
 		std::string strWorkDir;
 		int nWaitTime;
+		std::thread *pThread;
 
 		std::timed_mutex * pmutexLauncher;
 	};

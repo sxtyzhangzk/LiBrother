@@ -208,6 +208,7 @@ bool CUser::getBorrowedBooks(std::vector<TBorrowInfo> &binfo)//to be implemented
 				for (int i = 1; i <= num; i++)
 				{
 					Json::Value tem_value = valueData[i];
+					borrow_info.userID = m_nID;
 					borrow_info.bookID = tem_value[1].asInt();
 					borrow_info.borrowTime = tem_value[2].asInt64();
 					borrow_info.flag = tem_value[3].asBool();

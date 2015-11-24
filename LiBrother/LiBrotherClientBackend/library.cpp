@@ -94,7 +94,7 @@ bool CLibrary::queryByISBN(const char * strISBN, IBook ** ppBook)
 	value0["command"] = "library_queryByISBN";
 	value0["isbn"] = strISBN;
 	Json::FastWriter writer;
-	std::string str = writer.write(value0);
+	strRequest = writer.write(value0);
 	if (sendRequest(strRequest, strRespond)) {
 		Json::Reader reader;
 		Json::Value value;

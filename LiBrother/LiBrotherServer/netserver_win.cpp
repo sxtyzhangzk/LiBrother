@@ -231,7 +231,7 @@ struct TSocketEx
 		LeaveCriticalSection(&csIOContext);
 		return ret;
 	}
-	size_t getSendQueue(char * buffer)
+	size_t getSendQueue(char * &buffer)
 	{
 		size_t sizeBuffer = 0;
 		EnterCriticalSection(&csIOContext);
