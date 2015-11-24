@@ -154,6 +154,7 @@ bool CManager::getUserByName(const char * strName, IUser ** ppUser)
 			Basicinfo.email = result->getString("email");
 			Basicinfo.gender = result->getInt("gender");
 			Basicinfo.id = result->getInt("id");
+			Basicinfo.num = result->getInt("num");
 			Basicinfo.name = result->getString("name");
 			n->setReadLevel(result->getInt("ReadLevel"));
 			n->setAuthLevel(result->getInt("AuthLevel"));
