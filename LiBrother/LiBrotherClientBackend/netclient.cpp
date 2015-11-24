@@ -319,7 +319,7 @@ void doRecv(boost::system::error_code errcode, size_t nLen)
 	strRecvMutex.lock();
 	if (errcode)
 	{
-		lprintf_e("ERROR: %s", errcode.message());
+		lprintf_e("ERROR: %s", errcode.message().c_str());
 		recvError++;
 		strRecvMutex.unlock();
 		pSocket->close();
