@@ -287,16 +287,17 @@ bool CBook::insert()
 		std::shared_ptr<sql::Connection> c(m_pDatabase->getConnection(REGID_MYSQL_CONN), MYSQL_CONN_RELEASER);
 		std::shared_ptr<sql::Statement> stat(c->createStatement());
 		std::stringstream str;
-		str << "INSERT INTO BookInfoDatabase(id, name, author, publisher, isbn, count, bcount, description, ReadLevel) VALUES (null, ";
+		str << "INSERT INTO BookInfoDatabase(id, name, isbn, author, publisher, count, bcount, description, ReadLevel) VALUES (null, ";
 		str << "'" << str2sql(m_CBBI.name) << "', ";
 		str << "'" << str2sql(m_CBBI.isbn) << "', ";
 		str << "'" << str2sql(m_CBBI.author) << "', ";
 		str << "'" << str2sql(m_CBBI.publisher) << "', ";
-		str << "'" << str2sql(m_CBBI.isbn) << "', ";
 		str << m_CBBI.count << ", ";
 		str << m_CBBI.bcount << ", ";
 		if (m_Description != "")
 			str << "Compress('" << str2sql(m_Description) << "'), ";
+		else
+			str << "null, ";
 		str << g_configPolicy.nDefaultBookReadLevel << ")";
 		stat->execute(str.str());
 		std::shared_ptr<sql::ResultSet> result(stat->executeQuery("Select LAST_INSERT_ID()"));
