@@ -61,18 +61,19 @@ int CLibrary::queryByName(const char * strName, IFvector& vBooks, int nCount, in
 		if (pConnSphinx)
 		{
 			std::shared_ptr<sql::Statement> pStatSphinx(pConnSphinx->createStatement());
-			strSQL.clear();
+			strSQL.str("");
 			strSQL << "Select * From book Where Match('" << str2sql(strName) << "')";
 			std::shared_ptr<sql::ResultSet> pResultSphinx(pStatSphinx->executeQuery(strSQL.str()));
-			while (pResult->next())
+			while (pResultSphinx->next())
 			{
+				lprintf("SPHINXQL GOT");
 				int nID = pResultSphinx->getInt("id");
-				strSQL.clear();
+				strSQL.str("");
 				strSQL << strSelectSQL << "Where id=" << nID;
 				std::shared_ptr<sql::ResultSet> pResultID(pStat->executeQuery(strSQL.str()));
 				if (pResultID->next())
 				{
-					readBookInfo(pResult, pBook);
+					readBookInfo(pResultID, pBook);
 					pBook->sign();
 					vBooks.push_back(pBook);
 					ret++;

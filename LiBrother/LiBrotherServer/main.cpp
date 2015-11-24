@@ -201,7 +201,7 @@ bool initMySQL(CConnectionPool& connPool)
 	std::string connURL = "tcp://";
 	connURL += g_configSvr.strMySQLHost;
 	connURL += ":";
-	connURL += g_configSvr.nMySQLPort;
+	connURL += type2str(g_configSvr.nMySQLPort);
 	return connPool.registerConnection(
 		REGID_MYSQL_CONN, connURL, 
 		g_configSvr.strUser, g_configSvr.strPWD, 
@@ -214,7 +214,7 @@ bool initSphinx(CConnectionPool& connPool)
 	std::string connURL = "tcp://";
 	connURL += g_configSvr.strSphinxHost;
 	connURL += ":";
-	connURL += g_configSvr.nSphinxPort;
+	connURL += type2str(g_configSvr.nSphinxPort);
 	return connPool.registerConnection(
 		REGID_SPHINX_CONN, connURL, "librother", "", "");
 }

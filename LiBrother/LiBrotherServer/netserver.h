@@ -12,7 +12,8 @@ typedef int socket_t;
 const socket_t INVALID_SOCKET = 0;
 #endif
 
-#ifdef _WIN32
+//#define FORCE_ASIO
+#if defined(_WIN32) && !defined(FORCE_ASIO)
 #include <vector>
 
 typedef void * handle_t;				//WinAPI HANDLE
@@ -86,7 +87,7 @@ protected:
 	//标记套接字即将结束的状态
 	void setSocketClose(TSocketEx * pSocket);
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(FORCE_ASIO)
 	//创建一个指定端口上的套接字
 	TSocketEx * createListenSocket(int nPort);
 
@@ -138,7 +139,7 @@ protected:
 	Botan::TLS::Session_Manager_In_Memory * m_pTLSSM;	//TLS 会话管理器
 	Botan::TLS::Policy * m_pPolicy;						//TLS 配置
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(FORCE_ASIO)
 	TSocketEx * m_psockListen;			//监听套接字
 	TSocketEx * m_psockListenTLS;		//监听套接字(TLS)
 	handle_t m_hIOCP;					//完成端口的句柄
