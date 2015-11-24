@@ -82,6 +82,10 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 	Json::FastWriter writer;
 	Json::Value value;
 
+	TAuthorization auth = { 0 };
+	if (user_id)
+		auth = g_configPolicy.vAuthList[current_auth_level];
+
 	if (request == "book_getDescription") {
 		if (!g_configPolicy.vAuthList[current_auth_level].auth_GetBookInfo) {
 			value["result"] = "PermissionDenied";
@@ -298,28 +302,34 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		return;
 	}
 
-	if (request == "library_insertBook") {
-		TBookBasicInfo book_basic_info;
-		book_basic_info.id = value0["id"].asInt();
-		book_basic_info.count = value0["count"].asInt();
-		book_basic_info.name = value0["name"].asString();
-		book_basic_info.publisher = value0["publisher"].asString();
-		book_basic_info.author = value0["author"].asString();
-		book_basic_info.isbn = value0["isbn"].asString();
-		auto_iface<ILibrary> library;
-		m_pClassFactory->getLibrary(&library);
-		auto_iface<IBook> book;
-		m_pClassFactory->createEmptyBook(&book);
-		book->setBasicInfo(book_basic_info);
-		if (library->insertBook(book))  value["result"] = '1';
-		else value["result"] = "DatabaseError";
+	if (request == "library_insertBook")
+	{
+		if (!user_id || !auth.auth_InsertBook)
+			writePermissionDenied(value);
+		else
+		{
+			TBookBasicInfo book_basic_info;
+			book_basic_info.count = value0["count"].asInt();
+			book_basic_info.name = value0["name"].asString();
+			book_basic_info.publisher = value0["publisher"].asString();
+			book_basic_info.author = value0["author"].asString();
+			book_basic_info.isbn = value0["isbn"].asString();
+			auto_iface<ILibrary> library;
+			m_pClassFactory->getLibrary(&library);
+			auto_iface<IBook> book;
+			m_pClassFactory->createEmptyBook(&book);
+			book->setBasicInfo(book_basic_info);
+			book->setDescription(value0["description"].asCString());
+			if (library->insertBook(book))
+				value["result"] = 1;
+			else
+				writeInterfaceError(value, library);
+		}
 		strResponse = writer.write(value);
 		return;
 	}
 
-	TAuthorization auth = { 0 };
-	if (user_id)
-		auth = g_configPolicy.vAuthList[current_auth_level];
+	
 
 	if (request == "usermanager_getUserByName")
 	{

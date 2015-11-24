@@ -133,12 +133,12 @@ bool CLibrary::insertBook(IBook * pBook)
 	value0["command"] = "library_insertBook";
 	TBookBasicInfo tem_book_basic_info;
 	pBook->getBasicInfo(tem_book_basic_info);
-	value0["id"] = tem_book_basic_info.id;
 	value0["count"] = tem_book_basic_info.count;
 	value0["name"] = tem_book_basic_info.name;
 	value0["author"] = tem_book_basic_info.author;
 	value0["isbn"] = tem_book_basic_info.isbn;
 	value0["publisher"] = tem_book_basic_info.publisher;
+	value0["description"] = ((CBook*)pBook)->m_Description;
 	Json::FastWriter writer;
 	std::string strRequest;
 	std::string strRespond;

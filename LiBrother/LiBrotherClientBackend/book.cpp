@@ -92,11 +92,11 @@ bool CBook::setDescription(const char * description)
 	}
 	if (id)
 	{
-		m_Description = description;
+		;
 		Json::Value value0;
 		value0["command"] = "book_setDescription";
 		value0["id"] = id;
-		value0["description"] = m_Description;
+		value0["description"] = description;
 		Json::FastWriter writer;
 		std::string strRequest;
 		std::string strRespond;
@@ -105,7 +105,11 @@ bool CBook::setDescription(const char * description)
 			Json::Reader reader;
 			Json::Value value;
 			reader.parse(strRespond, value);
-			if (value["result"].asString() == "1") return true;
+			if (value["result"].asString() == "1")
+			{
+				m_Description = description;
+				return true;
+			}
 			else {
 				if (value["result"].asString() == "PermissionDenied")
 					setError(PermissionDenied, 0, "permission_denied");
@@ -116,6 +120,8 @@ bool CBook::setDescription(const char * description)
 		else setError(NetworkError, 0, "network down");
 		return false;
 	}
+	else
+		m_Description = description;
 	return true;
 }
 
