@@ -277,6 +277,7 @@ bool CBook::insert()
 		setError(InvalidParam, 10, "Only new books can be inserted.");
 		return false;
 	}
+	m_CBBI.bcount = 0;
 	if (!check(m_CBBI))
 	{
 		setError(InvalidParam, 1, "This book is not valid.");

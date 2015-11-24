@@ -44,6 +44,8 @@ bool CManager::getUserByID(int nID, IUser ** ppUser)
 		((CUser*)n)->straightsetpassword(result->getString("password").c_str());
 		((CUser*)n)->sign();
 		(*ppUser) = n;
+		(*ppUser)->AddRef();
+		n = nullptr;
 		return true;
 	}
 	catch (sql::SQLException& e)
@@ -124,6 +126,8 @@ bool CManager::getUserByName(const char * strName, IUser ** ppUser)
 			((CUser*)n)->straightsetpassword(result->getString("password").c_str());
 			((CUser*)n)->sign();
 			(*ppUser) = n;
+			(*ppUser)->AddRef();
+			n = nullptr;
 			return true;
 		}
 		catch (sql::SQLException& e)
@@ -162,6 +166,8 @@ bool CManager::getUserByName(const char * strName, IUser ** ppUser)
 			((CUser*)n)->straightsetpassword(result->getString("password").c_str());
 			((CUser*)n)->sign();
 			(*ppUser) = n;
+			(*ppUser)->AddRef();
+			n = nullptr;
 			return true;
 		}
 		catch (sql::SQLException& e)
@@ -180,17 +186,18 @@ bool CManager::verify(const char* strName,const char * strEmail)
 	{
 		std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN), MYSQL_CONN_RELEASER);
 		std::shared_ptr<sql::Statement> stat(c->createStatement());
-		std::stringstream str1;
-		str1 << "SELECT * FROM UserInfoDatabase WHERE name = " << '\'' << str2sql(strName) << '\'';
-		stat->execute(str1.str());
+		std::stringstream str;
+		str << "SELECT * FROM UserInfoDatabase WHERE name = " << '\'' << str2sql(strName) << '\'';
+		stat->execute(str.str());
 		std::shared_ptr<sql::ResultSet> result1(stat->getResultSet());
 		int flag = 1;
 		if (result1->next()) flag = 0;
-		std::stringstream str2;
-		str2 << "SELECT * FROM UserInfoDatabase WHERE email = " << '\'' << str2sql(strEmail) << '\'';
-		stat->execute(str2.str());
+		str.str("");
+		str << "SELECT * FROM UserInfoDatabase WHERE email = " << '\'' << str2sql(strEmail) << '\'';
+		stat->execute(str.str());
 		std::shared_ptr<sql::ResultSet> result2(stat->getResultSet());
 		if (result2->next()) flag = 0;
+		str.str("");
 		if (flag)
 			return true;
 		else

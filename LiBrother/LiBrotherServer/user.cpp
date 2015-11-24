@@ -218,34 +218,52 @@ bool CUser::returnBook(IBook * pBook)
 		return false;
 	}
 	int b_id;
-	m_CUBI.num++;
+	std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN), MYSQL_CONN_RELEASER);
+	std::shared_ptr<sql::Statement> stat(c->createStatement());
+	std::stringstream str;
+	TBookBasicInfo info;
+	((CBook*)pBook)->getBasicInfo(info);
+	b_id = info.id;
 	if (((CBook*)pBook)->borrow(-1))
 	{
-		try
+		int num0, num1;
+		str << "SELECT * FROM BorrowDatabase where userID = " << m_Id << " And bookID = " << b_id << " And flag = 0";
+		stat->execute(str.str());
+		std::shared_ptr<sql::ResultSet> result0(stat->getResultSet());
+		result0->last();
+		num0 = result0->rowsCount();
+		str.str("");
+		str << "SELECT * FROM BorrowDatabase where userID = " << m_Id << " And bookID = " << b_id << " And flag = 1";
+		stat->execute(str.str());
+		std::shared_ptr<sql::ResultSet> result1(stat->getResultSet());
+		result1->last();
+		num1 = result1->rowsCount();
+		str.str("");
+		if (num0 > num1)
 		{
-			std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN), MYSQL_CONN_RELEASER);
-			std::shared_ptr<sql::Statement> stat(c->createStatement());
-			std::stringstream str;
-			str << "UPDATE UserInfoDatabase SET num = " << m_CUBI.num << " WHERE id=" << m_Id;
-			stat->execute(str.str());
-			TBookBasicInfo info;
-			((CBook*)pBook)->getBasicInfo(info);
-			b_id = info.id;
-			str.str("");
-			str << "INSERT INTO BorrowDatabase VALUES (" << m_Id << " ," << info.id << " ,null ,"  << 1 << ")";
-			stat->execute(str.str());
-			lprintf("User id = %d has returned a book id = %d.", m_Id, b_id);
-			return true;
-		}
-		catch (sql::SQLException& e)
-		{
-			lprintf_e("User id = %d failed to return a book id = %d.", m_Id, b_id);
-			((CBook*)pBook)->borrow(1);
-			setError(DatabaseError, 9, (std::string("There is some wrong with our database.\n") + e.what()).c_str());
-			return false;
+			try
+			{
+
+				m_CUBI.num++;
+				str << "UPDATE UserInfoDatabase SET num = " << m_CUBI.num << " WHERE id=" << m_Id;
+				stat->execute(str.str());
+
+				str.str("");
+				str << "INSERT INTO BorrowDatabase VALUES (" << m_Id << " ," << info.id << " ,null ," << 1 << ")";
+				stat->execute(str.str());
+				lprintf("User id = %d has returned a book id = %d.", m_Id, b_id);
+				return true;
+			}
+			catch (sql::SQLException& e)
+			{
+				lprintf_e("User id = %d failed to return a book id = %d.", m_Id, b_id);
+				((CBook*)pBook)->borrow(1);
+				setError(DatabaseError, 9, (std::string("There is some wrong with our database.\n") + e.what()).c_str());
+				return false;
+			}
 		}
 	}
-	return true;
+	return false;
 }
 bool CUser::deleteUser()
 {
