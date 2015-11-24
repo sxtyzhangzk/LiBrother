@@ -33,6 +33,8 @@ private slots:
 
     void on_pushButton_7_clicked();
 
+    void on_pushButton_clicked();
+
 private:
     Ui::usermain *ui;
     auto_iface<IClassFactoryClient> factory1;

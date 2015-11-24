@@ -20,7 +20,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string/>
+   <string>申明</string>
   </property>
   <widget class="QTextEdit" name="textEdit">
    <property name="geometry">

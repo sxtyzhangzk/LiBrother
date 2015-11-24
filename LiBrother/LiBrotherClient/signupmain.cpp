@@ -40,10 +40,13 @@ void signupmain::on_pushButton_2_clicked()
     std::string uPass = uPassword.toStdString();
     std::string u2Pass = u2Password.toStdString();
 
+
+
     basic1.name = uName.toStdString();
     basic1.email = uMail.toStdString();
 
-
+    if(uPass.length()>=6)
+    {
     if(uPass ==u2Pass)
     {
         if(!iUser->setBasicInfo(basic1)){close();QMessageBox::information(this,"Warning",u8"系统错误");return;}
@@ -54,5 +57,8 @@ void signupmain::on_pushButton_2_clicked()
         close();
     }
     else{QMessageBox::information(this,"Warning",u8"两次密码输入不一致");}
-
+    }
+    else{QMessageBox::information(this,"Warning",u8"用户密码必须不短于6位");}
 }
+
+

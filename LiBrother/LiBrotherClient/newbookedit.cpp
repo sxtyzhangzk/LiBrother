@@ -55,3 +55,8 @@ void newbookedit::on_pushButton_3_clicked()
 
 
 }
+
+void newbookedit::on_pushButton_4_clicked()
+{
+    close();
+}
