@@ -23,9 +23,11 @@ CUser::~CUser()
 }
 bool CUser::check(TUserBasicInfo info_to_check)
 {
-	//if (info_to_check.num<0) return false;
-	//if (info_to_check.email.empty() || info_to_check.name.empty()) return false;
-	return true;
+	if (info_to_check.num<0) return false;
+	if (info_to_check.email.empty() || info_to_check.name.empty()) return false;
+	for (int i = 0; i < info_to_check.email.length(); i++)
+		if (info_to_check.email[i] == '@') return true;
+	return false;
 }
 bool CUser::bcheck(TBorrowInfo info_to_check)
 {
@@ -335,17 +337,19 @@ int CUser::getAuthLevel()
 		std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN),MYSQL_CONN_RELEASER);
 		std::shared_ptr<sql::Statement> stat(c->createStatement());
 		std::stringstream str;
-		str << "SELECT AuthLevel FROM UserInfoDatabase WHERE userID = " << m_Id;
+		str << "SELECT AuthLevel FROM UserInfoDatabase WHERE id = " << m_Id;
 		stat->execute(str.str());
 		std::shared_ptr<sql::ResultSet> result(stat->getResultSet());
-		return result->getInt("AuthLevel");
+		if(result->next())
+			return result->getInt("AuthLevel");
 	}
 	catch (sql::SQLException& e)
 	{
 		setError(DatabaseError, 9, (std::string("There is some wrong with our database.\n") + e.what()).c_str());
 		return false;
 	}
-	return true;
+	setError(Other, 10, "Cannot get AuthLevel");
+	return -1;
 }
 int CUser::getReadLevel()
 {
