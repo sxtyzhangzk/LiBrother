@@ -77,7 +77,7 @@ void bookdata::on_pushButton_clicked()
     {
         if(library1->queryById(m_nBookID,&iBook1))
         {
-            if(iUser1->borrowBook(iBook1)){}//正式借书操作
+            if(iUser1->borrowBook(iBook1)){QMessageBox::information(this,"Welcome",u8"借书成功");close();}//正式借书操作
             else{QMessageBox::information(this,"Warning","借书失败");}
         }
         else{QMessageBox::information(this,"Warning",u8"请先选择所要借阅的书籍");}

@@ -17,7 +17,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>登陆 Log in</string>
+   <string>登录 Log in</string>
   </property>
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">

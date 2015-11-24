@@ -108,7 +108,7 @@ void usermain::on_pushButton_3_clicked()//还书操作
     auto_iface<IUser> iUser1;
     if(iUser->getCurrentUser(&iUser1))//确定当前要还书的用户
     {
-        if(iUser1->returnBook(iBook1)){}//正式还书
+        if(iUser1->returnBook(iBook1)){QMessageBox::information(this,"Welcome",u8"还书成功");}//正式还书
         else{QMessageBox::information(this,"Warning",u8"归还失败");}
     }
     else{QMessageBox::information(this,"Warning",u8"用户信息错误");}

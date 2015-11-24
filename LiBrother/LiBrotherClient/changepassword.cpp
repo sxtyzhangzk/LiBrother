@@ -38,6 +38,7 @@ void ChangePassword::on_pushButton_clicked()
     {
         if(iUser->changePassword(passOld1.c_str(),passNew1.c_str()))
         {
+            QMessageBox::information(this,"Welcome",u8"密码修改成功");
             close();//成功更改密码之后自动退出
         }
         else{QMessageBox::information(this,"Warning",u8"修改密码失败");}

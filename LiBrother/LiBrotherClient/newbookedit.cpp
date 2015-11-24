@@ -51,10 +51,10 @@ void newbookedit::on_pushButton_3_clicked()
     basic2.publisher = nbPublisher1.toStdString();
     std::string nbDescription01 = nbDescription1.toStdString();
 
-    if(iBook2->setBasicInfo(basic2)){}else{QMessageBox::information(this,"Warning",u8"基础信息录入失败，请检查输入格式");}
-    if(iBook2->setDescription(nbDescription01.c_str())){}else{QMessageBox::information(this,"Warning",u8"简介录入失败");}
-    if(library2->insertBook(iBook2)){}else{QMessageBox::information(this,"Warning",u8"无法写入");}
-
+    if(iBook2->setBasicInfo(basic2)){}else{QMessageBox::information(this,"Warning",u8"基础信息录入失败，请检查输入格式");return;}
+    if(iBook2->setDescription(nbDescription01.c_str())){}else{QMessageBox::information(this,"Warning",u8"简介录入失败");return;}
+    if(library2->insertBook(iBook2)){}else{QMessageBox::information(this,"Warning",u8"无法写入");return;}
+    QMessageBox::information(this,"Welcome",u8"新书添加成功");close();
 
 }
 

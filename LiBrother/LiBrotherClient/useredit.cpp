@@ -73,11 +73,13 @@ void useredit::on_pushButton_clicked()//正式修改信息模块
             if(nPassword1 == n2Password1)//输入密码是否一致
             {
                 if(!iUser->setPassword(nPassword1.c_str())){close();QMessageBox::information(this,"Warning",u8"系统错误");return;}
+
             }
-            else{QMessageBox::information(this,"Warning",u8"两次密码输入不同");}
+            else{QMessageBox::information(this,"Warning",u8"两次密码输入不同");return;}
         }
     }
-    else{QMessageBox::information(this,"Warning",u8"查找用户错误");}
+    else{QMessageBox::information(this,"Warning",u8"查找用户错误");return;}
+    QMessageBox::information(this,"Welcome",u8"用户信息修改成功");close();
 
 }
 
