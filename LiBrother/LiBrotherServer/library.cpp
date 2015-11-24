@@ -94,9 +94,9 @@ int CLibrary::queryByName(const char * strName, IFvector& vBooks, int nCount, in
 	delete pBook;
 	if (pConn)
 		m_pDatabase->releaseConnection(REGID_MYSQL_CONN, pConn);
-	if (pConnSphinx)
-		m_pDatabase->releaseConnection(REGID_SPHINX_CONN, pConnSphinx);
-	return ret;
+if (pConnSphinx)
+m_pDatabase->releaseConnection(REGID_SPHINX_CONN, pConnSphinx);
+return ret;
 }
 
 bool CLibrary::queryById(int nID, IBook ** ppBook)
@@ -150,7 +150,7 @@ bool CLibrary::queryByISBN(const char * strISBN, IBook ** ppBook)
 		setError(InvalidParam, 4, "The pointer is NULL.");
 		return false;
 	}
-	
+
 	bool ret = false;
 	sql::Connection *c = m_pDatabase->getConnection(REGID_MYSQL_CONN);
 	CBook *pBook = new CBook(m_pDatabase);
@@ -191,8 +191,14 @@ bool CLibrary::insertBook(IBook * pBook)
 {
 	TBookBasicInfo info;
 	pBook->getBasicInfo(info);
-	if(verify(info.isbn.c_str()))
-		return ((CBook*)pBook)->insert();
+	if (verify(info.isbn.c_str()))
+	{
+		if (!((CBook*)pBook)->insert())
+		{
+			return false;
+		}
+		return true;
+	}
 	else return false;
 }
 

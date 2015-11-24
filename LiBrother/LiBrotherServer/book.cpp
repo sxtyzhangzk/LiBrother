@@ -23,7 +23,7 @@ CBook::~CBook()
 }
 bool CBook::check(TBookBasicInfo info_to_check)
 {
-	if (info_to_check.id == -1 || info_to_check.count < 1) return false;
+	if (info_to_check.count < 1) return false;
 	if (info_to_check.isbn.empty() || info_to_check.name.empty() || info_to_check.publisher.empty() || info_to_check.author.empty()) return false;
 	return true;
 }
@@ -34,11 +34,6 @@ bool CBook::bcheck(TBorrowInfo info_to_check)
 }
 bool CBook::getBasicInfo(TBookBasicInfo& info)
 {
-	if (!check(m_CBBI) || !is_from_Database)	//检查书本基本信息是否合法以及是否来自数据库
-	{
-		setError(InvalidParam, 1, "This book is not valid.");
-		return false;	//不合法，返回false
-	}
 	info = m_CBBI;	//合法，将书本基本信息赋给info
 	return true;
 }
