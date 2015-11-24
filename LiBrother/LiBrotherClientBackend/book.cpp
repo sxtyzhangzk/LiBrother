@@ -50,33 +50,37 @@ bool CBook::setBasicInfo(const TBookBasicInfo& info)
 		m_CBBI = new TBookBasicInfo(info);
 	else
 		*m_CBBI = info;
-	id = info.id;
-	Json::Value value0;
-	value0["command"] = "book_setBasicInfo";
-	value0["id"] = m_CBBI->id;
-	value0["count"] = m_CBBI->count;
-	value0["name"] = m_CBBI->name;
-	value0["publisher"] = m_CBBI->publisher;
-	value0["author"] = m_CBBI->author;
-	value0["isbn"] = m_CBBI->isbn;
-	Json::FastWriter writer;
-	std::string strRequest;
-	std::string strRespond;
-	strRequest = writer.write(value0);
-	if (sendRequest(strRequest, strRespond)) {
-		Json::Reader reader;
-		Json::Value value;
-		reader.parse(strRespond, value);
-		if (value["result"].asString() == "1") return true;
-		else {
-			if (value["result"].asString() == "PermissionDenied")
-				setError(PermissionDenied, 0, "permission_denied");
-			if (value["result"].asString() == "DatabaseError")
-				setError(DatabaseError, 0, "database_error");
+	if (id)
+	{
+		//id = info.id;
+		Json::Value value0;
+		value0["command"] = "book_setBasicInfo";
+		value0["id"] = m_CBBI->id;
+		value0["count"] = m_CBBI->count;
+		value0["name"] = m_CBBI->name;
+		value0["publisher"] = m_CBBI->publisher;
+		value0["author"] = m_CBBI->author;
+		value0["isbn"] = m_CBBI->isbn;
+		Json::FastWriter writer;
+		std::string strRequest;
+		std::string strRespond;
+		strRequest = writer.write(value0);
+		if (sendRequest(strRequest, strRespond)) {
+			Json::Reader reader;
+			Json::Value value;
+			reader.parse(strRespond, value);
+			if (value["result"].asString() == "1") return true;
+			else {
+				if (value["result"].asString() == "PermissionDenied")
+					setError(PermissionDenied, 0, "permission_denied");
+				if (value["result"].asString() == "DatabaseError")
+					setError(DatabaseError, 0, "database_error");
+			}
 		}
+		else setError(NetworkError, 0, "network down");
+		return false;
 	}
-	else setError(NetworkError, 0, "network down");
-	return false;
+	return true;
 }
 
 bool CBook::setDescription(const char * description)
@@ -86,29 +90,33 @@ bool CBook::setDescription(const char * description)
 		setError(InvalidParam, 4, "The pointer is NULL.");
 		return false;
 	}
-	m_Description = description;
-	Json::Value value0;
-	value0["command"] = "book_setDescription";
-	value0["id"] = id;
-	value0["description"] = m_Description;
-	Json::FastWriter writer;
-	std::string strRequest;
-	std::string strRespond;
-	strRequest = writer.write(value0);
-	if (sendRequest(strRequest, strRespond)) {
-		Json::Reader reader;
-		Json::Value value;
-		reader.parse(strRespond, value);
-		if (value["result"].asString() == "1") return true;
-		else {
-			if (value["result"].asString() == "PermissionDenied")
-				setError(PermissionDenied, 0, "permission_denied");
-			if (value["result"].asString() == "DatabaseError")
-				setError(DatabaseError, 0, "database_error");
+	if (id)
+	{
+		m_Description = description;
+		Json::Value value0;
+		value0["command"] = "book_setDescription";
+		value0["id"] = id;
+		value0["description"] = m_Description;
+		Json::FastWriter writer;
+		std::string strRequest;
+		std::string strRespond;
+		strRequest = writer.write(value0);
+		if (sendRequest(strRequest, strRespond)) {
+			Json::Reader reader;
+			Json::Value value;
+			reader.parse(strRespond, value);
+			if (value["result"].asString() == "1") return true;
+			else {
+				if (value["result"].asString() == "PermissionDenied")
+					setError(PermissionDenied, 0, "permission_denied");
+				if (value["result"].asString() == "DatabaseError")
+					setError(DatabaseError, 0, "database_error");
+			}
 		}
+		else setError(NetworkError, 0, "network down");
+		return false;
 	}
-	else setError(NetworkError, 0, "network down");
-	return false;
+	return true;
 }
 
 bool CBook::deleteBook(int number) 
