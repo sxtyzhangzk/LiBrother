@@ -8,6 +8,7 @@
 #include "changepassword.h"
 #include "managermain.h"
 #include "useredit.h"
+#include "set";
 
 usermain::usermain(QWidget *parent) ://开场直接显示所有用户已借的书本
     QDialog(parent),
@@ -26,37 +27,43 @@ usermain::usermain(QWidget *parent) ://开场直接显示所有用户已借的�
     {
         TUserBasicInfo basic1;
         if(iUser1->getBasicInfo(basic1))//获取当前用户信息
-        {
+           {
             QString uName1 = QString::fromStdString(basic1.name);
             ui->label_2->setText(uName1);//两个显示
             ui->label_5->setText(QString::number(basic1.id));
             std::vector<TBorrowInfo> basic2;//已经借了的书目
             if(iUser1->getBorrowedBooks(basic2))
             {
-                int i;
-
                 auto_iface<ILibrary> library2;
                 factory1->getLibrary(&library2);
-
+                int i;int j;
+                std::set<int> TBorrow;
                 for(i=0;i<basic2.size();i++)//在widget依次显示已借的书本
                 {
-                    auto_iface<IBook> iBook1;
-                    int bID1 = basic2[i].bookID;
-                    if(library2->queryById(bID1,&iBook1))
-                    {
-                        TBookBasicInfo basic3;
-                        if(iBook1->getBasicInfo(basic3))
-                        {
-                            QString bName2 = QString::fromStdString(basic3.name);
+                            bool pd = true;
+                            if(basic2[i].flag = 1)
+                            {
+                                TBorrow.erase(basic2[i].bookID);
+                                pd = false;break;
+                            }
+                            if(pd){TBorrow.insert(basic2[i].bookID);}
+                }
+                for(int bookID : TBorrow)
+                {
+                    auto_iface<IBook> iBook2;
 
-                            QListWidgetItem *item = new QListWidgetItem;
-                            item->setText(bName2);
-                            item->setData(Qt::UserRole,basic3.id);//随带保存书本ID便于之后归还
-                            ui->listWidget->addItem(item);
-                        }
-                        else{QMessageBox::information(this,"Warning",u8"获取已借书本信息失败");}
+                    if(!library2->queryById(bookID,&iBook2)){QMessageBox::information(this,"Warning",u8"系统错误");return;}
+                    TBookBasicInfo basic4;
+                    if(iBook2->getBasicInfo(basic4))
+                    {
+                        QString bName2 = QString::fromStdString(basic4.name);
+
+                        QListWidgetItem *item = new QListWidgetItem;
+                        item->setText(bName2);
+                        item->setData(Qt::UserRole,basic4.id);//随带保存书本ID便于之后归还
+                        ui->listWidget->addItem(item);
                     }
-                    else{QMessageBox::information(this,"Warning",u8"无法查询到用户所借的该本书");}
+                    else{QMessageBox::information(this,"Warning",u8"系统错误");}
                 }
             }
             else{QMessageBox::information(this,"Warning",u8"无法获取用户已借的书目信息");}
@@ -171,26 +178,34 @@ void usermain::on_pushButton_7_clicked()//刷新操作，对当前用户的所�
             {
                 auto_iface<ILibrary> library2;
                 factory1->getLibrary(&library2);
-                int i;
+                int i;int j;
+                std::set<int> TBorrow;
                 for(i=0;i<basic2.size();i++)//在widget依次显示已借的书本
                 {
-                    auto_iface<IBook> iBook1;
-                    int bID1 = basic2[i].bookID;
-                    if(library2->queryById(bID1,&iBook1))
-                    {
-                        TBookBasicInfo basic3;
-                        if(iBook1->getBasicInfo(basic3))
-                        {
-                            QString bName2 = QString::fromStdString(basic3.name);
+                            bool pd = true;
+                            if(basic2[i].flag = 1)
+                            {
+                                TBorrow.erase(basic2[i].bookID);
+                                pd = false;break;
+                            }
+                            if(pd){TBorrow.insert(basic2[i].bookID);}
+                }
+                for(int bookID : TBorrow)
+                {
+                    auto_iface<IBook> iBook2;
 
-                            QListWidgetItem *item = new QListWidgetItem;
-                            item->setText(bName2);
-                            item->setData(Qt::UserRole,basic3.id);//随带保存书本ID便于之后归还
-                            ui->listWidget->addItem(item);
-                        }
-                        else{QMessageBox::information(this,"Warning",u8"获取已借书本信息失败");}
+                    if(!library2->queryById(bookID,&iBook2)){QMessageBox::information(this,"Warning",u8"系统错误");return;}
+                    TBookBasicInfo basic4;
+                    if(iBook2->getBasicInfo(basic4))
+                    {
+                        QString bName2 = QString::fromStdString(basic4.name);
+
+                        QListWidgetItem *item = new QListWidgetItem;
+                        item->setText(bName2);
+                        item->setData(Qt::UserRole,basic4.id);//随带保存书本ID便于之后归还
+                        ui->listWidget->addItem(item);
                     }
-                    else{QMessageBox::information(this,"Warning",u8"无法查询到用户所借的该本书");}
+                    else{QMessageBox::information(this,"Warning",u8"系统错误");}
                 }
             }
             else{QMessageBox::information(this,"Warning",u8"无法获取用户已借的书目信息");}
@@ -200,4 +215,9 @@ void usermain::on_pushButton_7_clicked()//刷新操作，对当前用户的所�
     }
     else{QMessageBox::information(this,"Warning",u8"请先登录");}
 
+}
+
+void usermain::on_pushButton_clicked()
+{
+    close();
 }

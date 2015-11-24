@@ -17,7 +17,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>用户主界面</string>
   </property>
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
