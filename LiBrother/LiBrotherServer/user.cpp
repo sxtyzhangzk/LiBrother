@@ -26,7 +26,9 @@ bool CUser::check(TUserBasicInfo info_to_check)
 	if (info_to_check.num<0) return false;
 	if (info_to_check.email.empty() || info_to_check.name.empty()) return false;
 	for (int i = 0; i < info_to_check.email.length(); i++)
-		if (info_to_check.email[i] == '@') return true;
+		if (info_to_check.email[i] == '@')
+			return true;
+	setError(InvalidParam, 1000000, "email");
 	return false;
 }
 bool CUser::bcheck(TBorrowInfo info_to_check)
