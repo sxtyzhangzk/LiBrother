@@ -32,16 +32,18 @@ struct TSocketEx
 	bool TLS;
 	Botan::TLS::Server * pTLSServer;
 
-	TSocketEx(CNetServer * pNetServer, ip::tcp::socket * socket) :
+	TSocketEx(CNetServer * pNetServer, ip::tcp::socket * socket, bool bTLS) :
 		pNetServer(pNetServer), socket(socket), nRefCount(1),
-		pTLSServer(nullptr)
+		pTLSServer(nullptr), TLS(bTLS), bReadyToClose(false)
 	{
+		lprintf_d("Socket %p Created", this);
 		pNetServer->m_mutexClientSocks.lock();
 		pNetServer->m_vpClientSocks.insert(this);
 		pNetServer->m_mutexClientSocks.unlock();
 	}
 	~TSocketEx()
 	{
+		lprintf_d("Socket %p Deleted", this);
 		if (pTLSServer)
 			delete pTLSServer;
 		while (!qSend.empty())
@@ -56,10 +58,12 @@ struct TSocketEx
 	void AddRef()
 	{
 		nRefCount++;
+		lprintf_d("Socket %p AddRef", this);
 	}
 	void Release()
 	{
 		nRefCount--;
+		lprintf_d("Socket %p Release", this);
 		if (nRefCount <= 0)
 		{
 			std::mutex& mutexSocks = pNetServer->m_mutexClientSocks;
@@ -76,7 +80,7 @@ struct TSocketEx
 		char * pBuffer = new char[nLen];
 		memcpy(pBuffer, pData, nLen);
 		mutexSend.lock();
-		ret = qSend.empty();
+		ret = !qSend.empty();
 		qSend.push(std::make_pair(pBuffer, nLen));
 		mutexSend.unlock();
 		return ret;
@@ -191,7 +195,7 @@ bool CNetServer::initListenSocket()
 
 void CNetServer::createNewSocket(bool bTLS)
 {
-	TSocketEx * pListenSocket = new TSocketEx(this, new ip::tcp::socket(m_ioService));
+	TSocketEx * pListenSocket = new TSocketEx(this, new ip::tcp::socket(m_ioService), bTLS);
 	ip::tcp::acceptor * pAcceptor = (bTLS ? m_pacceptorTLS : m_pacceptorMain);
 	pAcceptor->async_accept(*pListenSocket->socket, std::bind(&CNetServer::doAccept, this, pListenSocket, std::placeholders::_1));
 }
@@ -223,7 +227,11 @@ bool CNetServer::createTLSSession(TSocketEx * pSocket)
 void CNetServer::doAccept(TSocketEx * pSocket, boost::system::error_code errcode)
 {
 	if (errcode)
+	{
+		lprintf_w("doAccept Error: %s", errcode.message().c_str());
+		pSocket->Release();
 		return;
+	}
 	createNewSocket(pSocket->TLS);
 	pSocket->socket->async_receive(
 		buffer(pSocket->rawBuffer),
@@ -233,7 +241,12 @@ void CNetServer::doAccept(TSocketEx * pSocket, boost::system::error_code errcode
 void CNetServer::doRecv(TSocketEx * pSocket, size_t nLen, boost::system::error_code errcode)
 {
 	if (errcode)
+	{
+		lprintf_w("doRecv Error: %s", errcode.message().c_str());
+		pSocket->Release();
 		return;
+	}
+	lprintf_d("doRecv called, socket %p, nLen %d", pSocket, (int)nLen);
 	recvRawData(pSocket, pSocket->rawBuffer, nLen);
 	if (!pSocket->bReadyToClose)
 	{
@@ -248,7 +261,12 @@ void CNetServer::doRecv(TSocketEx * pSocket, size_t nLen, boost::system::error_c
 void CNetServer::doSend(TSocketEx * pSocket, size_t nLen, boost::system::error_code errcode)
 {
 	if (errcode)
+	{
+		lprintf_w("doSend Error: %s", errcode.message().c_str());
+		pSocket->Release();
 		return;
+	}
+	lprintf_d("doSend called, socket %p, nLen %d", pSocket, (int)nLen);
 
 	bool flag = false;
 
@@ -272,20 +290,26 @@ void CNetServer::doSend(TSocketEx * pSocket, size_t nLen, boost::system::error_c
 bool CNetServer::sendData(TSocketEx * pSocket, const char * pData, size_t nLen)
 {
 	assert(pSocket && pData);
+	lprintf_d("sendData called, socket %p, len %d", pSocket, (int)nLen);
 	if (pSocket->bReadyToClose)
 		return false;
 
 	while (nLen > 0)
 	{
-		size_t nNow = std::max(nLen, BufferSize);
+		size_t nNow = std::min(nLen, BufferSize);
 		if (!pSocket->postToSendQueue(pData, nLen))
 		{
 			pSocket->mutexSend.lock();
-			char * pBuffer = pSocket->qSend.front().first;
-			pSocket->AddRef();
-			pSocket->socket->async_send(
-				buffer(pBuffer, nNow),
-				std::bind(&CNetServer::doSend, this, pSocket, std::placeholders::_2, std::placeholders::_1));
+			if (!pSocket->qSend.empty())
+			{
+				char * pBuffer = pSocket->qSend.front().first;
+				size_t nLen = pSocket->qSend.front().second;
+				pSocket->AddRef();
+				pSocket->socket->async_send(
+					buffer(pBuffer, nNow),
+					std::bind(&CNetServer::doSend, this, pSocket, std::placeholders::_2, std::placeholders::_1));
+			}
+			pSocket->mutexSend.unlock();
 		}
 		pData += nNow;
 		nLen -= nNow;
@@ -298,11 +322,11 @@ void CNetServer::receivedData(TSocketEx * pSocket, const char * pData, size_t nL
 	assert(pSocket);
 
 	int nLine = 0;
-	if (pSocket->recvBuffer.back() == '\n')
+	if (!pSocket->recvBuffer.empty() && pSocket->recvBuffer.back() == '\n')
 		nLine = 1;
-	size_t lasti = 0;
 	for (size_t i = 0; i < nLen; i++)
 	{
+		pSocket->recvBuffer += pData[i];
 		if (pData[i] == '\n')
 			nLine++;
 		else
@@ -310,33 +334,38 @@ void CNetServer::receivedData(TSocketEx * pSocket, const char * pData, size_t nL
 		if (nLine >= 2)
 		{
 			nLine = 0;
-			pSocket->recvBuffer.append(pData + lasti, i - lasti + 1);
 			pSocket->recvBuffer.erase(pSocket->recvBuffer.size() - 2, 2);
+
+			size_t fi, len = pSocket->recvBuffer.length();
+			for (fi = 0; fi < len; fi++)
+			{
+				if (pSocket->recvBuffer[fi] != '\n')
+					break;
+			}
+			if (fi)
+				pSocket->recvBuffer = pSocket->recvBuffer.substr(fi);
 
 			std::string strResponse;
 			bool bKeepAlive;
 			bKeepAlive = m_pSManager->recvRequest(
-				pSocket->socket->remote_endpoint().address().to_string(), 
+				pSocket->socket->remote_endpoint().address().to_string(),
 				pSocket->recvBuffer, strResponse);
-
-			if (strResponse.back() == '\n')
+			pSocket->recvBuffer.clear();
+			if (!strResponse.empty() && strResponse.back() == '\n')
 				strResponse += "\n";
 			else
 				strResponse += "\n\n";
 			sendResponse(pSocket, strResponse);
 			if (!bKeepAlive)
 				setSocketClose(pSocket);
-
-			lasti = i + 1;
 		}
 	}
-	if (lasti != nLen)
-		pSocket->recvBuffer.append(pData + lasti, nLen - lasti + 1);
 }
 
 void CNetServer::sendResponse(TSocketEx * pSocket, const std::string& strResponse)
 {
 	assert(pSocket);
+	lprintf_d("sendResponse: socket %p, res:\n[\n%s\n]", pSocket, strResponse.c_str());
 	if (pSocket->TLS)
 	{
 		assert(pSocket->pTLSServer);
