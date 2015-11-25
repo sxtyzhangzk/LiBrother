@@ -122,7 +122,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		m_pClassFactory->getLibrary(&library);
 		auto_iface<IBook> book;
 		library->queryById(book_basic_info.id, &book);
-		if (book->setBasicInfo(book_basic_info))  value["result"] = '1';
+		if (book->setBasicInfo(book_basic_info))  value["result"] = "1";
 		else value["result"] = "DatabaseError";
 		strResponse = writer.write(value);
 		return;
@@ -140,7 +140,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		m_pClassFactory->getLibrary(&library);
 		auto_iface<IBook>book;
 		library->queryById(tem_id, &book);
-		if (book->setDescription(tem_description.c_str())) value["result"] = '1';
+		if (book->setDescription(tem_description.c_str())) value["result"] = "1";
 		else value["result"] = "DatabaseError";
 		strResponse = writer.write(value);
 		return;
@@ -158,7 +158,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		m_pClassFactory->getLibrary(&library);
 		auto_iface<IBook> book;
 		library->queryById(tem_id, &book);
-		if (book->deleteBook(tem_num)) value["result"] = '1';
+		if (book->deleteBook(tem_num)) value["result"] = "1";
 		else value["result"] = "DatabaseError";
 		strResponse = writer.write(value);
 		return;
@@ -204,7 +204,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		library->queryById(tem_id, &book);
 		if (book->getBookReadLevel() != -1) {
 			value["read_level"] = book->getBookReadLevel();
-			value["result"] = '1';
+			value["result"] = "1";
 		}
 		else value["result"] = "DatabaseError";
 		strResponse = writer.write(value);
@@ -224,7 +224,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 		m_pClassFactory->getLibrary(&library);
 		auto_iface<IBook> book;
 		library->queryById(tem_id, &book);
-		if (book->setBookReadLevel(read_level0)) value["result"] = '1';
+		if (book->setBookReadLevel(read_level0)) value["result"] = "1";
 		else value["result"] = "DatabaseError";
 		strResponse = writer.write(value);
 		return;
@@ -423,17 +423,27 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 			writePermissionDenied(value);
 		else
 		{
-		TUserBasicInfo tem_user_basic_info;
-		tem_user_basic_info.gender = value0["gender"].asInt();
-		tem_user_basic_info.name = value0["name"].asString();
-		tem_user_basic_info.email = value0["email"].asString();
-
 			auto_iface<IUserManager> usermanager;
-		m_pClassFactory->getUserManager(&usermanager);
-		auto_iface<IUser> user;
-		usermanager->getUserByID(tem_user_basic_info.id, &user);
-			if (user->setBasicInfo(tem_user_basic_info)) value["result"] = '1';
-		else value["result"] = "DatabaseError";
+			m_pClassFactory->getUserManager(&usermanager);
+			auto_iface<IUser> user;
+			if (usermanager->getUserByID(req_id, &user))
+			{
+				TUserBasicInfo tem_user_basic_info;
+				if (user->getBasicInfo(tem_user_basic_info))
+				{
+					tem_user_basic_info.gender = value0["gender"].asInt();
+					tem_user_basic_info.name = value0["name"].asString();
+					tem_user_basic_info.email = value0["email"].asString();
+					if (user->setBasicInfo(tem_user_basic_info))
+						value["result"] = 1;
+					else
+						writeInterfaceError(value, user);
+				}
+				else
+					writeInterfaceError(value, user);
+			}
+			else
+				writeInterfaceError(value, usermanager);
 		}
 		strResponse = writer.write(value);
 		return;
@@ -608,6 +618,29 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 					value["result"] = 1;
 					value["AuthLevel"] = nAuthLevel;
 				}
+				else
+					writeInterfaceError(value, user);
+			}
+			else
+				writeInterfaceError(value, userManager);
+		}
+		strResponse = writer.write(value);
+		return;
+	}
+
+	if (request == "user_setAuthLevel")
+	{
+		if (!user_id || !auth.auth_SetAuthLevel)
+			writePermissionDenied(value);
+		else
+		{
+			auto_iface<IUserManager> userManager;
+			m_pClassFactory->getUserManager(&userManager);
+			auto_iface<IUser> user;
+			if (userManager->getUserByID(value0["id"].asInt(), &user))
+			{
+				if (user->setAuthLevel(value0["AuthLevel"].asInt()))
+					value["result"] = 1;
 				else
 					writeInterfaceError(value, user);
 			}

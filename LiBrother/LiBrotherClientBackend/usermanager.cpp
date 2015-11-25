@@ -33,7 +33,7 @@ bool CUserManager::getUserByName(const char * strName, IUser ** ppUser)
 	value0["name"] = strName;
 
 	Json::FastWriter writer;
-	std::string str = writer.write(value0);
+	strRequest = writer.write(value0);
 
 	TRY_SEND_REQUEST(strRequest, strResponse);
 	
@@ -46,11 +46,11 @@ bool CUserManager::getUserByName(const char * strName, IUser ** ppUser)
 		if (value["result"].asInt() == 1)
 		{
 			TUserBasicInfo Info;
-			Info.id = value0["id"].asInt();
-			Info.gender = value0["gender"].asInt();
-			Info.name = value0["name"].asString();
-			Info.email = value0["email"].asString();
-			Info.num = value0["book_num"].asInt();
+			Info.id = value["id"].asInt();
+			Info.gender = value["gender"].asInt();
+			Info.name = value["name"].asString();
+			Info.email = value["email"].asString();
+			Info.num = value["book_num"].asInt();
 
 			CUser *user = new CUser(Info.id);
 			user->AddRef();

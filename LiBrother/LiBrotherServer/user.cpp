@@ -407,7 +407,7 @@ bool CUser::setAuthLevel(int nAuthLevel)
 		std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN),MYSQL_CONN_RELEASER);
 		std::shared_ptr<sql::Statement> stat(c->createStatement());
 		std::stringstream str;
-		str << "UPDATE FROM UserInfoDatabase AuthLevel = "<<nAuthLevel<<" WHERE userID = " << m_Id;
+		str << "UPDATE UserInfoDatabase Set AuthLevel = "<<nAuthLevel<<" WHERE id = " << m_Id;
 		stat->execute(str.str());
 		return true;
 	}

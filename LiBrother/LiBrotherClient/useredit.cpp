@@ -1,4 +1,4 @@
-#include "useredit.h"
+﻿#include "useredit.h"
 #include "ui_useredit.h"
 #include "client_interfaces.h"
 #include "QMessageBox"
@@ -23,7 +23,7 @@ void useredit::on_pushButton_3_clicked()//用户查询模块
     factory1->getUserManager(&IUManager);
     auto_iface<IUser> iUser;
 
-    uName = ui->label_5->text();
+    uName = ui->lineEdit_5->text();
     std::string uName1 = uName.toStdString();
     if(IUManager->getUserByName(uName1.c_str(),&iUser))//通过用户名查询到当前索要修改的用户信息
     {

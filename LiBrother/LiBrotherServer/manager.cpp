@@ -31,7 +31,11 @@ bool CManager::getUserByID(int nID, IUser ** ppUser)
 		str << "SELECT * FROM UserInfoDatabase WHERE id = " << nID;
 		stat->execute(str.str());
 		std::shared_ptr<sql::ResultSet> result(stat->getResultSet());
-		result->next();
+		if (!result->next())
+		{
+			setError(InvalidParam, 5, "User Not Found");
+			return false;
+		}
 		TUserBasicInfo Basicinfo;
 		Basicinfo.email = result->getString("email");
 		Basicinfo.gender = result->getInt("gender");
