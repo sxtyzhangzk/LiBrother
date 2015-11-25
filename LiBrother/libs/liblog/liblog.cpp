@@ -12,6 +12,10 @@
 
 #include <mutex>
 
+#ifdef _WIN32
+#include <Windows.h>
+#endif
+
 MODULE_LOG_NAME("LibLog");
 
 //单条日志的长度上限
@@ -31,6 +35,8 @@ tm GetTime();
 void GetLogHeader(char * pDest, const size_t nBufferSize, const char * strStatus, const char * strModuleName, const tm& tmNow);
 //输出日志，nSize == -1表示不指定长度
 void printLog(const char * strContent, int nSize = -1);
+
+void setConsoleColor(const char * strStatus);
 
 bool InitLog(const char * strFile, bool bAppend, bool bCopytoScreen)
 {
@@ -67,6 +73,7 @@ void lprintf_(const char * strStatus, const char * strModuleName, const char * s
 	nLength = strnlen(strBuffer, sizeof(strBuffer));
 
 	mtxLog.lock();
+	setConsoleColor(strStatus);
 	//每换一行输出日志头
 	for (int i = 0, j = 0; i < nLength; i++)
 		if (strBuffer[i] == '\n' || i == nLength - 1)
@@ -77,6 +84,7 @@ void lprintf_(const char * strStatus, const char * strModuleName, const char * s
 		}
 	if (strBuffer[nLength - 1] != '\n')
 		printLog("\n");
+	setConsoleColor(nullptr);
 	mtxLog.unlock();
 }
 
@@ -130,4 +138,30 @@ void printLog(const char * strContent, int nSize)
 		if (g_bCopytoScreen)
 			printf("%.*s", nSize, strContent);
 	}
+}
+
+void setConsoleColor(const char * strContent)
+{
+#ifdef _WIN32
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	if (hConsole == INVALID_HANDLE_VALUE)
+		return;
+	if (!strContent)
+		SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+	else if (strcmp(strContent, "WARNING") == 0)
+		SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+	else if (strcmp(strContent, "ERROR") == 0)
+		SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_INTENSITY);
+	else if(strcmp(strContent, "DEBUG") == 0)
+		SetConsoleTextAttribute(hConsole, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+#else
+	if (!strContent)
+		printf("\x1b[m");
+	else if (strcmp(strContent, "WARNING") == 0)
+		printf("\x1b[33m\x1b[1m");
+	else if (strcmp(strContent, "ERROR") == 0)
+		printf("\x1b[31m\x1b[1m");
+	else if (strcmp(strContent, "DEBUG") == 0)
+		printf("\x1b[32m\x1b[1m");
+#endif
 }

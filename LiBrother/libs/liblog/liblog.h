@@ -15,6 +15,13 @@
 //输出一条警告
 #define lprintf_w(format, ...) lprintf_("WARNING", g_strModuleName, format, ##__VA_ARGS__)
 
+//输出一条调试信息
+#ifdef _DEBUG
+#define lprintf_d(format, ...) lprintf_("DEBUG", g_strModuleName, format, ##__VA_ARGS__)
+#else
+#define lprintf_d(format, ...)
+#endif
+
 //初始化日志文件
 bool InitLog(const char * strFile, bool bAppend = true, bool bCopytoScreen = true);
 //记录日志，格式同printf，请使用lprintf宏调用此函数
