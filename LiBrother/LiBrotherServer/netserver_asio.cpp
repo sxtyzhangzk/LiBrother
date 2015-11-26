@@ -62,9 +62,9 @@ struct TSocketEx
 	}
 	void Release()
 	{
-		nRefCount--;
+		int refNow = --nRefCount;
 		lprintf_d("Socket %p Release", this);
-		if (nRefCount <= 0)
+		if (refNow <= 0)
 		{
 			std::mutex& mutexSocks = pNetServer->m_mutexClientSocks;
 			mutexSocks.lock();
@@ -206,14 +206,11 @@ bool CNetServer::createTLSSession(TSocketEx * pSocket)
 
 	try
 	{
-		auto fnOutput = std::bind(&CNetServer::sendData, this, pSocket, std::placeholders::_1, std::placeholders::_2);
-		auto fnData = std::bind(&CNetServer::receivedData, this, pSocket, std::placeholders::_1, std::placeholders::_2);
-		auto fnAlert = [](Botan::TLS::Alert alert, const Botan::byte * pData, size_t size) {};
-		auto fnHandshake = [](const Botan::TLS::Session& session)->bool { return true; };
 		pSocket->pTLSServer = new Botan::TLS::Server(
-			[&fnOutput](const Botan::byte * pData, size_t size) { fnOutput((const char *)pData, size); },
-			[&fnData](const Botan::byte * pData, size_t size) { fnData((const char *)pData, size); },
-			fnAlert, fnHandshake,
+			[this, pSocket](const Botan::byte * pData, size_t size) { sendData(pSocket, (const char*)pData, size); },
+			[this, pSocket](const Botan::byte * pData, size_t size) { receivedData(pSocket, (const char*)pData, size); },
+			[](Botan::TLS::Alert alert, const Botan::byte * pData, size_t size) {},
+			[](const Botan::TLS::Session& session)->bool { return true; },
 			*m_pTLSSM, *m_pCredManager, *m_pPolicy, *m_rng);
 	}
 	catch (std::exception& e)
@@ -233,6 +230,7 @@ void CNetServer::doAccept(TSocketEx * pSocket, boost::system::error_code errcode
 		return;
 	}
 	createNewSocket(pSocket->TLS);
+	createTLSSession(pSocket);
 	pSocket->socket->async_receive(
 		buffer(pSocket->rawBuffer),
 		std::bind(&CNetServer::doRecv, this, pSocket, std::placeholders::_2, std::placeholders::_1));
@@ -385,7 +383,7 @@ void CNetServer::recvRawData(TSocketEx * pSocket, const char * pData, size_t nLe
 
 void CNetServer::setSocketClose(TSocketEx * pSocket)
 {
-	if (pSocket->TLS)
+	if (pSocket->TLS && pSocket->pTLSServer)
 		pSocket->pTLSServer->close();
 	pSocket->bReadyToClose = true;
 }

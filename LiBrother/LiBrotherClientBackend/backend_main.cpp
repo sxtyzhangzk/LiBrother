@@ -105,6 +105,11 @@ bool initBackend(int argc, char * argv[], int& retcode)
 		g_configClient.strServer = netConfig["server"].as<std::string>();
 		g_configClient.nPort = netConfig["port"].as<int>();
 		g_configClient.bTLS = netConfig["tls"].as<bool>();
+		if (g_configClient.bTLS)
+		{
+			g_configClient.strCAPath = netConfig["ca-certs"].as<std::string>();
+			g_configClient.bTLSVerifyHostname = netConfig["verify-hostname"].as<bool>();
+		}
 		g_configClient.bKeepAlive = netConfig["keepalive"].as<bool>();
 		g_configClient.nBufferSize = netConfig["buffersize"].as<int>();
 

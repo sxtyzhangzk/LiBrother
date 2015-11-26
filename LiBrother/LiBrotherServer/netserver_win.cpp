@@ -185,12 +185,12 @@ struct TSocketEx
 
 	unsigned int AddRef()
 	{
-		lprintf("AddRef");
+		lprintf_d("SocketEx AddRef: %p", this);
 		return InterlockedIncrement(&nRefCount);
 	}
 	unsigned int Release()
 	{
-		lprintf("Release");
+		lprintf_d("SocketEx Release: %p", this);
 		unsigned int refCount = InterlockedDecrement(&nRefCount);
 		if (refCount == 0)
 		{
@@ -395,14 +395,11 @@ bool CNetServer::createTLSSession(TSocketEx * pSocket)
 	try
 	{
 		//TODO: Handle Alert
-		auto fnOutput = std::bind(&CNetServer::sendData, this, pSocket, std::placeholders::_1, std::placeholders::_2);
-		auto fnData = std::bind(&CNetServer::receivedData, this, pSocket, std::placeholders::_1, std::placeholders::_2);
-		auto fnAlert = [](Botan::TLS::Alert alert, const Botan::byte * pData, size_t size) {};
-		auto fnHandshake = [](const Botan::TLS::Session& session)->bool { return true; };
 		pSocket->pTLSServer = new Botan::TLS::Server(
-			[&fnOutput](const Botan::byte * pData, size_t size) { fnOutput((const char *)pData, size); },
-			[&fnData](const Botan::byte * pData, size_t size) { fnData((const char *)pData, size); },
-			fnAlert, fnHandshake,
+			[this, pSocket](const Botan::byte * pData, size_t size) { sendData(pSocket, (const char*)pData, size); },
+			[this, pSocket](const Botan::byte * pData, size_t size) { receivedData(pSocket, (const char*)pData, size); },
+			[](Botan::TLS::Alert alert, const Botan::byte * pData, size_t size) {}, 
+			[](const Botan::TLS::Session& session)->bool { return true; },
 			*m_pTLSSM, *m_pCredManager, *m_pPolicy, *m_rng);
 	}
 	catch (std::exception& e)
@@ -420,12 +417,16 @@ bool CNetServer::initListenSocket()
 		return false;
 	m_psockListen->TLS = false;
 
+	lprintf("Listen at %d", g_configSvr.nPort);
+
 	//创建监听套接字(TLS)
 	if (g_configSvr.nTLS)
 	{
 		if (!(m_psockListenTLS = createListenSocket(g_configSvr.nTLSPort)))
 			return false;
 		m_psockListenTLS->TLS = true;
+
+		lprintf("TLS Listen at %d", g_configSvr.nTLSPort);
 	}
 
 	//获取AcceptEx和GetAcceptExSockAddrs的指针
@@ -506,7 +507,7 @@ bool CNetServer::postAcceptRq(TSocketEx * pSocket, TPerIOContext * pIOContext)
 {
 	assert(pSocket);
 
-	lprintf("POST ACCEPT RQ");
+	lprintf_d("POST ACCEPT RQ");
 
 	bool bNewIOContext = false;
 	if (!pIOContext)
@@ -547,7 +548,7 @@ bool CNetServer::postRecvRq(TSocketEx * pSocket, TPerIOContext * pIOContext)
 {
 	assert(pSocket);
 
-	lprintf("POST RECV RQ");
+	lprintf_d("POST RECV RQ");
 
 	bool bNewIOContext = false;
 	
@@ -575,7 +576,7 @@ bool CNetServer::postSendRq(TSocketEx * pSocket, TPerIOContext * pIOContext)
 {
 	assert(pSocket && pIOContext);
 
-	lprintf("POST SEND RQ");
+	lprintf_d("POST SEND RQ");
 
 	DWORD dwBytes, dwFlags = 0;
 	int nRet = WSASend(pSocket->socket, &pIOContext->wsaBuffer, 1, &dwBytes, 0, (LPOVERLAPPED)pIOContext, nullptr);
@@ -620,18 +621,31 @@ unsigned long WINAPI CNetServer::WorkerThread(void * pParam)
 	while (true)
 	{
 		BOOL bRet = GetQueuedCompletionStatus(netServer->m_hIOCP, &dwBytes, &completionKey, &pOverlapped, INFINITE);
+		TSocketEx * pSocket = (TSocketEx *)completionKey;
+		TPerIOContext * pPIOContext = CONTAINING_RECORD(pOverlapped, TPerIOContext, overlapped);
 		if (!bRet)
 		{
 			//TODO: Handle Error
-			lprintf_e("An Error occurred");
+			DWORD dwError = GetLastError();
+			
+			if (dwError == ERROR_NETNAME_DELETED)
+			{
+				lprintf("A client closed the connection abnormally");
+				pSocket->eraseIoContext(pPIOContext);
+				pSocket->Release();
+			}
+			else
+			{
+				lprintf_e("An IOCP Error occurred: %d (Thread: %d)", dwError, param->nThreadID);
+				break;
+			}
+			continue;
 		}
+
 		if (completionKey == Exit_Key)
 			break;
 
-		TSocketEx * pSocket = (TSocketEx *)completionKey;
-		TPerIOContext * pPIOContext = CONTAINING_RECORD(pOverlapped, TPerIOContext, overlapped);
-
-		lprintf("IOTYPE=%d", pPIOContext->ioType);
+		lprintf_d("IOTYPE=%d", pPIOContext->ioType);
 
 		switch (pPIOContext->ioType)
 		{
@@ -669,14 +683,19 @@ int CNetServer::doAccept(TSocketEx * pSocket, TPerIOContext * pIOContext, size_t
 
 	TSocketEx * pClientSocket = new TSocketEx(this, pIOContext->sockClient, true, *remoteAddr, pSocket->TLS);
 
+	char clientIP[IPLength] = { 0 };
+	inet_ntop(remoteAddr->sin_family, &remoteAddr->sin_addr, clientIP, sizeof(clientIP));
+	lprintf("Accept Connection, IP: %s %s", clientIP, pSocket->TLS ? "(TLS enabled)" : "");
+
 	bool bPostedAcceptRq = postAcceptRq(pSocket, pIOContext);
 	if (!bPostedAcceptRq)
 	{
-		//TODO:
+		lprintf_e("Failed to Post Accept Request");
 	}
 
 	if (pSocket->TLS && !createTLSSession(pClientSocket))
 	{
+		lprintf_e("Failed to Create TLS Session");
 		//delete pClientSocket;
 		pClientSocket->Release();
 		if (!bPostedAcceptRq)
@@ -686,6 +705,7 @@ int CNetServer::doAccept(TSocketEx * pSocket, TPerIOContext * pIOContext, size_t
 
 	if (!CreateIoCompletionPort((HANDLE)pClientSocket->socket, m_hIOCP, (ULONG_PTR)pClientSocket, 0))
 	{
+		lprintf_e("Failed to Bind Socket to IOCP, Error: %d", GetLastError());
 		//delete pClientSocket;
 		pClientSocket->Release();
 		if (!bPostedAcceptRq)
@@ -694,7 +714,7 @@ int CNetServer::doAccept(TSocketEx * pSocket, TPerIOContext * pIOContext, size_t
 	}
 
 	//处理客户端发来的第一组数据
-	receivedData(pClientSocket, pIOContext->wsaBuffer.buf, nDataSize);
+	recvRawData(pClientSocket, pIOContext->wsaBuffer.buf, nDataSize);
 
 	if (!pClientSocket->bReadyToClose)
 	{
@@ -718,20 +738,20 @@ int CNetServer::doAccept(TSocketEx * pSocket, TPerIOContext * pIOContext, size_t
 bool CNetServer::doRecv(TSocketEx * pSocket, TPerIOContext * pIOContext, size_t nDataSize)
 {
 	assert(pSocket && pIOContext);
+	lprintf_d("DO RECV, size=%d", nDataSize);
 
 	if (nDataSize == 0)
 	{
 		//关闭连接
-		EnterCriticalSection((LPCRITICAL_SECTION)m_pcsClientSocks);
-		m_vpClientSocks.erase(pSocket);
-		LeaveCriticalSection((LPCRITICAL_SECTION)m_pcsClientSocks);
-		delete pSocket;
+		pSocket->bReadyToClose = true;
+		pSocket->eraseIoContext(pIOContext);
+		pSocket->Release();
 		return true;
 	}
-	receivedData(pSocket, pIOContext->wsaBuffer.buf, nDataSize);
+	recvRawData(pSocket, pIOContext->wsaBuffer.buf, nDataSize);
 	if (pSocket->bReadyToClose)
 	{
-		lprintf("CLOSE CONNECTION");
+		lprintf_d("CLOSE CONNECTION");
 		pSocket->eraseIoContext(pIOContext);
 		pSocket->Release();
 		return true;
@@ -743,7 +763,7 @@ bool CNetServer::doSend(TSocketEx * pSocket, TPerIOContext * pIOContext, size_t 
 {
 	assert(pSocket && pIOContext && pIOContext->wsaBuffer.buf);
 
-	lprintf("DO SEND, size=%d", nDataSize);
+	lprintf_d("DO SEND, size=%d", nDataSize);
 
 	delete pIOContext->wsaBuffer.buf;
 	char * buffer = nullptr;
@@ -808,7 +828,7 @@ void CNetServer::sendResponse(TSocketEx * pSocket, const std::string& strRespons
 {
 	assert(pSocket);
 
-	lprintf("SEND RES: [\n%s\n]", strResponse.c_str());
+	lprintf_d("SEND RES: [\n%s\n]", strResponse.c_str());
 	if (pSocket->TLS)
 	{
 		assert(pSocket->pTLSServer);

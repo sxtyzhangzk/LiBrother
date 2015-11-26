@@ -158,6 +158,7 @@
     <ClInclude Include="client_interfaces.h" />
     <ClInclude Include="class_factory_client.h" />
     <ClInclude Include="config.h" />
+    <ClInclude Include="credentials_manager.h" />
     <ClInclude Include="library.h" />
     <ClInclude Include="netclient.h" />
     <ClInclude Include="user.h" />
@@ -167,6 +168,7 @@
   <ItemGroup>
     <ClCompile Include="backend_main.cpp" />
     <ClCompile Include="book.cpp" />
+    <ClCompile Include="credentials_manager.cpp" />
     <ClCompile Include="library.cpp" />
     <ClCompile Include="netclient.cpp" />
     <ClCompile Include="user.cpp" />

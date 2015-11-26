@@ -1,5 +1,6 @@
 #include "config.h"
 #include "netclient.h"
+#include "credentials_manager.h"
 
 #include <liblog.h>
 #include <cassert>
@@ -11,6 +12,9 @@
 #include <sstream>
 #include <thread>
 #include <condition_variable>
+
+#include <botan/auto_rng.h>
+#include <botan/tls_client.h>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/asio.hpp>
@@ -60,11 +64,21 @@ std::thread *pThreadWorker;
 ip::tcp::socket *pSocket;
 ip::tcp::endpoint epServer;
 
+Botan::AutoSeeded_RNG rng;
+CCredentialsManager credManager;
+Botan::TLS::Policy TLSPolicy;
+Botan::TLS::Session_Manager_In_Memory TLSSM(rng);
+Botan::TLS::Client *pTLSClient;
+
 char recvBuffer[BufferSize];
 std::string strRecv;
 std::condition_variable strRecvCV;
 std::mutex strRecvMutex;
 int recvError;
+
+std::mutex mutexHandshake;
+std::condition_variable cvHandshake;
+int nHandshakeStatus;
 
 unsigned long long sessionID = 0;
 
@@ -86,25 +100,29 @@ void doRecv(boost::system::error_code errcode, size_t nLen);
 
 bool sendDataRaw(const char *pBuffer, size_t nBuffer);
 
+bool initTLS();
+
+bool initTLSSession();
+
+
 bool initNetClient()
 {
+	if (g_configClient.bTLS && !initTLS())
+		return false;
 	work = new io_service::work(ioService);
 	pThreadWorker = new std::thread(workerThread);
-	lprintf("Thread Created.");
 	pSocket = new ip::tcp::socket(ioService);
 	ip::tcp::resolver resolver(ioService);
 	ip::tcp::resolver::query query(g_configClient.strServer, boost::lexical_cast<std::string>(g_configClient.nPort));
 	boost::system::error_code error;
 	auto iter = resolver.resolve(query, error);
 	decltype(iter) end;
-	lprintf("ITER");
 	if (error || iter == end)
 	{
 		lprintf_e("Cannot resolve server ip");
 		return false;
 	}
 	epServer = *iter;
-	lprintf("POST-ITEr");
 	return true;
 }
 
@@ -117,10 +135,18 @@ void workerThread()
 
 void cleanupNetClient()
 {
+	if (pSocket->is_open())
+	{
+		if (pTLSClient)
+			pTLSClient->close();
+		pTLSClient = nullptr;
+		pSocket->shutdown(socket_base::shutdown_type::shutdown_both);
+		pSocket->close();
+	}
+
 	if (work)
 		delete work;
-	if (pSocket->is_open())
-		pSocket->close();
+	
 	ioService.stop();
 	pThreadWorker->join();
 	delete pThreadWorker;
@@ -183,7 +209,13 @@ bool sendRequest(const std::string& strRequest, std::string& strRespond)
 bool connectToServer()
 {
 	if (pSocket->is_open())
+	{
+		pSocket->shutdown(socket_base::shutdown_type::shutdown_both);
+		pSocket->close();
 		return true;
+	}
+	recvError = 0;
+	nHandshakeStatus = 0;
 
 	boost::system::error_code error;
 	pSocket->connect(epServer, error);
@@ -195,13 +227,38 @@ bool connectToServer()
 
 	pSocket->async_receive(buffer(recvBuffer), doRecv);
 
+	if (g_configClient.bTLS && !initTLSSession())
+	{
+		pSocket->close();
+		return false;
+	}
+
 	lprintf("Connected to Server Successfully.");
 	return true;
 }
 
 bool sendData(const std::string& strSend)
 {
-	return sendDataRaw(strSend.c_str(), strSend.length());
+	if (g_configClient.bTLS)
+	{
+		assert(pTLSClient);
+		try
+		{
+			/*if (!pTLSClient->is_active())
+			{
+				lprintf_e("Failed to send data: TLS is not active");
+				return false;
+			}*/
+			pTLSClient->send((const Botan::byte *)strSend.data(), strSend.length());
+		}
+		catch (std::exception& e)
+		{
+			lprintf_e("TLS Send Error: %s", e.what());
+			return false;
+		}
+	}
+	else
+		return sendDataRaw(strSend.c_str(), strSend.length());
 }
 
 bool recvData(std::string& strBuffer)
@@ -211,7 +268,7 @@ bool recvData(std::string& strBuffer)
 	while (true)
 	{
 		std::unique_lock<std::mutex> lock(strRecvMutex);
-		if (strRecv.empty())
+		if (strRecv.empty() && !recvError)
 			strRecvCV.wait(lock);
 		if (recvError)
 		{
@@ -274,7 +331,17 @@ bool postData(const std::string& strSend, std::string& strRecv, bool retry)
 
 	if (!g_configClient.bKeepAlive)
 	{
-		pSocket->close();	//TLS?
+		if (g_configClient.bTLS)
+		{
+			if (pTLSClient)
+			{
+				pTLSClient->close();
+				delete pTLSClient;
+				pTLSClient = nullptr;
+			}
+		}
+		pSocket->shutdown(socket_base::shutdown_type::shutdown_both);
+		pSocket->close();
 	}
 	return true;
 }
@@ -316,17 +383,20 @@ bool verifySession()
 
 void doRecv(boost::system::error_code errcode, size_t nLen)
 {	//TODO: TLS
-	strRecvMutex.lock();
+	//std::unique_lock<std::mutex> lock(strRecvMutex);
 	if (errcode)
 	{
 		lprintf_e("ERROR: %s", errcode.message().c_str());
+		strRecvMutex.lock();
 		recvError++;
-		strRecvMutex.unlock();
 		pSocket->close();
+		strRecvMutex.unlock();
+		strRecvCV.notify_all();
 		return;
 	}
 	if (nLen == 0)
 	{
+		strRecvMutex.lock();
 		pSocket->close();
 		if (strRecv.length() >= 2 && strRecv.substr(strRecv.length() - 2) == "\n\n")
 			return;
@@ -334,11 +404,42 @@ void doRecv(boost::system::error_code errcode, size_t nLen)
 			strRecv += "\n";
 		else
 			strRecv += "\n\n";	//确保接收缓冲区以\n\n结尾
+		strRecvMutex.unlock();
+		strRecvCV.notify_all();
 		return;
 	}
-	strRecv.append(recvBuffer, nLen);
-	strRecvCV.notify_all();
-	strRecvMutex.unlock();
+	if (g_configClient.bTLS)
+	{
+		assert(pTLSClient);
+		try
+		{
+			pTLSClient->received_data((const Botan::byte *)recvBuffer, nLen);
+		}
+		catch (std::exception& e)
+		{
+			lprintf_e("%s", e.what());
+			if (nHandshakeStatus == 1)
+			{
+				strRecvMutex.lock();
+				recvError++;
+				strRecvMutex.unlock();
+				strRecvCV.notify_all();
+			}
+			else
+			{
+				std::unique_lock<std::mutex> lock(mutexHandshake);
+				nHandshakeStatus = 2;
+				cvHandshake.notify_all();
+			}
+		}
+	}
+	else
+	{
+		strRecvMutex.lock();
+		strRecv.append(recvBuffer, nLen);
+		strRecvMutex.unlock();
+		strRecvCV.notify_all();
+	}
 
 	pSocket->async_receive(buffer(recvBuffer), doRecv);
 }
@@ -355,6 +456,82 @@ bool sendDataRaw(const char *pBuffer, size_t nBuffer)
 		if (!pSocket->send(buffer(pBuffer + pos, nNow)))
 			return false;
 		pos += nNow;
+	}
+	return true;
+}
+
+bool initTLS()
+{
+	try
+	{
+		credManager.loadCA(g_configClient.strCAPath);
+	}
+	catch (std::exception& e)
+	{
+		lprintf_e("Failed to init TLS: %s", e.what());
+		return false;
+	}
+	return true;
+}
+
+bool initTLSSession()
+{
+	try
+	{
+		auto fnOutput = [](const Botan::byte *buffer, size_t len) { sendDataRaw((const char *)buffer, len); };
+		auto fnData = [](const Botan::byte *buffer, size_t len)
+		{
+			strRecvMutex.lock();
+			strRecv.append((const char *)buffer, len);
+			strRecvMutex.unlock();
+			strRecvCV.notify_all();
+		};
+		auto fnAlert = [](Botan::TLS::Alert alert, const Botan::byte *buffer, size_t len)
+		{
+			lprintf_w("TLS Alert: %s", alert.type_string().c_str());
+		};
+		auto fnHandshake = [](const Botan::TLS::Session& session)
+		{
+			std::unique_lock<std::mutex> lckHandshake(mutexHandshake);
+			nHandshakeStatus = 1;
+			cvHandshake.notify_all();
+			return true; 
+		};
+		if (pTLSClient)
+			delete pTLSClient;
+
+		if (!g_configClient.bTLSVerifyHostname)
+		{
+			pTLSClient = new Botan::TLS::Client(
+				fnOutput, fnData, fnAlert, fnHandshake,
+				TLSSM, credManager, TLSPolicy, rng/*,
+				Botan::TLS::Server_Information(g_configClient.strServer, g_configClient.nPort)*/);
+		}
+		else
+		{
+			pTLSClient = new Botan::TLS::Client(
+				fnOutput, fnData, fnAlert, fnHandshake,
+				TLSSM, credManager, TLSPolicy, rng,
+				Botan::TLS::Server_Information(g_configClient.strServer, g_configClient.nPort));
+		}
+
+		std::unique_lock<std::mutex> lckHandshake(mutexHandshake);
+		if(!nHandshakeStatus)
+			cvHandshake.wait(lckHandshake);
+
+		if (nHandshakeStatus != 1)
+			return false;
+
+		int cnt = 0;
+		while (!pTLSClient->is_active() && ++cnt <= 100)
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		if (!pTLSClient->is_active())
+			return false;
+	}
+	catch (std::exception& e)
+	{
+		lprintf_e("Failed to init TLS session: %s", e.what());
+		return false;
 	}
 	return true;
 }

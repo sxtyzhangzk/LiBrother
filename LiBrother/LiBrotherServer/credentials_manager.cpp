@@ -12,8 +12,13 @@ void CCredentialsManager::loadCertificate(const std::string& strCert, const std:
 	TServerCert cert;
 	cert.pKey.reset(Botan::PKCS8::load_key(strKey, *m_rng, strPassphrase));
 	Botan::DataSource_Stream dsStream(strCert);
-	while (!dsStream.end_of_data())
-		cert.certChain.push_back(Botan::X509_Certificate(dsStream));
+	try
+	{
+		while (!dsStream.end_of_data())
+			cert.certChain.push_back(Botan::X509_Certificate(dsStream));
+	}
+	catch(std::exception& e)
+	{ }
 	m_vCerts.push_back(cert);
 }
 

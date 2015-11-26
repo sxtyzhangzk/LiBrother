@@ -11,6 +11,8 @@
 #include <liblog.h>
 #include <botan/auto_rng.h>
 
+//会话管理模块
+
 MODULE_LOG_NAME("SessionManager");
 
 const int Cleaner_Short_Wait_Time = 1000;	//清理线程的短等待时间
@@ -87,7 +89,7 @@ bool CSessionManager::recvRequest(const std::string& strClientIP, const std::str
 {
 	strResponse.clear();
 
-	lprintf("recvRequest (IP=%s) [\n%s\n]", strClientIP.c_str(), strRequest.c_str());
+	lprintf_d("recvRequest (IP=%s) [\n%s\n]", strClientIP.c_str(), strRequest.c_str());
 
 	bool bKeepAlive = true;
 	session_t sessionID;
@@ -240,7 +242,7 @@ void CSessionManager::cleanerThread()
 	int nMaxClean = 50;		//一次最多清理的会话数
 	while (!m_mutexExitSignal.try_lock_for(std::chrono::milliseconds(nWaitTime)))
 	{
-		lprintf("Cleaning Sessions");
+		lprintf_d("Cleaning Sessions");
 		int nCleanedSession = 0;
 		time_t timeNow = time(nullptr);
 		std::vector<TSessionEx *> vExpiredSession;

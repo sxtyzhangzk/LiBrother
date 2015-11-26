@@ -14,6 +14,8 @@ struct TConfig
 	int nBufferSize;
 	bool bLog;
 	std::string strLogFile;
+	std::string strCAPath;
+	bool bTLSVerifyHostname;
 };
 
 extern TConfig g_configClient;
