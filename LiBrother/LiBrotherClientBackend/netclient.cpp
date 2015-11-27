@@ -256,6 +256,7 @@ bool sendData(const std::string& strSend)
 			lprintf_e("TLS Send Error: %s", e.what());
 			return false;
 		}
+		return true;
 	}
 	else
 		return sendDataRaw(strSend.c_str(), strSend.length());
@@ -311,6 +312,7 @@ bool recvData(std::string& strBuffer)
 		}
 		strRecv.clear();
 	}
+	return false;
 }
 
 bool postData(const std::string& strSend, std::string& strRecv, bool retry)

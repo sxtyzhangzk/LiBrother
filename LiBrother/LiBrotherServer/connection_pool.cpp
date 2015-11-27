@@ -53,6 +53,8 @@ sql::Connection * CConnectionPool::getConnection(int regID)
 	}
 	auto iter_conn = sqlConn->second.pConn.begin();
 	sql::Connection * conn = *iter_conn;
+	if (conn->isClosed())
+		conn->reconnect();
 	sqlConn->second.pConn.erase(iter_conn);
 	sqlConn->second.pConnInUse.insert(conn);
 	return conn;

@@ -23,7 +23,6 @@ static CClassFactory * g_mainFactory = nullptr;
 CClassFactory::CClassFactory() :
 	m_pLibrary(nullptr), m_pUserManager(nullptr), m_pAuthManager(nullptr)
 {
-	lprintf("CONSTRUCT");
 }
 
 bool CClassFactory::createEmptyBook(IBook ** ppBook)
@@ -143,10 +142,7 @@ bool initBackend(int argc, char * argv[], int& retcode)
 
 	g_mainFactory = new CClassFactory;
 
-	lprintf("HELLO");
 	g_mainFactory->AddRef();
-
-	lprintf("GO");
 
 	retcode = 0;
 	return true;

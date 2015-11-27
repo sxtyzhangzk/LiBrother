@@ -8,7 +8,9 @@ int main(int argc, char *argv[])
 	int retcode;
 	if(!initBackend(argc, argv, retcode))
 		return retcode;
+	QApplication::addLibraryPath("./plugins");
     QApplication a(argc, argv);
+	
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
     MainWindow w;
     w.show();
