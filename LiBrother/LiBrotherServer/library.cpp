@@ -185,7 +185,7 @@ bool CLibrary::queryByISBN(const char * strISBN, IBook ** ppBook)
 		std::string strError = std::string("An error occurred while searching by ISBN: ") + e.what();
 		setError(DatabaseError, 9, strError.c_str());
 		ret = false;
-		lprintf_e("%s", strError);
+		lprintf_e("%s", strError.c_str());
 	}
 
 	lprintf("queryByISBN called, isbn='%s', got %d results", strISBN, ret);
