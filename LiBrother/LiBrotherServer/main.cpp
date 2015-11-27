@@ -43,6 +43,7 @@ void loadDefaultConfig()
 	g_configSvr.strMySQLHost = "localhost";
 	g_configSvr.nSphinxPort = 9306;
 	g_configSvr.strSphinxDIR = "./sphinx/";
+	g_configSvr.nUpdateInterval = 300000;
 #ifdef _WIN32
 	g_configSvr.strPathSearchd = "searchd.exe";
 	g_configSvr.strPathIndexer = "indexer.exe";
@@ -184,6 +185,8 @@ bool loadConfig(const std::string& strFile)
 					g_configSvr.strPathIndexer = sphinx["indexer-bin"].as<std::string>();
 				if (sphinx["dir"].IsDefined())
 					g_configSvr.strSphinxDIR = sphinx["dir"].as<std::string>();
+				if (sphinx["upd-interval"].IsDefined())
+					g_configSvr.nUpdateInterval = sphinx["upd-interval"].as<int>();
 			}
 		}
 	}
@@ -310,6 +313,12 @@ int main(int argc, char * argv[])
 
 	if (g_configSvr.nSphinxType == 1)
 	{
+		std::vector<std::string> vecArgs;
+		vecArgs.push_back("book");
+		progLauncher.runProgram(
+			g_configSvr.strPathIndexer, vecArgs, g_configSvr.strSphinxDIR,
+			CProgramLauncher::RunWait);
+
 		nSearchd = progLauncher.runProgram(
 			g_configSvr.strPathSearchd, std::vector<std::string>(), g_configSvr.strSphinxDIR,
 			CProgramLauncher::RunBackend);
@@ -321,12 +330,12 @@ int main(int argc, char * argv[])
 		else
 		{
 			//TODO: Launch Indexer
-			std::vector<std::string> vecArgs;
+			vecArgs.clear();
 			vecArgs.push_back("book_delta");
 			vecArgs.push_back("--rotate");
 			nIndexer = progLauncher.runProgram(
 				g_configSvr.strPathIndexer, vecArgs, g_configSvr.strSphinxDIR, 
-				CProgramLauncher::RunAsTask, 300000);
+				CProgramLauncher::RunAsTask, g_configSvr.nUpdateInterval);
 			if (nIndexer < 0)
 			{
 				lprintf_w("Failed to add task Indexer");

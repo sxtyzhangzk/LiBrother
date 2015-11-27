@@ -32,7 +32,7 @@ bookdata::bookdata(int nID, QWidget *parent) :
         if(!iBook1->getDescription(bDescription)){close();QMessageBox::information(this,"Warning",u8"系统错误");return;}
 
         QString bName1 = QString::fromStdString(basic1.name);
-        int bCount = basic1.count;
+        int bCount = basic1.count - basic1.bcount;
 
         QString bAuthor1 = QString::fromStdString(basic1.author);
         bAuthor1 = QString(u8"作者：") + bAuthor1;
@@ -78,7 +78,7 @@ void bookdata::on_pushButton_clicked()
         if(library1->queryById(m_nBookID,&iBook1))
         {
             if(iUser1->borrowBook(iBook1)){QMessageBox::information(this,"Welcome",u8"借书成功");close();}//正式借书操作
-            else{QMessageBox::information(this,"Warning","借书失败");}
+            else{QMessageBox::information(this,"Warning",u8"借书失败");}
         }
         else{QMessageBox::information(this,"Warning",u8"请先选择所要借阅的书籍");}
     }

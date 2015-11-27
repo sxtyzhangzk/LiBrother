@@ -48,6 +48,7 @@ struct TConfig
 	std::string strSphinxDIR;
 	std::string strPathSearchd;
 	std::string strPathIndexer;
+	int nUpdateInterval;
 };
 struct TPolicy
 {

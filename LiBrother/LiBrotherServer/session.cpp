@@ -120,18 +120,27 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 				return;
 			}
 			TBookBasicInfo book_basic_info;
-			book_basic_info.id = value0["id"].asInt();
-			book_basic_info.count = value0["count"].asInt();
-			book_basic_info.name = value0["name"].asString();
-			book_basic_info.publisher = value0["publisher"].asString();
-			book_basic_info.author = value0["author"].asString();
-			book_basic_info.isbn = value0["isbn"].asString();
+			
 			auto_iface<ILibrary> library;
 			m_pClassFactory->getLibrary(&library);
 			auto_iface<IBook> book;
-			library->queryById(book_basic_info.id, &book);
-			if (book->setBasicInfo(book_basic_info))  value["result"] = "1";
-			else value["result"] = "DatabaseError";
+			if (library->queryById(value0["id"].asInt(), &book))
+			{
+				if (book->getBasicInfo(book_basic_info))
+				{
+					book_basic_info.count = value0["count"].asInt();
+					book_basic_info.name = value0["name"].asString();
+					book_basic_info.publisher = value0["publisher"].asString();
+					book_basic_info.author = value0["author"].asString();
+					book_basic_info.isbn = value0["isbn"].asString();
+					if (book->setBasicInfo(book_basic_info))  value["result"] = "1";
+					else value["result"] = "DatabaseError";
+				}
+				else
+					writeInterfaceError(value, book);
+			}
+			else
+				writeInterfaceError(value, book);
 			strResponse = writer.write(value);
 			return;
 		}
@@ -254,6 +263,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 				Json::Value bookVal;
 				bookVal["id"] = info.id;
 				bookVal["count"] = info.count;
+				bookVal["bcount"] = info.bcount;
 				bookVal["name"] = info.name;
 				bookVal["author"] = info.author;
 				bookVal["isbn"] = info.isbn;
@@ -274,6 +284,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 				book->getBasicInfo(tem_book_basic_info);
 				value["id"] = tem_book_basic_info.id;
 				value["count"] = tem_book_basic_info.count;
+				value["bcount"] = tem_book_basic_info.bcount;
 				value["name"] = tem_book_basic_info.name;
 				value["author"] = tem_book_basic_info.author;
 				value["isbn"] = tem_book_basic_info.isbn;
@@ -297,6 +308,7 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 				book->getBasicInfo(tem_book_basic_info);
 				value["id"] = tem_book_basic_info.id;
 				value["count"] = tem_book_basic_info.count;
+				value["bcount"] = tem_book_basic_info.bcount;
 				value["name"] = tem_book_basic_info.name;
 				value["author"] = tem_book_basic_info.author;
 				value["isbn"] = tem_book_basic_info.isbn;
@@ -440,7 +452,6 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 					if (user->getBasicInfo(tem_user_basic_info))
 					{
 						tem_user_basic_info.gender = value0["gender"].asInt();
-						tem_user_basic_info.name = value0["name"].asString();
 						tem_user_basic_info.email = value0["email"].asString();
 						if (user->setBasicInfo(tem_user_basic_info))
 							value["result"] = 1;

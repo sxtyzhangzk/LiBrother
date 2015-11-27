@@ -269,7 +269,14 @@ bool recvData(std::string& strBuffer)
 	{
 		std::unique_lock<std::mutex> lock(strRecvMutex);
 		if (strRecv.empty() && !recvError)
-			strRecvCV.wait(lock);
+		{
+			if (strRecvCV.wait_for(lock, std::chrono::milliseconds(20000)) == std::cv_status::timeout)
+			{
+				lprintf_e("Recv data time out");
+				return false;
+			}
+		}
+
 		if (recvError)
 		{
 			recvError--;
@@ -310,6 +317,10 @@ bool postData(const std::string& strSend, std::string& strRecv, bool retry)
 {
 	if (!pSocket->is_open() && !connectToServer())
 		return false;
+
+	strRecvMutex.lock();
+	strRecv.clear();
+	strRecvMutex.unlock();
 
 	bool ret;
 	if (g_configClient.bKeepAlive)

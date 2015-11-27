@@ -115,6 +115,8 @@ void userborrow::on_pushButton_2_clicked()
     if(iUser->getAuthLevel() >= 1)
     {
         QListWidgetItem *item = ui->listWidget->currentItem();//获取选中的书本信息，并通过setBookID函数输入书本的ID号
+		if(!item)
+			return;
         int bID = item->data(Qt::UserRole).toInt();
         bookdataedit bookdataedit1(bID);
         //bookdataedit1.setBookID(bID);

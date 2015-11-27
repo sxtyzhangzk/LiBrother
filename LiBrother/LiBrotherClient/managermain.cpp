@@ -1,4 +1,4 @@
-#include "managermain.h"
+﻿#include "managermain.h"
 #include "ui_managermain.h"
 #include "qstring.h"
 #include "userborrow.h"

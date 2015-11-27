@@ -37,13 +37,15 @@ usermain::usermain(QWidget *parent) ://开场直接显示所有用户已借的�
                 auto_iface<ILibrary> library2;
                 factory1->getLibrary(&library2);
                 int i;int j;
-                std::set<int> TBorrow;
+                std::multiset<int> TBorrow;
                 for(i=0;i<basic2.size();i++)//在widget依次显示已借的书本
                 {
                             //bool pd = true;
                             if(basic2[i].flag == 1)
                             {
-                                TBorrow.erase(basic2[i].bookID);
+                                auto iter = TBorrow.lower_bound(basic2[i].bookID);
+								if(*iter == basic2[i].bookID)
+									TBorrow.erase(iter);
                                 //pd = false;break;
                             }
                             else{TBorrow.insert(basic2[i].bookID);}
@@ -94,6 +96,8 @@ void usermain::on_pushButton_2_clicked()//继续借书模块，直接进入书�
 void usermain::on_pushButton_3_clicked()//还书操作
 {
     QListWidgetItem *item = ui->listWidget->currentItem();
+	if(!item)
+		return;
     int bId = item->data(Qt::UserRole).toInt();
 
     auto_iface<ILibrary> library3;
@@ -179,13 +183,15 @@ void usermain::on_pushButton_7_clicked()//刷新操作，对当前用户的所�
                 auto_iface<ILibrary> library2;
                 factory1->getLibrary(&library2);
                 int i;int j;
-                std::set<int> TBorrow;
+                std::multiset<int> TBorrow;
                 for(i=0;i<basic2.size();i++)//在widget依次显示已借的书本
                 {
                             //bool pd = true;
                             if(basic2[i].flag == 1)
                             {
-                                TBorrow.erase(basic2[i].bookID);
+								auto iter = TBorrow.lower_bound(basic2[i].bookID);
+								if(*iter == basic2[i].bookID)
+									TBorrow.erase(iter);
                                 //pd = false;break;
                             }
 							else{TBorrow.insert(basic2[i].bookID);}

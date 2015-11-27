@@ -31,6 +31,7 @@ int CLibrary::queryByName(const char * strName, IFvector& vBooks, int nCount, in
 		Json::Value bookinfo = value[i + 1];
 		Info.id = bookinfo["id"].asInt();
 		Info.count = bookinfo["count"].asInt();
+		Info.bcount = bookinfo["bcount"].asInt();
 		Info.name = bookinfo["name"].asString();
 		Info.author = bookinfo["author"].asString();
 		Info.isbn = bookinfo["isbn"].asString();
@@ -62,6 +63,7 @@ bool CLibrary::queryById(int nID, IBook ** ppBook)
 			TBookBasicInfo *Info = new TBookBasicInfo;
 			Info->id = value["id"].asInt();
 			Info->count = value["count"].asInt();
+			Info->bcount = value["bcount"].asInt();
 			Info->name = value["name"].asString();
 			Info->author = value["author"].asString();
 			Info->isbn = value["isbn"].asString();
@@ -103,6 +105,7 @@ bool CLibrary::queryByISBN(const char * strISBN, IBook ** ppBook)
 			TBookBasicInfo *Info = new TBookBasicInfo;
 			Info->id = value["id"].asInt();
 			Info->count = value["count"].asInt();
+			Info->bcount = value["bcount"].asInt();
 			Info->name = value["name"].asString();
 			Info->author = value["author"].asString();
 			Info->isbn = value["isbn"].asString();

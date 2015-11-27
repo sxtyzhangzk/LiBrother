@@ -45,12 +45,15 @@ int CLibrary::queryByName(const char * strName, IFvector& vBooks, int nCount, in
 	CBook * pBook = new CBook(m_pDatabase);
 	try
 	{
+		std::set<int> setBookID;
 		std::shared_ptr<sql::Statement> pStat(pConn->createStatement());
 		
 		strSQL << strSelectSQL << "Where name='" << str2sql(strName) << "'";
 		std::shared_ptr<sql::ResultSet> pResult(pStat->executeQuery(strSQL.str()));
 		while (pResult->next())
 		{
+			setBookID.insert(pResult->getInt("id"));
+
 			readBookInfo(pResult, pBook);
 			pBook->sign();
 			vBooks.push_back(pBook);
@@ -62,12 +65,17 @@ int CLibrary::queryByName(const char * strName, IFvector& vBooks, int nCount, in
 		{
 			std::shared_ptr<sql::Statement> pStatSphinx(pConnSphinx->createStatement());
 			strSQL.str("");
-			strSQL << "Select * From book Where Match('" << str2sql(strName) << "')";
+			strSQL << "Select * From book,book_delta Where Match('" << str2sql(strName) << "')";
 			std::shared_ptr<sql::ResultSet> pResultSphinx(pStatSphinx->executeQuery(strSQL.str()));
 			while (pResultSphinx->next())
 			{
-				lprintf("SPHINXQL GOT");
 				int nID = pResultSphinx->getInt("id");
+				lprintf_d("SPHINXQL GOT %d", nID);
+
+				if (setBookID.find(nID) != setBookID.end())
+					continue;
+				setBookID.insert(nID);
+
 				strSQL.str("");
 				strSQL << strSelectSQL << "Where id=" << nID;
 				std::shared_ptr<sql::ResultSet> pResultID(pStat->executeQuery(strSQL.str()));
