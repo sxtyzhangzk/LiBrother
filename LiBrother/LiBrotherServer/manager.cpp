@@ -22,7 +22,7 @@ bool CManager::getUserByID(int nID, IUser ** ppUser)
 		setError(InvalidParam, 4, "The pointer is NULL.");
 		return false;
 	}
-	IUser* n = new CUser(m_pDatabase);
+	CUser* n = new CUser(m_pDatabase);
 	try
 	{
 		std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN),MYSQL_CONN_RELEASER);
@@ -33,6 +33,7 @@ bool CManager::getUserByID(int nID, IUser ** ppUser)
 		std::shared_ptr<sql::ResultSet> result(stat->getResultSet());
 		if (!result->next())
 		{
+			delete n;
 			setError(InvalidParam, 5, "User Not Found");
 			return false;
 		}
@@ -54,6 +55,7 @@ bool CManager::getUserByID(int nID, IUser ** ppUser)
 	}
 	catch (sql::SQLException& e)
 	{
+		delete n;
 		setError(DatabaseError, 9, (std::string("There is some wrong with our database.\n") + e.what()).c_str());
 		return false;
 	}
@@ -108,7 +110,7 @@ bool CManager::getUserByName(const char * strName, IUser ** ppUser)
 			setError(InvalidParam, 4, "The pointer is NULL.");
 			return false;
 		}
-		IUser* n = new CUser(m_pDatabase);
+		CUser* n = new CUser(m_pDatabase);
 		try
 		{
 			std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN), MYSQL_CONN_RELEASER);
@@ -117,7 +119,13 @@ bool CManager::getUserByName(const char * strName, IUser ** ppUser)
 			str << "SELECT * FROM UserInfoDatabase WHERE email = " << '\'' << str2sql(strName) << '\'';
 			stat->execute(str.str());
 			std::shared_ptr<sql::ResultSet> result(stat->getResultSet());
-			result->next();
+			if (!result->next())
+			{
+				delete n;
+				*ppUser = nullptr;
+				setError(InvalidParam, 5, "User Not Found");
+				return false;
+			}
 			TUserBasicInfo Basicinfo;
 			Basicinfo.email = result->getString("email");
 			Basicinfo.gender = result->getInt("gender");
@@ -136,6 +144,7 @@ bool CManager::getUserByName(const char * strName, IUser ** ppUser)
 		}
 		catch (sql::SQLException& e)
 		{
+			delete n;
 			setError(DatabaseError, 9, (std::string("There is some wrong with our database.\n") + e.what()).c_str());
 			return false;
 		}
@@ -148,7 +157,7 @@ bool CManager::getUserByName(const char * strName, IUser ** ppUser)
 			setError(InvalidParam, 4, "The pointer is NULL.");
 			return false;
 		}
-		IUser* n = new CUser(m_pDatabase);
+		CUser* n = new CUser(m_pDatabase);
 		try
 		{
 			std::shared_ptr<sql::Connection>  c(m_pDatabase->getConnection(REGID_MYSQL_CONN),MYSQL_CONN_RELEASER);
@@ -157,7 +166,13 @@ bool CManager::getUserByName(const char * strName, IUser ** ppUser)
 			str << "SELECT * FROM UserInfoDatabase WHERE name = " << '\'' << str2sql(strName) << '\'';
 			stat->execute(str.str());
 			std::shared_ptr<sql::ResultSet> result(stat->getResultSet());
-			result->next();
+			if (!result->next())
+			{
+				delete n;
+				*ppUser = nullptr;
+				setError(InvalidParam, 5, "User Not Found");
+				return false;
+			}
 			TUserBasicInfo Basicinfo;
 			Basicinfo.email = result->getString("email");
 			Basicinfo.gender = result->getInt("gender");
@@ -177,6 +192,7 @@ bool CManager::getUserByName(const char * strName, IUser ** ppUser)
 		catch (sql::SQLException& e)
 		{
 			setError(DatabaseError, 9, (std::string("There is some wrong with our database.\n") + e.what()).c_str());
+			delete n;
 			return false;
 		}
 	}

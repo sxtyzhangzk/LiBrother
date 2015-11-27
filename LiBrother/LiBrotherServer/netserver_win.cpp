@@ -107,7 +107,7 @@ struct TSocketEx
 
 	~TSocketEx()
 	{
-		//lprintf("SOCKET DELETE");
+		lprintf_d("SocketEx Deleted: %p", this);
 		DeleteCriticalSection(&csIOContext);
 		if (pTLSServer)
 		{
@@ -727,8 +727,8 @@ int CNetServer::doAccept(TSocketEx * pSocket, TPerIOContext * pIOContext, size_t
 			return 1;
 		}
 	}
-	else
-		pClientSocket->Release();
+	
+	pClientSocket->Release();
 
 	if (!bPostedAcceptRq)
 		return -1;
