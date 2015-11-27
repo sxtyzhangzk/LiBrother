@@ -1,7 +1,15 @@
 #include "program_launcher.h"
 
 #include <cassert>
+#include <cstring>
+
+#ifdef _WIN32
 #include <Windows.h>
+#else
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#endif
 
 int CProgramLauncher::runProgram(
 	const std::string& strPath, const std::vector<std::string>& vArgs, const std::string& strWorkDir,
@@ -23,7 +31,9 @@ int CProgramLauncher::runProgram(
 			delete pTask;
 			return -1;
 		}
+#ifdef _WIN32
 		CloseHandle(pTask->hProcess);
+#endif
 		break;
 
 	case RunBackend:
@@ -104,6 +114,7 @@ int CProgramLauncher::getAvaliableTaskID()
 
 bool CProgramLauncher::StartProcess(TTask& task)
 {
+#ifdef _WIN32
 	std::string strCmd;
 	for (auto cmd : task.strArgs)
 		strCmd += " " + cmd;
@@ -119,11 +130,42 @@ bool CProgramLauncher::StartProcess(TTask& task)
 	if (!CreateProcessA(task.strPath.c_str(), cCmd, NULL, NULL, FALSE, 0, NULL, task.strWorkDir.c_str(), &startupInfo, &processInfo))
 		return false;
 	task.hProcess = processInfo.hProcess;
+#else
+	int pid = fork();
+	if (pid < 0)
+		return false;
+	else if (pid == 0)
+	{
+		char strNow[256];
+		getcwd(strNow, 255);
+		std::string strPath;
+		if (!task.strPath.empty() && task.strPath[0] != '/')
+			strPath = std::string(strNow) + "/" + task.strPath;
+		else
+			strPath = task.strPath;
+
+		chdir(task.strWorkDir.c_str());
+		char **ppArgv = new char*[task.strArgs.size() + 2];
+		ppArgv[0] = new char[strPath.length() + 1];
+		strcpy(ppArgv[0], strPath.c_str());
+		for (int i = 0; i < task.strArgs.size(); i++)
+		{
+			ppArgv[i + 1] = new char[task.strArgs[i].length() + 1];
+			strcpy(ppArgv[i + 1], task.strArgs[i].c_str());
+		}
+		ppArgv[task.strArgs.size() + 1] = nullptr;
+		execv(strPath.c_str(), ppArgv);
+		exit(-1);
+}
+	else
+		task.hProcess = pid;
+#endif
 	return true;
 }
 
 bool CProgramLauncher::WaitForProcess(TTask& task, int nTimeout, bool bTerminate)
 {
+#ifdef _WIN32
 	assert(task.hProcess != INVALID_HANDLE_VALUE);
 	DWORD dwMilliseconds = nTimeout;
 	if (nTimeout < 0)
@@ -137,6 +179,10 @@ bool CProgramLauncher::WaitForProcess(TTask& task, int nTimeout, bool bTerminate
 	}
 	CloseHandle(task.hProcess);
 	task.hProcess = INVALID_HANDLE_VALUE;
+#else
+	int status;
+	waitpid(task.hProcess, &status, 0);
+#endif
 	return true;
 }
 

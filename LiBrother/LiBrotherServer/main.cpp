@@ -12,9 +12,8 @@
 
 #include <signal.h>
 
-#ifdef _WIN32
-#include <Windows.h>
-#endif
+#include <mutex>
+#include <condition_variable>
 
 #include <liblog.h>
 #include <yaml-cpp/yaml.h>
@@ -24,9 +23,9 @@ MODULE_LOG_NAME("Main");
 TConfig g_configSvr;
 TPolicy g_configPolicy;
 
-#ifdef _WIN32
-HANDLE g_hExitEvent;
-#endif
+std::mutex mtxExitEvent;
+std::condition_variable cvExitEvent;
+bool bExitEvent;
 
 
 //加载默认配置
@@ -160,6 +159,8 @@ bool loadConfig(const std::string& strFile)
 				g_configSvr.strPathMysqlAdmin = mysql["mysqladmin-bin"].as<std::string>();
 			if (mysql["dir"].IsDefined())
 				g_configSvr.strMySQLDIR = mysql["dir"].as<std::string>();
+			if (mysql["mysqld-param"].IsDefined())
+				g_configSvr.strMysqldParam = mysql["mysqld-param"].as<std::string>();
 		}
 
 		YAML::Node sphinx = doc["sphinx"];
@@ -187,6 +188,10 @@ bool loadConfig(const std::string& strFile)
 					g_configSvr.strSphinxDIR = sphinx["dir"].as<std::string>();
 				if (sphinx["upd-interval"].IsDefined())
 					g_configSvr.nUpdateInterval = sphinx["upd-interval"].as<int>();
+				if (sphinx["searchd-param"].IsDefined())
+					g_configSvr.strSearchdParam = sphinx["searchd-param"].as<std::string>();
+				if (sphinx["indexer-param"].IsDefined())
+					g_configSvr.strIndexerParam = sphinx["indexer-param"].as<std::string>();
 			}
 		}
 	}
@@ -260,19 +265,19 @@ void signalHandler(int sig)
 	if (sig == SIGINT)
 	{
 		std::cout << "SIGINT received" << std::endl;
-		SetEvent(g_hExitEvent);
+		std::unique_lock<std::mutex> lock(mtxExitEvent);
+		bExitEvent = true;
+		cvExitEvent.notify_all();
 	}
 }
 
 //等待服务结束命令
 void waitForSigint()
 {
-#ifdef _WIN32
-	g_hExitEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 	signal(SIGINT, signalHandler);
-	WaitForSingleObject(g_hExitEvent, INFINITE);
-	CloseHandle(g_hExitEvent);
-#endif
+	std::unique_lock<std::mutex> lock(mtxExitEvent);
+	if (!bExitEvent)
+		cvExitEvent.wait(lock);
 }
 
 int main(int argc, char * argv[])
@@ -293,8 +298,11 @@ int main(int argc, char * argv[])
 	int nMysqld = -1, nSearchd = -1, nIndexer = -1;
 	if (g_configSvr.nMySQLType == 1)
 	{
+		std::vector<std::string> vec;
+		if (!g_configSvr.strMysqldParam.empty())
+			vec.push_back(g_configSvr.strMysqldParam);
 		nMysqld = progLauncher.runProgram(
-			g_configSvr.strPathMysqld, std::vector<std::string>(), g_configSvr.strMySQLDIR,
+			g_configSvr.strPathMysqld, vec, g_configSvr.strMySQLDIR,
 			CProgramLauncher::RunBackend);
 		if (nMysqld < 0)
 		{
@@ -315,12 +323,18 @@ int main(int argc, char * argv[])
 	{
 		std::vector<std::string> vecArgs;
 		vecArgs.push_back("book");
+		if (!g_configSvr.strIndexerParam.empty())
+			vecArgs.push_back(g_configSvr.strIndexerParam);
 		progLauncher.runProgram(
 			g_configSvr.strPathIndexer, vecArgs, g_configSvr.strSphinxDIR,
 			CProgramLauncher::RunWait);
 
+		vecArgs.clear();
+		if (!g_configSvr.strSearchdParam.empty())
+			vecArgs.push_back(g_configSvr.strSearchdParam);
+
 		nSearchd = progLauncher.runProgram(
-			g_configSvr.strPathSearchd, std::vector<std::string>(), g_configSvr.strSphinxDIR,
+			g_configSvr.strPathSearchd, vecArgs, g_configSvr.strSphinxDIR,
 			CProgramLauncher::RunBackend);
 		if (nSearchd < 0)
 		{
@@ -333,6 +347,8 @@ int main(int argc, char * argv[])
 			vecArgs.clear();
 			vecArgs.push_back("book_delta");
 			vecArgs.push_back("--rotate");
+			if (!g_configSvr.strIndexerParam.empty())
+				vecArgs.push_back(g_configSvr.strIndexerParam);
 			nIndexer = progLauncher.runProgram(
 				g_configSvr.strPathIndexer, vecArgs, g_configSvr.strSphinxDIR, 
 				CProgramLauncher::RunAsTask, g_configSvr.nUpdateInterval);

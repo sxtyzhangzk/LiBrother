@@ -103,14 +103,18 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 			auto_iface<ILibrary>  library;
 			m_pClassFactory->getLibrary(&library);
 			auto_iface<IBook>  book;
-			library->queryById(tem_id, &book);
-			std::string tem_description;
-			if (book->getDescription(tem_description)) {
-				value["description"] = tem_description;
-				value["result"] = "1";
-				strResponse = writer.write(value);
+			if (library->queryById(tem_id, &book))
+			{
+				std::string tem_description;
+				if (book->getDescription(tem_description)) {
+					value["description"] = tem_description;
+					value["result"] = "1";
+				}
+				else value["result"] = "DatabaseError";
 			}
-			else value["result"] = "DatabaseError";
+			else
+				writeInterfaceError(value, library);
+			strResponse = writer.write(value);
 			return;
 		}
 
@@ -156,9 +160,13 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 			auto_iface<ILibrary> library;
 			m_pClassFactory->getLibrary(&library);
 			auto_iface<IBook>book;
-			library->queryById(tem_id, &book);
-			if (book->setDescription(tem_description.c_str())) value["result"] = "1";
-			else value["result"] = "DatabaseError";
+			if (library->queryById(tem_id, &book))
+			{
+				if (book->setDescription(tem_description.c_str())) value["result"] = "1";
+				else value["result"] = "DatabaseError";
+			}
+			else
+				writeInterfaceError(value, library);
 			strResponse = writer.write(value);
 			return;
 		}
@@ -174,9 +182,13 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 			auto_iface<ILibrary> library;
 			m_pClassFactory->getLibrary(&library);
 			auto_iface<IBook> book;
-			library->queryById(tem_id, &book);
-			if (book->deleteBook(tem_num)) value["result"] = "1";
-			else value["result"] = "DatabaseError";
+			if (library->queryById(tem_id, &book))
+			{
+				if (book->deleteBook(tem_num)) value["result"] = "1";
+				else value["result"] = "DatabaseError";
+			}
+			else
+				writeInterfaceError(value, library);
 			strResponse = writer.write(value);
 			return;
 		}
@@ -189,20 +201,25 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 			auto_iface<ILibrary>  library;
 			m_pClassFactory->getLibrary(&library);
 			auto_iface<IBook> book;
-			library->queryById(tem_id, &book);
-			std::vector<TBorrowInfo> tem_binfo;
-			book->getBorrowInfo(tem_binfo);
-			Json::FastWriter writer;
-			int num_of_records = tem_binfo.size();
-			value[0] = num_of_records;
-			for (int i = 0; i < num_of_records; i++) {
-				Json::Value borinfoVal;
-				borinfoVal["bookID"] = tem_binfo[i].bookID;
-				borinfoVal["userID"] = tem_binfo[i].userID;
-				borinfoVal["flag"] = tem_binfo[i].flag;
-				borinfoVal["borrowTime"] = tem_binfo[i].borrowTime;
-				value[i + 1] = borinfoVal;
+			if (library->queryById(tem_id, &book))
+			{
+				std::vector<TBorrowInfo> tem_binfo;
+				book->getBorrowInfo(tem_binfo);
+				Json::FastWriter writer;
+				int num_of_records = tem_binfo.size();
+				value[0] = num_of_records;
+				for (int i = 0; i < num_of_records; i++) {
+					Json::Value borinfoVal;
+					borinfoVal["bookID"] = tem_binfo[i].bookID;
+					borinfoVal["userID"] = tem_binfo[i].userID;
+					borinfoVal["flag"] = tem_binfo[i].flag;
+					borinfoVal["borrowTime"] = tem_binfo[i].borrowTime;
+					value[i + 1] = borinfoVal;
+				}
 			}
+			else
+				writeInterfaceError(value, library);
+			strResponse = writer.write(value);
 			return;
 		}
 
@@ -218,12 +235,16 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 			auto_iface<ILibrary> library;
 			m_pClassFactory->getLibrary(&library);
 			auto_iface<IBook> book;
-			library->queryById(tem_id, &book);
-			if (book->getBookReadLevel() != -1) {
-				value["read_level"] = book->getBookReadLevel();
-				value["result"] = "1";
+			if (library->queryById(tem_id, &book))
+			{
+				if (book->getBookReadLevel() != -1) {
+					value["read_level"] = book->getBookReadLevel();
+					value["result"] = "1";
+				}
+				else value["result"] = "DatabaseError";
 			}
-			else value["result"] = "DatabaseError";
+			else
+				writeInterfaceError(value, library);
 			strResponse = writer.write(value);
 			return;
 		}
@@ -240,9 +261,13 @@ void CSession::recvRequest(const std::string& strRequest, std::string& strRespon
 			auto_iface<ILibrary> library;
 			m_pClassFactory->getLibrary(&library);
 			auto_iface<IBook> book;
-			library->queryById(tem_id, &book);
-			if (book->setBookReadLevel(read_level0)) value["result"] = "1";
-			else value["result"] = "DatabaseError";
+			if (library->queryById(tem_id, &book))
+			{
+				if (book->setBookReadLevel(read_level0)) value["result"] = "1";
+				else value["result"] = "DatabaseError";
+			}
+			else
+				writeInterfaceError(value, library);
 			strResponse = writer.write(value);
 			return;
 		}

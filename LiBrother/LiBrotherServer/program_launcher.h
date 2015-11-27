@@ -29,6 +29,8 @@ public:
 protected:
 #ifdef _WIN32
 	typedef void * handle_t;
+#else
+	typedef int handle_t;
 #endif
 	struct TTask
 	{

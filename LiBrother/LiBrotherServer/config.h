@@ -40,6 +40,7 @@ struct TConfig
 	std::string strMySQLDIR;
 	std::string strPathMysqld;
 	std::string strPathMysqlAdmin;
+	std::string strMysqldParam;
 
 	//Sphinx
 	int nSphinxType;	//0 Disabled, 1 Local, 2 Remote
@@ -49,6 +50,8 @@ struct TConfig
 	std::string strPathSearchd;
 	std::string strPathIndexer;
 	int nUpdateInterval;
+	std::string strSearchdParam;
+	std::string strIndexerParam;
 };
 struct TPolicy
 {
